@@ -28,3 +28,6 @@ jobs:
 
       - name: Modulith verify
         run: ./gradlew test --tests '*ModuleStructureTest' --no-daemon
+
+      - name: ArchUnit boundaries
+        run: ./gradlew test --tests '*ModuleBoundaryArchTest' --no-daemon

@@ -12,10 +12,10 @@
 | Step   | 내용                      | 상태        | 시작일 | 완료일 | 비고 |
 | ------ | ------------------------- | ----------- | ------ | ------ | ---- |
 | Step 1 | Spring Modulith 모듈 정의 | Done        | 2026-05-15 | 2026-05-15 | Modulith verify + internal 경계 반영 |
-| Step 2 | ArchUnit 경계 검증        | Not Started | —      | —      |      |
+| Step 2 | ArchUnit 경계 검증        | Done        | 2026-05-15 | 2026-05-15 | 경계 테스트 3건 + CI 단계 + FAIL 재현 |
 | Step 3 | Schema Registry 연동 검증 | Not Started | —      | —      |      |
 
-**W1 진행률**: 1/3 Steps 완료
+**W1 진행률**: 2/3 Steps 완료
 
 ### W2 (2026-05-19 ~ 05-23)
 
@@ -80,10 +80,13 @@
   - feat(modulith): note/graph/chunking 공개 API와 internal bootstrap 구조 분리
   - test(modulith): `ApplicationModules.verify()` 및 Modulith 문서 생성 테스트 보강
   - docs(workflow): Step 1 모듈 구조 문서와 Workflow/Task 상태 동기화
+  - test(archunit): 모듈 직접 의존 금지, 순환 참조 금지, internal 외부 접근 금지 규칙 3건 추가
+  - chore(ci): GitHub Actions CI에 ArchUnit 테스트 단계 추가
+  - verify(archunit): 의도적 위반 코드로 FAIL 재현 후 제거, 전체 테스트 재통과 확인
 - **이슈**:
   - 없음
 - **내일 계획**:
-  - W1 Step 2 ArchUnit 모듈 경계 테스트 설계 및 구현 시작
+  - W1 Step 3 Avro 스키마 등록 및 호환성 검증 착수
 
 #### 2026-05-16 (금)
 
