@@ -10,44 +10,44 @@
 
 ### 1.1 TASK 시작
 
-- [ ] Step Goal / Done When / Scope / Input 확인
-- [ ] PRD_W1 해당 요구사항 확인 (모듈 분리 요구사항)
-- [ ] Duration 산정 확인 (1일)
+- [x] Step Goal / Done When / Scope / Input 확인
+- [x] PRD_W1 해당 요구사항 확인 (모듈 분리 요구사항)
+- [x] Duration 산정 확인 (1일)
 
 ### 1.2 요구사항 분석
 
-- [ ] Spring Modulith 공식 문서 분석
-- [ ] note/graph/chunking 모듈 간 의존성 규칙 도출
-- [ ] 모듈별 public API 인터페이스 정의 기준
-- [ ] Instructions 초안 → TASK 문서 반영
+- [x] Spring Modulith 공식 문서 분석
+- [x] note/graph/chunking 모듈 간 의존성 규칙 도출
+- [x] 모듈별 public API 인터페이스 정의 기준
+- [x] Instructions 초안 → TASK 문서 반영
 
 ### 1.3 Security 1차 검토
 
-- [ ] 인증 필요 여부: No (설정 작업)
-- [ ] 권한 종류: 없음
-- [ ] 공개 API 여부: No
-- [ ] 모듈 간 internal 패키지 외부 접근 차단 확인
-- [ ] 결과 → TASK Constraints 반영
+- [x] 인증 필요 여부: No (설정 작업)
+- [x] 권한 종류: 없음
+- [x] 공개 API 여부: No
+- [x] 모듈 간 internal 패키지 외부 접근 차단 확인
+- [x] 결과 → TASK Constraints 반영
 
 ### 1.4 모듈 정의 및 구조 설계
 
-- [ ] note, graph, chunking 패키지 생성
-- [ ] 각 모듈 `package-info.java` 작성
-- [ ] `@ApplicationModule(allowedDependencies=...)` 설정
-- [ ] 모듈별 internal 패키지 분리
-- [ ] 모듈 간 public API 인터페이스 정의
-- [ ] 모듈 구조 다이어그램 문서화
+- [x] note, graph, chunking 패키지 생성
+- [x] 각 모듈 `package-info.java` 작성
+- [x] `@ApplicationModule(allowedDependencies=...)` 설정
+- [x] 모듈별 internal 패키지 분리
+- [x] 모듈 간 public API 인터페이스 정의
+- [x] 모듈 구조 다이어그램 문서화
 
 ### 1.5 모듈 경계 검증
 
-- [ ] `ApplicationModules.verify()` 통합 테스트 작성
-- [ ] 의존 위반 시 빌드 실패 수동 검증
-- [ ] 순환 의존 감지 확인
-- [ ] internal 패키지 외부 접근 시 컴파일 에러 확인
+- [x] `ApplicationModules.verify()` 통합 테스트 작성
+- [x] 의존 위반 시 빌드 실패 수동 검증
+- [x] 순환 의존 감지 확인
+- [x] internal 패키지 외부 접근 시 컴파일 에러 확인
 
 ### 1.6 ~ 1.10 N/A (설정 작업 — DTO/Entity/Repository/Service/Controller/View 해당 없음)
 
-**Step 1 Status**: [ ] Not Started / [ ] In Progress / [ ] Done
+**Step 1 Status**: [ ] Not Started / [ ] In Progress / [x] Done
 
 ---
 

@@ -11,11 +11,11 @@
 
 | Step   | 내용                      | 상태        | 시작일 | 완료일 | 비고 |
 | ------ | ------------------------- | ----------- | ------ | ------ | ---- |
-| Step 1 | Spring Modulith 모듈 정의 | Not Started | —      | —      |      |
+| Step 1 | Spring Modulith 모듈 정의 | Done        | 2026-05-15 | 2026-05-15 | Modulith verify + internal 경계 반영 |
 | Step 2 | ArchUnit 경계 검증        | Not Started | —      | —      |      |
 | Step 3 | Schema Registry 연동 검증 | Not Started | —      | —      |      |
 
-**W1 진행률**: 0/3 Steps 완료
+**W1 진행률**: 1/3 Steps 완료
 
 ### W2 (2026-05-19 ~ 05-23)
 
@@ -76,10 +76,14 @@
 
 #### 2026-05-15 (목)
 
-- **완료**:
-- **진행 중**:
+- **한 일**:
+  - feat(modulith): note/graph/chunking 공개 API와 internal bootstrap 구조 분리
+  - test(modulith): `ApplicationModules.verify()` 및 Modulith 문서 생성 테스트 보강
+  - docs(workflow): Step 1 모듈 구조 문서와 Workflow/Task 상태 동기화
 - **이슈**:
-- **다음**:
+  - 없음
+- **내일 계획**:
+  - W1 Step 2 ArchUnit 모듈 경계 테스트 설계 및 구현 시작
 
 #### 2026-05-16 (금)
 
