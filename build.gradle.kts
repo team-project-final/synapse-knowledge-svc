@@ -30,6 +30,7 @@ dependencies {
 	implementation("org.springframework.modulith:spring-modulith-starter-core")
 	testImplementation("org.springframework.modulith:spring-modulith-docs")
 	testImplementation("org.springframework.modulith:spring-modulith-starter-test")
+	testImplementation("com.tngtech.archunit:archunit-junit5:1.3.0")
 }
 
 tasks.withType<Test> {
