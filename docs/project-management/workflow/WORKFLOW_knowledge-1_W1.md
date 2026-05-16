@@ -1,7 +1,7 @@
 # WORKFLOW: @knowledge-owner-1 — Week 1
 
-> **Task 문서**: [TASK_knowledge-1.md](../task/TASK_knowledge-1.md)  
-> **기간**: 2026-05-12 ~ 2026-05-16  
+> **Task 문서**: [TASK_knowledge-1.md](../task/TASK_knowledge-1.md)
+> **기간**: 2026-05-12 ~ 2026-05-15, 4 영업일
 > **기능개발 Workflow**: [README §7](../README.md)
 
 ---
@@ -84,29 +84,29 @@
 - [ ] 결과 → TASK Constraints 반영
 
 ### 1.4 ERD 설계
-- [ ] notes 테이블 설계 (id, title, content, owner_id, created_at, updated_at, deleted_at)
-- [ ] 인덱스 설계 (owner_id, created_at DESC)
-- [ ] 관계 정의 (notes.owner_id → users.id FK)
+- [ ] notes 테이블 설계 (id, tenant_id, user_id, title, content_md, content_plain, status: active|archived|trashed, word_count, metadata jsonb, created_at, updated_at, deleted_at)
+- [ ] 인덱스 설계 (user_id, created_at DESC)
+- [ ] 관계 정의 (notes.user_id → users.id FK)
 - [ ] Duration(final) 갱신
 
 ### 1.5 Security 2차 검토
 - [ ] 민감 정보 암호화: 비해당 (노트 내용은 평문 저장)
 - [ ] Soft Delete 정책: 논리삭제 (deleted_at)
-- [ ] 행 단위 접근 제어: 필요 (수정/삭제 시 owner_id 확인)
+- [ ] 행 단위 접근 제어: 필요 (수정/삭제 시 user_id 확인)
 - [ ] 결과 → TASK Constraints 반영
 
 ### 1.6 DTO / Entity 설계 (API First)
-- [ ] NoteCreateRequest 정의 (title, content)
-- [ ] NoteUpdateRequest 정의 (title, content)
-- [ ] NoteResponse 정의 (id, title, content, ownerId, createdAt, updatedAt)
-- [ ] NoteListResponse 정의 (id, title, ownerId, createdAt — content 제외)
+- [ ] NoteCreateRequest 정의 (title, content_md)
+- [ ] NoteUpdateRequest 정의 (title, content_md)
+- [ ] NoteResponse 정의 (id, title, content_md, content_plain, userId, status, word_count, createdAt, updatedAt)
+- [ ] NoteListResponse 정의 (id, title, userId, status, createdAt — content 제외)
 - [ ] Note Entity 작성
 - [ ] MapStruct 매퍼 작성
 - [ ] Output Format → TASK 반영
 
 ### 1.7 Repository 구현
 - [ ] NoteRepository 인터페이스 작성
-- [ ] findByOwnerIdAndDeletedAtIsNull 커스텀 쿼리
+- [ ] findByUserIdAndDeletedAtIsNull 커스텀 쿼리
 - [ ] 페이징 처리 (Pageable)
 
 ### 1.8 Service + Test
@@ -152,8 +152,9 @@
 - [ ] 결과 → TASK Constraints 반영
 
 ### 1.4 ERD 설계
-- [ ] note_links 테이블 설계 (id, source_note_id, target_title, target_note_id nullable, created_at)
-- [ ] 인덱스 설계 (source_note_id, target_note_id, source+target_title UNIQUE)
+- [ ] note_links 테이블 설계 (id, source_note_id, target_note_id nullable, link_type: wikilink|reference|embed, context_snippet, created_at)
+- [ ] 참고: target_title 컬럼은 ERD에 없음 — 애플리케이션 레벨에서 target_note_id로 조회하여 처리
+- [ ] 인덱스 설계 (source_note_id, target_note_id, source+target_note_id UNIQUE)
 - [ ] 관계 정의 (note_links → notes FK x2)
 - [ ] Duration(final) 갱신
 
@@ -164,7 +165,7 @@
 - [ ] 결과 → TASK Constraints 반영
 
 ### 1.6 DTO / Entity 설계 (API First)
-- [ ] NoteLinkResponse 정의 (id, sourceNoteId, targetTitle, targetNoteId)
+- [ ] NoteLinkResponse 정의 (id, sourceNoteId, targetNoteId, linkType, contextSnippet)
 - [ ] NoteLink Entity 작성
 - [ ] MapStruct 매퍼 작성
 - [ ] Output Format → TASK 반영
@@ -183,7 +184,7 @@
 - [ ] 테스트 통과 확인
 
 ### 1.9 Controller + Test
-- [ ] GET /notes/{id}/links 엔드포인트 구현
+- [ ] GET /notes/{id}/backlinks 엔드포인트 구현
 - [ ] 슬라이스 테스트 (@WebMvcTest)
 - [ ] 401/403 응답 테스트
 - [ ] 통합 테스트 (노트 생성 → 링크 자동 저장 확인)
