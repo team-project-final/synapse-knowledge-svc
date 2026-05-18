@@ -1,7 +1,7 @@
 # WORKFLOW: @knowledge-owner-1 — Week 2
 
-> **Task 문서**: [TASK_knowledge-1.md](../task/TASK_knowledge-1.md)  
-> **기간**: 2026-05-19 ~ 2026-05-23  
+> **Task 문서**: [TASK_knowledge-1.md](../task/TASK_knowledge-1.md)
+> **기간**: 2026-05-18 ~ 2026-05-22, 5 영업일
 > **PRD**: [PRD_W2.md](../prd/PRD_W2.md)
 
 ---
@@ -27,9 +27,9 @@
 - [ ] 결과 → TASK Constraints 반영
 
 ### 4.4 ERD 설계
-- [ ] note_links 테이블 확인/갱신 (sourceNoteId, targetNoteId, createdAt)
-- [ ] 양방향 조회를 위한 인덱스 설계 (sourceNoteId, targetNoteId)
-- [ ] 복합 유니크 제약 (sourceNoteId + targetNoteId)
+- [ ] note_links 테이블 확인/갱신 (source_note_id, target_note_id, link_type: wikilink|reference|embed, context_snippet, created_at)
+- [ ] 양방향 조회를 위한 인덱스 설계 (source_note_id, target_note_id)
+- [ ] 복합 유니크 제약 (source_note_id + target_note_id)
 - [ ] Duration(final) 갱신
 
 ### 4.5 Security 2차 검토
@@ -40,8 +40,8 @@
 
 ### 4.6 DTO / Entity 설계 (API First)
 - [ ] BacklinkResponse 정의 (noteId, title, createdAt)
-- [ ] GraphNodeDto 정의 (id, title, group)
-- [ ] GraphEdgeDto 정의 (source, target)
+- [ ] GraphNodeDto 정의 (id, title, linkCount, pageRank)
+- [ ] GraphEdgeDto 정의 (source, target, type)
 - [ ] GraphDataResponse 정의 (nodes[], edges[])
 - [ ] NoteLink Entity 확인/갱신
 - [ ] MapStruct 매퍼 작성
@@ -58,15 +58,16 @@
 - [ ] GraphService 구현 (getBacklinks, getOutlinks, getGraphData)
 - [ ] 백링크 조회 서비스 (targetNoteId → source 노트 목록)
 - [ ] 아웃링크 조회 서비스 (sourceNoteId → target 노트 목록)
-- [ ] D3.js용 노드/엣지 JSON 생성 서비스 (depth 제한 BFS/DFS)
+- [ ] D3.js용 노드/엣지 JSON 생성 서비스 (depth 제한 BFS/DFS — 노드: {id,title,linkCount,pageRank}, 엣지: {source,target,type})
 - [ ] 소유자 검증 로직 구현
 - [ ] 단위 테스트 작성 (Mockito)
 - [ ] 테스트 통과 확인
 
 ### 4.9 Controller + Test
-- [ ] GET /api/v1/notes/{noteId}/backlinks 엔드포인트 구현
-- [ ] GET /api/v1/notes/{noteId}/outlinks 엔드포인트 구현
-- [ ] GET /api/v1/graph?noteId={id}&depth={n} 엔드포인트 구현 (D3.js 데이터)
+- [ ] GET /notes/{noteId}/backlinks 엔드포인트 구현
+- [ ] GET /notes/{noteId}/links 엔드포인트 구현 (forward links — Wiki 추가 예정)
+- [ ] GET /graph/data 엔드포인트 구현 (D3.js 데이터 — nodes[{id,title,linkCount,pageRank}], edges[{source,target,type}])
+- [ ] GET /graph/neighbors/{noteId} 엔드포인트 구현 (인접 노드 탐색)
 - [ ] 슬라이스 테스트 (@WebMvcTest)
 - [ ] 401/403 응답 테스트
 - [ ] 통합 테스트 (양방향 링크 + 그래프 JSON 검증)
@@ -90,7 +91,7 @@
 
 ### 5.2 요구사항 분석
 - [ ] 노트 변경 이벤트 종류 정의 (created, updated, deleted)
-- [ ] Kafka consumer 그룹 및 토픽 (note.updated) 확인
+- [ ] Kafka consumer 그룹 및 토픽 (note.created, note.updated, note.deleted — 3개 토픽 모두) 확인
 - [ ] Elasticsearch 인덱스 매핑 요건 분석 (title, content, tags, userId)
 - [ ] 동기화 지연 허용 범위 (eventual consistency) 정의
 - [ ] Instructions 초안 → TASK 문서 반영
@@ -124,7 +125,7 @@
 
 ### 5.8 Service + Test
 - [ ] NoteIndexService 구현 (index, update, delete)
-- [ ] Kafka Consumer 구현 (note.updated 토픽 소비 → ES 인덱싱)
+- [ ] Kafka Consumer 구현 (note.created, note.updated, note.deleted 3개 토픽 소비 → ES 인덱싱)
 - [ ] 이벤트별 분기 처리 (created→index, updated→update, deleted→delete)
 - [ ] 재시도 로직 구현 (RetryTemplate 또는 @Retryable)
 - [ ] 단위 테스트 작성 (Mockito)

@@ -1,7 +1,7 @@
-# WORKFLOW: @knowledge-1-owner — Week 3
+# WORKFLOW: @knowledge-owner-1 — Week 3
 
-> **Task 문서**: [TASK_knowledge-1.md](../task/TASK_knowledge-1.md)  
-> **기간**: 2026-05-26 ~ 2026-05-30  
+> **Task 문서**: [TASK_knowledge-1.md](../task/TASK_knowledge-1.md)
+> **기간**: 2026-05-26 ~ 2026-05-29, 4 영업일
 > **PRD**: [PRD_W3.md](../prd/PRD_W3.md)
 
 ---
@@ -26,7 +26,8 @@
 - [ ] 결과 → TASK Constraints 반영
 
 ### 1.4 ERD 설계
-- [ ] note_versions 테이블 설계 (id, note_id, version_number, title, content, created_by, created_at)
+- [ ] note_versions 테이블 설계 (id, note_id, version_number, title, content_md, change_summary, created_at)
+- [ ] 참고: created_by 컬럼은 ERD에 없음 — 소유자는 note_id → notes.user_id 로 참조
 - [ ] 인덱스 설계 (note_id + version_number UNIQUE, note_id + created_at DESC)
 - [ ] 관계 정의 (notes 1:N note_versions)
 - [ ] 버전 번호 자동 증가 로직 설계

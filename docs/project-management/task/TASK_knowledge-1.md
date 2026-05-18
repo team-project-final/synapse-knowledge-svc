@@ -1,8 +1,8 @@
 # TASK: @knowledge-owner-1
 
-> **담당 서비스**: knowledge-svc (note / graph / chunking)  
-> **GitHub Repository**: [synapse-knowledge-svc](https://github.com/team-project-final/synapse-knowledge-svc)  
-> **주차**: W1 (2026-05-12 ~ 2026-05-16)  
+> **담당 서비스**: knowledge-svc (note / graph / chunking)
+> **GitHub Repository**: [synapse-knowledge-svc](https://github.com/team-project-final/synapse-knowledge-svc)
+> **주차**: W1 (2026-05-12 ~ 2026-05-15, 4 영업일)
 > **관련 문서**: [SCOPE](../scope/SCOPE_knowledge-1.md) | [PRD_W1](../prd/PRD_W1.md) | [WORKFLOW](../workflow/WORKFLOW_knowledge-1_W1.md) | [HISTORY](../history/HISTORY_knowledge-1.md)
 
 ---
@@ -57,7 +57,7 @@
   - [ ] `POST /notes` → Markdown 노트 생성 (제목 + 본문)
   - [ ] `GET /notes` → 노트 목록 조회 (페이징, 소유자 필터)
   - [ ] `GET /notes/{id}` → 노트 상세 조회 (Markdown 원문 반환)
-  - [ ] `PUT /notes/{id}` → 노트 수정 (소유자만)
+  - [ ] `PATCH /notes/{id}` → 노트 수정 (소유자만)
   - [ ] `DELETE /notes/{id}` → 노트 삭제 (소유자만)
   - [ ] notes 테이블 Flyway 마이그레이션 완료
   - [ ] 통합 테스트 통과
@@ -77,11 +77,17 @@
     - 버전 히스토리
 - **Input**: PRD_W1 노트 기능 요구사항, JWT 인증 토큰 (platform-svc)
 - **Instructions**:
-  1. notes 테이블 DDL 작성 (id, title, content, owner_id, created_at, updated_at, deleted_at)
+  1. notes 테이블 DDL 작성 (id, tenant_id, title, content_md, content_plain, user_id, status, word_count, created_at, updated_at, deleted_at)
+     - `tenant_id`: 멀티테넌트 식별 컬럼 (필수)
+     - `content_md`: Markdown 원문 저장 (구 `content` → ERD 기준 `content_md`)
+     - `content_plain`: 플레인텍스트 버전 (검색/미리보기용)
+     - `user_id`: 소유자 식별 (구 `owner_id` → ERD 기준 `user_id`)
+     - `status`: 노트 상태 (`active|archived|trashed` — ERD 기준)
+     - `word_count`: 단어 수 집계
   2. Flyway V1 마이그레이션 파일 생성
   3. Note 엔티티 + JPA Repository 작성
   4. NoteService 구현 (create, findAll, findById, update, delete)
-  5. 소유자 권한 검증 로직 (수정/삭제 시 owner_id 확인)
+  5. 소유자 권한 검증 로직 (수정/삭제 시 user_id 확인)
   6. NoteController REST API 구현 (5개 엔드포인트)
   7. 페이징 처리 (Pageable, 기본 20건)
   8. 통합 테스트 작성 (@SpringBootTest + TestContainers)
@@ -107,7 +113,7 @@
   - [ ] 추출된 링크 → note_links 테이블 저장 (source_note_id, target_title)
   - [ ] 대상 노트 존재 시 target_note_id 자동 매핑
   - [ ] 노트 수정 시 기존 링크 갱신 (삭제 + 재생성)
-  - [ ] `GET /notes/{id}/links` → 해당 노트의 위키링크 목록 반환
+  - [ ] `GET /notes/{id}/backlinks` → 해당 노트를 참조하는 노트 목록 반환 (Wiki는 `/backlinks`만 정의 — `/links` 아님)
   - [ ] note_links 테이블 Flyway 마이그레이션 완료
   - [ ] 단위/통합 테스트 통과
 - **Scope**:
@@ -131,7 +137,7 @@
   4. NoteService.save/update 후처리에 링크 추출 로직 추가
   5. 추출된 title로 notes 테이블 조회 → target_note_id 매핑
   6. 노트 수정 시 기존 링크 삭제 후 재생성
-  7. LinkController `GET /notes/{id}/links` 구현
+  7. LinkController `GET /notes/{id}/backlinks` 구현 (Wiki 기준 — `/links` 아님)
   8. WikiLinkParser 단위 테스트 (다양한 케이스)
   9. 통합 테스트 (노트 생성 → 링크 자동 저장 확인)
 - **Output Format**: note 모듈 위키링크 코드 + Flyway 마이그레이션 + 테스트 코드
@@ -149,7 +155,7 @@
 
 ---
 
-## W2 (2026-05-19 ~ 2026-05-23)
+## W2 (2026-05-18 ~ 2026-05-22, 5 영업일)
 
 ---
 
@@ -159,17 +165,17 @@
 - **Step Goal**: 사용자가 노트 간 백링크를 조회하고, D3.js 지식 그래프 데이터를 API로 받을 수 있다.
 - **Done When**:
   - [ ] `GET /notes/{id}/backlinks` → 해당 노트를 참조하는 노트 목록 반환
-  - [ ] `GET /graph/nodes` → 전체 노트 그래프 노드 데이터 반환
-  - [ ] `GET /graph/edges` → 전체 노트 링크 엣지 데이터 반환
-  - [ ] `GET /graph?userId={id}` → 사용자별 그래프 데이터 반환
+  - [ ] `GET /graph/data` → 전체 노트 그래프 데이터 반환 (nodes + edges 단일 엔드포인트, Wiki 기준 — `/graph/nodes`·`/graph/edges` 분리 없음)
+     - 쿼리 파라미터로 `userId={id}` 지원 (구 `GET /graph?userId={id}` 대체)
   - [ ] D3.js force-directed graph 호환 JSON 포맷
   - [ ] 통합 테스트 통과
 - **Scope**:
   - In Scope:
     - 백링크 조회 API (note_links 역방향 조회)
-    - 그래프 노드 목록 API (노트 id, title, link_count)
-    - 그래프 엣지 목록 API (source_note_id, target_note_id)
-    - D3.js 호환 JSON 포맷 (nodes + links)
+    - 그래프 데이터 단일 API `GET /graph/data` (nodes + edges 함께 반환)
+      - 노드: id, title, `linkCount` + `pageRank` (구 `val` → `linkCount`+`pageRank`)
+      - 엣지: source, target, `type` 필드 포함 (배열명 `edges` — 구 `links` 아님)
+    - D3.js 호환 JSON 포맷 (nodes + edges)
     - 사용자별 그래프 필터링
     - 통합 테스트
   - Out of Scope:
@@ -181,10 +187,12 @@
   1. 백링크 조회 로직 구현 (note_links.target_note_id → source_note_id 역추적)
   2. BacklinkController `GET /notes/{id}/backlinks` 구현
   3. GraphService 구현 (노트 → 노드, 링크 → 엣지 변환)
-  4. GraphController `GET /graph/nodes` 구현
-  5. GraphController `GET /graph/edges` 구현
-  6. D3.js 호환 JSON 포맷 정의 ({nodes: [{id, title, val}], links: [{source, target}]})
-  7. 사용자별 그래프 필터링 로직 추가
+  4. GraphController `GET /graph/data` 구현 (nodes + edges 단일 엔드포인트)
+     - 노드 응답 필드: `id`, `title`, `linkCount`, `pageRank` (구 `val` → 분리)
+     - 엣지 배열명: `edges` (구 `links` 아님), 각 엣지에 `type` 필드 포함
+  5. (구 `/graph/nodes`, `/graph/edges` 별도 엔드포인트 제거 — Wiki 미정의)
+  6. D3.js 호환 JSON 포맷 정의 (`{nodes: [{id, title, linkCount, pageRank}], edges: [{source, target, type}]}`)
+  7. 사용자별 그래프 필터링 로직 추가 (`GET /graph/data?userId={id}`)
   8. 통합 테스트 작성
 - **Output Format**: graph 모듈 코드 + API 문서 (Swagger) + 테스트 코드
 - **Constraints**:
@@ -258,7 +266,7 @@
   - [ ] 노트 수정 시 note_versions 테이블에 이전 버전 자동 저장
   - [ ] `GET /notes/{id}/versions` → 수정 이력 목록 조회
   - [ ] `GET /notes/{id}/versions/{versionId}` → 특정 버전 상세 조회
-  - [ ] `POST /notes/{id}/versions/{versionId}/restore` → 이전 버전으로 복원
+  - [ ] `POST /notes/{id}/versions/{versionId}/restore` → 이전 버전으로 복원 (Wiki에 추가 예정)
   - [ ] note_versions 테이블 Flyway 마이그레이션 완료
   - [ ] 통합 테스트 통과
 - **Scope**:
@@ -275,7 +283,9 @@
     - 버전 보존 기간 정책
 - **Input**: notes 테이블, NoteService, JWT 인증 토큰
 - **Instructions**:
-  1. note_versions 테이블 DDL 작성 (id, note_id, version_number, title, content, created_by, created_at)
+  1. note_versions 테이블 DDL 작성 (id, note_id, version_number, title, content_md, change_summary, created_by, created_at)
+     - `content_md`: Markdown 원문 (구 `content` → ERD 기준 `content_md`)
+     - `change_summary`: 버전 변경 요약 메모
   2. Flyway 마이그레이션 파일 생성
   3. NoteVersion 엔티티 + Repository 작성
   4. NoteService.update에 이전 버전 저장 로직 추가
@@ -302,10 +312,10 @@
 - **Step Name**: 태그 필터링/자동완성
 - **Step Goal**: 사용자가 태그로 노트를 필터링하고, 태그 자동완성을 사용할 수 있다.
 - **Done When**:
-  - [ ] `POST /notes/{id}/tags` → 노트에 태그 추가
-  - [ ] `DELETE /notes/{id}/tags/{tagId}` → 노트에서 태그 제거
+  - [ ] `POST /notes/{id}/tags` → 노트에 태그 추가 (Wiki에 추가 예정)
+  - [ ] `DELETE /notes/{id}/tags/{tagId}` → 노트에서 태그 제거 (Wiki에 추가 예정)
   - [ ] `GET /notes?tag={tagName}` → 태그 기반 노트 필터링
-  - [ ] `GET /tags/autocomplete?q={prefix}` → 태그 자동완성 (prefix 매칭)
+  - [ ] `GET /tags/autocomplete?q={prefix}` → 태그 자동완성 (prefix 매칭, Wiki에 추가 예정)
   - [ ] tags / note_tags 테이블 Flyway 마이그레이션 완료
   - [ ] 통합 테스트 통과
 - **Scope**:
@@ -322,14 +332,16 @@
     - 태그 동의어 관리
 - **Input**: notes 테이블, JWT 인증 토큰, PRD 태그 기능 요구사항
 - **Instructions**:
-  1. tags 테이블 DDL 작성 (id, name, usage_count, created_at)
+  1. tags 테이블 DDL 작성 (id, name, color, created_at)
+     - `color`: 태그 색상 (ERD에 포함 — `usage_count`는 ERD에 없으므로 제외 또는 별도 집계)
+     - 주의: `usage_count`는 ERD에 정의되지 않음 — 필요 시 note_tags 집계 쿼리로 대체
   2. note_tags 테이블 DDL 작성 (note_id, tag_id)
   3. Flyway 마이그레이션 파일 생성
   4. Tag 엔티티 + Repository 작성
   5. TagService 구현 (addTag, removeTag, autocomplete)
-  6. 태그 추가 시 usage_count 증가 로직
+  6. 자동완성 정렬: 사용 빈도 기준 (note_tags 집계 쿼리 활용)
   7. 노트 필터링 API 수정 (tag 파라미터 추가)
-  8. 자동완성 API 구현 (LIKE '{prefix}%' + ORDER BY usage_count)
+  8. 자동완성 API 구현 (LIKE '{prefix}%' + 사용 빈도 내림차순)
   9. 통합 테스트 작성
 - **Output Format**: note 모듈 태그 코드 + Flyway 마이그레이션 + 테스트 코드
 - **Constraints**:
