@@ -8,6 +8,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/notes")
@@ -43,5 +44,11 @@ public class NoteController {
     public void delete(@PathVariable Long id) {
         Long mockUserId = 1L;
         noteService.delete(mockUserId, id);
+    }
+
+    @GetMapping("/{id}/backlinks")
+    public List<NoteResponse> getBacklinks(@PathVariable Long id) {
+        Long mockUserId = 1L;
+        return noteService.getBacklinks(mockUserId, id);
     }
 }

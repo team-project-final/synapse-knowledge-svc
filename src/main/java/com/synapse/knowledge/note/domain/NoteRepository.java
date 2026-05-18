@@ -11,4 +11,5 @@ import java.util.Optional;
 public interface NoteRepository extends JpaRepository<Note, Long> {
     Page<Note> findByUserIdAndDeletedAtIsNull(Long userId, Pageable pageable);
     Optional<Note> findByIdAndDeletedAtIsNull(Long id);
+    Optional<Note> findByTenantIdAndTitleAndDeletedAtIsNull(String tenantId, String title);
 }

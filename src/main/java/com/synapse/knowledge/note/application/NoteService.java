@@ -2,6 +2,8 @@ package com.synapse.knowledge.note.application;
 
 import com.synapse.knowledge.note.domain.Note;
 import com.synapse.knowledge.note.domain.NoteRepository;
+import com.synapse.knowledge.note.domain.NoteLink;
+import com.synapse.knowledge.note.domain.NoteLinkRepository;
 import com.synapse.knowledge.note.dto.NoteCreateRequest;
 import com.synapse.knowledge.note.dto.NoteResponse;
 import com.synapse.knowledge.shared.AccessDeniedException;
@@ -11,21 +13,31 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Propagation;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class NoteService {
     private final NoteRepository noteRepository;
+    private final NoteLinkRepository noteLinkRepository;
+    private final WikiLinkParser linkParser;
     private final MarkdownSanitizer sanitizer;
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRED)
     public NoteResponse create(Long userId, NoteCreateRequest request) {
         String sanitizedMd = sanitizer.sanitize(request.contentMd());
         String plainText = extractPlainText(sanitizedMd);
         
         Note note = Note.create(request.tenantId(), userId, request.title(), sanitizedMd, plainText);
-        return NoteResponse.from(noteRepository.save(note));
+        Note savedNote = noteRepository.save(note);
+        
+        updateWikiLinks(savedNote.getId(), request.tenantId(), sanitizedMd);
+        return NoteResponse.from(savedNote);
     }
 
     public Page<NoteResponse> findAll(Long userId, Pageable pageable) {
@@ -39,7 +51,7 @@ public class NoteService {
         return NoteResponse.from(note);
     }
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRED)
     public NoteResponse update(Long userId, Long noteId, NoteCreateRequest request) {
         Note note = findValidNote(noteId);
         validateOwner(userId, note);
@@ -48,14 +60,39 @@ public class NoteService {
         String plainText = extractPlainText(sanitizedMd);
         
         note.update(request.title(), sanitizedMd, plainText);
+        
+        updateWikiLinks(note.getId(), note.getTenantId(), sanitizedMd);
         return NoteResponse.from(note);
     }
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRED)
     public void delete(Long userId, Long noteId) {
         Note note = findValidNote(noteId);
         validateOwner(userId, note);
         note.softDelete();
+    }
+
+    public List<NoteResponse> getBacklinks(Long userId, Long noteId) {
+        Note note = findValidNote(noteId);
+        validateOwner(userId, note);
+
+        return noteLinkRepository.findByTargetNoteId(noteId).stream()
+            .map(link -> noteRepository.findById(link.getSourceNoteId()))
+            .filter(Optional::isPresent)
+            .map(Optional::get)
+            .map(NoteResponse::from)
+            .toList();
+    }
+
+    private void updateWikiLinks(Long sourceNoteId, String tenantId, String contentMd) {
+        noteLinkRepository.deleteBySourceNoteId(sourceNoteId);
+        
+        Set<String> titles = linkParser.parse(contentMd);
+        for (String title : titles) {
+            Optional<Note> targetNote = noteRepository.findByTenantIdAndTitleAndDeletedAtIsNull(tenantId, title);
+            NoteLink link = NoteLink.create(sourceNoteId, targetNote.map(Note::getId).orElse(null), title);
+            noteLinkRepository.save(link);
+        }
     }
 
     private Note findValidNote(Long noteId) {
