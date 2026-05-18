@@ -23,11 +23,11 @@ jobs:
           java-version: '21'
           cache: gradle
 
+      - name: Grant execute permission
+        run: chmod +x gradlew
+
       - name: Build
         run: ./gradlew clean build --no-daemon
 
       - name: Modulith verify
         run: ./gradlew test --tests '*ModuleStructureTest' --no-daemon
-
-      - name: ArchUnit boundaries
-        run: ./gradlew test --tests '*ModuleBoundaryArchTest' --no-daemon
