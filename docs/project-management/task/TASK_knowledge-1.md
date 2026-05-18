@@ -54,13 +54,13 @@
 
 - **Step Goal**: 로그인 사용자가 Markdown 노트를 생성/조회/수정/삭제할 수 있다.
 - **Done When**:
-  - [ ] `POST /notes` → Markdown 노트 생성 (제목 + 본문)
-  - [ ] `GET /notes` → 노트 목록 조회 (페이징, 소유자 필터)
-  - [ ] `GET /notes/{id}` → 노트 상세 조회 (Markdown 원문 반환)
-  - [ ] `PATCH /notes/{id}` → 노트 수정 (소유자만)
-  - [ ] `DELETE /notes/{id}` → 노트 삭제 (소유자만)
-  - [ ] notes 테이블 Flyway 마이그레이션 완료
-  - [ ] 통합 테스트 통과
+  - [x] `POST /notes` → Markdown 노트 생성 (제목 + 본문)
+  - [x] `GET /notes` → 노트 목록 조회 (페이징, 소유자 필터)
+  - [x] `GET /notes/{id}` → 노트 상세 조회 (Markdown 원문 반환)
+  - [x] `PATCH /notes/{id}` → 노트 수정 (소유자만)
+  - [x] `DELETE /notes/{id}` → 노트 삭제 (소유자만)
+  - [x] notes 테이블 Flyway 마이그레이션 완료
+  - [x] 통합 테스트 통과
 - **Scope**:
   - In Scope:
     - notes 테이블 설계 + Flyway 마이그레이션
@@ -101,7 +101,7 @@
 - **Assignee**: @knowledge-owner-1
 - **Reviewer**: @team-lead
 
-**Status**: [ ] Not Started / [ ] In Progress / [ ] Done
+**Status**: [ ] Not Started / [ ] In Progress / [x] Done
 
 ---
 
@@ -435,7 +435,7 @@
   1. P0 버그 목록 확인 (GitHub Issues 필터)
   2. 각 버그 재현 → 원인 분석 → 수정
   3. 수정 후 재현 테스트 작성 및 통과 확인
-  4. ES 동기화 실패 원인 분석 (네트워크, 스키마, 타임아웃)
+  4. ES 동기화 실패 원인 분석 (네트워크, 스키마, 타웃)
   5. Consumer 재시도 로직 보강 (exponential backoff)
   6. ES 인덱싱 모니터링 메트릭 추가 (성공/실패/지연)
   7. 전체 회귀 테스트 실행 및 통과 확인

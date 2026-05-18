@@ -67,68 +67,68 @@
 ## Step 2: note Markdown CRUD
 
 ### 1.1 TASK 시작
-- [ ] Step Goal / Done When / Scope / Input 확인
-- [ ] PRD_W1 해당 요구사항 확인 (FR-KN-xxx 노트 기능)
-- [ ] Duration 산정 확인 (2일)
+- [x] Step Goal / Done When / Scope / Input 확인
+- [x] PRD_W1 해당 요구사항 확인 (FR-KN-xxx 노트 기능)
+- [x] Duration 산정 확인 (2일)
 
 ### 1.2 요구사항 분석
-- [ ] 노트 CRUD API 엔드포인트 5개 정의
-- [ ] Markdown 원문 저장 정책 확인 (서버 렌더링 X)
-- [ ] 소유자 권한 검증 로직 설계
-- [ ] Instructions 초안 → TASK 문서 반영
+- [x] 노트 CRUD API 엔드포인트 5개 정의
+- [x] Markdown 원문 저장 정책 확인 (서버 렌더링 X)
+- [x] 소유자 권한 검증 로직 설계
+- [x] Instructions 초안 → TASK 문서 반영
 
 ### 1.3 Security 1차 검토
-- [ ] 인증 필요 여부: Yes (JWT 인증 필요)
-- [ ] 권한 종류: 로그인 사용자 (수정/삭제는 소유자만)
-- [ ] 공개 API 여부: No
-- [ ] 결과 → TASK Constraints 반영
+- [x] 인증 필요 여부: Yes (JWT 인증 필요)
+- [x] 권한 종류: 로그인 사용자 (수정/삭제는 소유자만)
+- [x] 공개 API 여부: No
+- [x] 결과 → TASK Constraints 반영
 
 ### 1.4 ERD 설계
-- [ ] notes 테이블 설계 (id, tenant_id, user_id, title, content_md, content_plain, status: active|archived|trashed, word_count, metadata jsonb, created_at, updated_at, deleted_at)
-- [ ] 인덱스 설계 (user_id, created_at DESC)
-- [ ] 관계 정의 (notes.user_id → users.id FK)
-- [ ] Duration(final) 갱신
+- [x] notes 테이블 설계 (id, tenant_id, user_id, title, content_md, content_plain, status: active|archived|trashed, word_count, metadata jsonb, created_at, updated_at, deleted_at)
+- [x] 인덱스 설계 (user_id, created_at DESC)
+- [x] 관계 정의 (notes.user_id → users.id FK)
+- [x] Duration(final) 갱신
 
 ### 1.5 Security 2차 검토
-- [ ] 민감 정보 암호화: 비해당 (노트 내용은 평문 저장)
-- [ ] Soft Delete 정책: 논리삭제 (deleted_at)
-- [ ] 행 단위 접근 제어: 필요 (수정/삭제 시 user_id 확인)
-- [ ] 결과 → TASK Constraints 반영
+- [x] 민감 정보 암호화: 비해당 (노트 내용은 평문 저장)
+- [x] Soft Delete 정책: 논리삭제 (deleted_at)
+- [x] 행 단위 접근 제어: 필요 (수정/삭제 시 user_id 확인)
+- [x] 결과 → TASK Constraints 반영
 
 ### 1.6 DTO / Entity 설계 (API First)
-- [ ] NoteCreateRequest 정의 (title, content_md)
-- [ ] NoteUpdateRequest 정의 (title, content_md)
-- [ ] NoteResponse 정의 (id, title, content_md, content_plain, userId, status, word_count, createdAt, updatedAt)
-- [ ] NoteListResponse 정의 (id, title, userId, status, createdAt — content 제외)
-- [ ] Note Entity 작성
-- [ ] MapStruct 매퍼 작성
-- [ ] Output Format → TASK 반영
+- [x] NoteCreateRequest 정의 (title, content_md)
+- [x] NoteUpdateRequest 정의 (title, content_md)
+- [x] NoteResponse 정의 (id, title, content_md, content_plain, userId, status, word_count, createdAt, updatedAt)
+- [x] NoteListResponse 정의 (id, title, userId, status, createdAt — content 제외)
+- [x] Note Entity 작성
+- [x] MapStruct 매퍼 작성
+- [x] Output Format → TASK 반영
 
 ### 1.7 Repository 구현
-- [ ] NoteRepository 인터페이스 작성
-- [ ] findByUserIdAndDeletedAtIsNull 커스텀 쿼리
-- [ ] 페이징 처리 (Pageable)
+- [x] NoteRepository 인터페이스 작성
+- [x] findByUserIdAndDeletedAtIsNull 커스텀 쿼리
+- [x] 페이징 처리 (Pageable)
 
 ### 1.8 Service + Test
-- [ ] NoteService 구현 (create, findAll, findById, update, delete)
-- [ ] 소유자 권한 검증 로직 구현
-- [ ] 제목 200자/본문 100,000자 검증 구현
-- [ ] 단위 테스트 작성 (Mockito)
-- [ ] 테스트 통과 확인
+- [x] NoteService 구현 (create, findAll, findById, update, delete)
+- [x] 소유자 권한 검증 로직 구현
+- [x] 제목 200자/본문 100,000자 검증 구현
+- [x] 단위 테스트 작성 (Mockito)
+- [x] 테스트 통과 확인
 
 ### 1.9 Controller + Test
-- [ ] NoteController REST API 구현 (5개 엔드포인트)
-- [ ] 슬라이스 테스트 (@WebMvcTest)
-- [ ] 401/403 응답 테스트 (미인증, 비소유자)
-- [ ] 통합 테스트 (@SpringBootTest + TestContainers)
-- [ ] 테스트 통과 확인
+- [x] NoteController REST API 구현 (5개 엔드포인트)
+- [x] 슬라이스 테스트 (@WebMvcTest)
+- [x] 401/403 응답 테스트 (미인증, 비소유자)
+- [x] 통합 테스트 (@SpringBootTest + TestContainers)
+- [x] 테스트 통과 확인
 
 ### 1.10 View + Test (해당 시)
-- [ ] Flutter 화면 연동: 해당 없음 (프론트 별도)
-- [ ] Swagger API 문서 확인
-- [ ] RULE Reference → TASK 반영
+- [x] Flutter 화면 연동: 해당 없음 (프론트 별도)
+- [x] Swagger API 문서 확인
+- [x] RULE Reference → TASK 반영
 
-**Step 2 Status**: [ ] Not Started / [ ] In Progress / [ ] Done
+**Step 2 Status**: [ ] Not Started / [ ] In Progress / [x] Done
 
 ---
 

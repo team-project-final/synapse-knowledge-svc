@@ -12,10 +12,10 @@
 | Step | 내용 | 상태 | 시작일 | 완료일 | 비고 |
 |------|------|------|--------|--------|------|
 | Step 1 | knowledge-svc 골격 생성 | Not Started | — | — | |
-| Step 2 | note Markdown CRUD | Not Started | — | — | |
+| Step 2 | note Markdown CRUD | Done | 2026-05-18 | 2026-05-18 | 보안/아키텍처 규칙 반영 |
 | Step 3 | 위키링크 파싱 | Not Started | — | — | |
 
-**W1 진행률**: 0/3 Steps 완료
+**W1 진행률**: 1/3 Steps 완료
 
 ### W2 (2026-05-19 ~ 05-23)
 
@@ -85,7 +85,20 @@
 
 ### W2 (2026-05-19 ~ 05-23)
 
-#### 2026-05-19 (월)
+#### 2026-05-18 (월)
+- **완료**:
+    - feat(note): 노트 기본 CRUD 구현 (생성, 목록 페이징, 상세, 수정, 소프트 삭제)
+    - feat(shared): Shared 모듈 인프라 구축 (BaseEntity, GlobalExceptionHandler, Sanitizer)
+    - fix(arch): Modulith 경계 준수를 위한 패키지 구조 재편 (shared.internal -> shared)
+    - test(note): NoteIntegrationTest를 통한 기능 및 보안 시나리오 검증
+- **진행 중**:
+    - Step 3: 위키링크 파싱 엔진 설계
+- **이슈**:
+    - Spring Modulith 캡슐화 규칙으로 인해 shared.internal 패키지 접근 불가 이슈 발생 -> 루트 패키지로 이동하여 해결
+- **다음**:
+    - [[title]] 형식의 위키링크 추출 파서 및 자동 매핑 구현
+
+#### 2026-05-19 (화)
 - **완료**:
 - **진행 중**:
 - **이슈**:
@@ -185,5 +198,6 @@
 
 | 날짜 | 변경 사항 |
 |------|-----------|
+| 2026-05-18 | W1 Step 2 완료 및 역사 기록 업데이트 |
 | 2026-05-11 | W2/W3/W4 대시보드 및 로그 템플릿 추가 |
 | 2026-05-11 | 초기 템플릿 생성 |
