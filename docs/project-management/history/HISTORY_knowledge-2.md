@@ -95,9 +95,15 @@
 #### 2026-05-18 (월)
 
 - **완료**:
+  - chore(build): Spring Modulith BOM을 `2.0.6`으로 상향해 Boot 4 기준과 정렬
+  - docs(task): knowledge-2 Task 관련 문서 링크와 Step 1 Modulith 버전 제약을 실제 기준에 맞게 수정
+  - verify(modulith): `ModuleStructureTest`, `ModuleBoundaryArchTest`, `./gradlew.bat build --no-daemon` 통과 확인
 - **진행 중**:
+  - 없음
 - **이슈**:
+  - 없음
 - **다음**:
+  - W1 Step 3 Avro 스키마 등록 및 호환성 검증 착수 여부 정리
 
 #### 2026-05-19 (화)
 
