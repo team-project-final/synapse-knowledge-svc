@@ -39,6 +39,6 @@ tasks.withType<Test> {
 
 dependencyManagement {
 	imports {
-		mavenBom("org.springframework.modulith:spring-modulith-bom:1.3.0")
+		mavenBom("org.springframework.modulith:spring-modulith-bom:2.0.6")
 	}
 }

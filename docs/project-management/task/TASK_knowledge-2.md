@@ -3,7 +3,7 @@
 > **담당 서비스**: knowledge-svc
 > **GitHub Repository**: [synapse-knowledge-svc](https://github.com/team-project-final/synapse-knowledge-svc)
 > **주차**: W1 (2026-05-12 ~ 2026-05-15, 4 영업일)
-> **관련 문서**: [SCOPE](../scope/SCOPE_knowledge.md) | [PRD_W1](../prd/PRD_W1.md) | [WORKFLOW](../workflow/WORKFLOW_knowledge_W1.md) | [HISTORY](../history/HISTORY_knowledge.md)
+> **관련 문서**: [SCOPE](../scope/SCOPE_knowledge-2.md) | [PRD_W1](../prd/PRD_W1.md) | [WORKFLOW](../workflow/WORKFLOW_knowledge-2_W1.md) | [HISTORY](../history/HISTORY_knowledge-2.md)
 
 ---
 
@@ -18,7 +18,7 @@
 | **Input** | Spring Modulith 공식 문서, knowledge-svc 기존 패키지 구조, PRD_W1 모듈 분리 요구사항 |
 | **Instructions** | 1. `build.gradle.kts`에 Spring Modulith 의존성 추가<br>2. `note`, `graph`, `chunking` 패키지 생성 및 `package-info.java` 작성<br>3. 각 모듈에 `@ApplicationModule(allowedDependencies=...)` 어노테이션 설정<br>4. 모듈 간 public API용 인터페이스 정의 (internal 패키지 분리)<br>5. `ApplicationModules.verify()` 통합 테스트 작성<br>6. 의존 위반 시 빌드 실패하는지 수동 검증<br>7. 모듈 구조 다이어그램 문서화 |
 | **Output Format** | 모듈별 패키지 구조 + verify() 테스트 코드 + 빌드 로그 캡처 |
-| **Constraints** | - Spring Modulith 2.x 사용<br>- 모듈 간 순환 의존 금지<br>- internal 패키지 외부 접근 시 컴파일 에러 보장<br>- 각 모듈은 독립 테스트 가능해야 함 |
+| **Constraints** | - Spring Modulith 2.0.x 사용<br>- 모듈 간 순환 의존 금지<br>- internal 패키지 외부 접근 시 컴파일 에러 보장<br>- 각 모듈은 독립 테스트 가능해야 함 |
 | **Duration** | 1일 |
 | **RULE Reference** | [03-아키텍처](../../wiki/03-아키텍처.md) · [18-기술-스택](../../wiki/18-기술-스택.md) |
 | **Assignee** | @knowledge-owner-2 |
