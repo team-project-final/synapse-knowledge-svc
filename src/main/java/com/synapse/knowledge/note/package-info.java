@@ -1,7 +1,4 @@
-@ApplicationModule(
-    displayName = "Note Module",
+@org.springframework.modulith.ApplicationModule(
     allowedDependencies = {"shared"}
 )
 package com.synapse.knowledge.note;
-
-import org.springframework.modulith.ApplicationModule;

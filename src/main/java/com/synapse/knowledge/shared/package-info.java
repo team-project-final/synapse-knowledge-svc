@@ -1,7 +1,4 @@
-@ApplicationModule(
-    displayName = "Shared Module",
-    allowedDependencies = {}
+@org.springframework.modulith.ApplicationModule(
+    displayName = "Shared Module"
 )
 package com.synapse.knowledge.shared;
-
-import org.springframework.modulith.ApplicationModule;
