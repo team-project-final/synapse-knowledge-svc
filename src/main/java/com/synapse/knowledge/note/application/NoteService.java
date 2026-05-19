@@ -8,13 +8,16 @@ import com.synapse.knowledge.note.dto.NoteCreateRequest;
 import com.synapse.knowledge.note.dto.NoteResponse;
 import com.synapse.knowledge.shared.AccessDeniedException;
 import com.synapse.knowledge.shared.MarkdownSanitizer;
+import com.synapse.knowledge.shared.NoteChunkingRequested;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.annotation.Propagation;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -27,6 +30,7 @@ public class NoteService {
     private final NoteLinkRepository noteLinkRepository;
     private final WikiLinkParser linkParser;
     private final MarkdownSanitizer sanitizer;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional(propagation = Propagation.REQUIRED)
     public NoteResponse create(Long userId, NoteCreateRequest request) {
@@ -37,6 +41,7 @@ public class NoteService {
         Note savedNote = noteRepository.save(note);
         
         updateWikiLinks(savedNote.getId(), request.tenantId(), sanitizedMd);
+        publishChunkingRequested(savedNote, "created");
         return NoteResponse.from(savedNote);
     }
 
@@ -62,6 +67,7 @@ public class NoteService {
         note.update(request.title(), sanitizedMd, plainText);
         
         updateWikiLinks(note.getId(), note.getTenantId(), sanitizedMd);
+        publishChunkingRequested(note, "updated");
         return NoteResponse.from(note);
     }
 
@@ -70,6 +76,15 @@ public class NoteService {
         Note note = findValidNote(noteId);
         validateOwner(userId, note);
         note.softDelete();
+        eventPublisher.publishEvent(
+            new NoteChunkingRequested(
+                note.getId(),
+                note.getTenantId(),
+                null,
+                "deleted",
+                Instant.now()
+            )
+        );
     }
 
     public List<NoteResponse> getBacklinks(Long userId, Long noteId) {
@@ -109,5 +124,17 @@ public class NoteService {
     private String extractPlainText(String htmlOrMd) {
         if (htmlOrMd == null) return null;
         return htmlOrMd.replaceAll("<[^>]*>", "").replaceAll("\\[|\\]|\\(|\\)|#|\\*|`", "").trim();
+    }
+
+    private void publishChunkingRequested(Note note, String reason) {
+        eventPublisher.publishEvent(
+            new NoteChunkingRequested(
+                note.getId(),
+                note.getTenantId(),
+                note.getContentPlain(),
+                reason,
+                Instant.now()
+            )
+        );
     }
 }

@@ -71,18 +71,18 @@
 | 필드 | 내용 |
 |------|------|
 | **Step Name** | 임베딩용 청크 분할 |
-| **Step Goal** | knowledge-owner-2가 노트를 비동기로 임베딩용 청크로 분할하여 chunks 테이블에 저장한다. |
-| **Done When** | 노트 저장 시 비동기 청크 분할 완료 + note_chunks 테이블 저장 확인 + 단위/통합 테스트 통과 |
-| **Scope** | **In**: note_chunks 테이블, 비동기 분할 로직 / **Out**: 벡터 생성(ai-owner 담당) |
+| **Step Goal** | knowledge-owner-2가 노트를 비동기 이벤트 기반으로 임베딩용 청크로 분할하여 `note_chunks` 테이블에 저장하고, 수정/삭제 시 관련 청크 상태를 정합하게 유지한다. |
+| **Done When** | 노트 저장/수정 시 비동기 청크 분할 완료 + 노트 삭제 시 관련 청크 정리 확인 + `note_chunks` 테이블 저장 확인 + 단위/통합 테스트 통과 |
+| **Scope** | **In**: `note_chunks` 테이블, Spring Application Event + `@Async` 기반 비동기 분할 로직, 수정 시 재생성, 삭제 시 청크 정리 / **Out**: 벡터 생성(ai-owner 담당), Kafka transport 구현 |
 | **Input** | Step 3 완료된 Avro 스키마, 노트 엔티티, 청크 분할 전략 문서, PRD_W2 요구사항 |
-| **Instructions** | 1. `note_chunks` 테이블 스키마 설계 (id, note_id, chunk_text, chunk_index, embedding vector(1536), created_at)<br>   - 구 `chunks` → ERD 기준 `note_chunks`<br>   - 구 `noteId` → `note_id`, `chunkIndex` → `chunk_index` (snake_case)<br>   - 구 `content` → `chunk_text`<br>   - `embedding vector(1536)`: pgvector 임베딩 컬럼 (learning-ai-owner가 채움)<br>2. Flyway 마이그레이션 스크립트 작성<br>3. 비동기 청크 분할 서비스 구현 (@Async 또는 이벤트 기반)<br>4. 청크 크기 전략 정의 (최대 512 토큰, 오버랩 50 토큰)<br>5. 노트 저장 이벤트 수신 시 자동 청크 분할 트리거<br>6. 단위 테스트: 다양한 길이의 노트에 대한 청크 분할 검증<br>7. 통합 테스트: 노트 저장 → note_chunks 테이블 저장 E2E 확인 |
-| **Output Format** | note_chunks 테이블 DDL + 청크 분할 서비스 코드 + 테스트 결과 |
-| **Constraints** | - 청크 최대 크기: 512 토큰<br>- 오버랩: 50 토큰<br>- 비동기 처리 (노트 저장 응답 지연 금지)<br>- 빈 노트는 청크 생성하지 않음<br>- PostgreSQL 사용 (pgvector 확장 필요) |
+| **Instructions** | 1. `note_chunks` 테이블 스키마 설계 (`id`, `note_id`, `chunk_index`, `chunk_text`, `token_count`, `embedding`, `created_at`)<br>   - `embedding vector(1536)`: pgvector 임베딩 컬럼 (learning-ai-owner가 채움)<br>2. Flyway 마이그레이션 스크립트 작성 (`CREATE EXTENSION IF NOT EXISTS vector` 포함)<br>3. `NoteService` 저장/수정/삭제 흐름에서 chunking 요청 이벤트 발행<br>4. Spring Application Event + `@TransactionalEventListener(AFTER_COMMIT)` + `@Async` 기반 비동기 청크 분할 서비스 구현<br>5. 청크 크기 전략 정의 (최대 512 토큰, 오버랩 50 토큰, 공백 기준 token counter 1차 적용)<br>6. 노트 저장/수정 시 기존 청크 삭제 후 재생성, 노트 삭제 시 관련 청크 정리<br>7. 단위 테스트: 빈 노트, 매우 긴 노트, 한국어 포함, overlap 검증<br>8. 통합 테스트: 노트 저장/수정/삭제 → `note_chunks` 테이블 상태 검증 |
+| **Output Format** | `note_chunks` 테이블 DDL + chunking 이벤트/서비스 코드 + 단위/통합 테스트 결과 |
+| **Constraints** | - 청크 최대 크기: 512 토큰<br>- 오버랩: 50 토큰<br>- 비동기 처리 (노트 저장 응답 지연 금지)<br>- 빈 노트는 청크 생성하지 않음<br>- 현재 단계의 transport는 Spring Application Event + `@Async`, Kafka는 추후 전환<br>- PostgreSQL 사용 (pgvector 확장 필요), 테스트 환경(H2)은 문자열 컬럼으로 대체 매핑 |
 | **Duration** | 1.5일 |
 | **RULE Reference** | [03-아키텍처](../../wiki/03-아키텍처.md) · [18-기술-스택](../../wiki/18-기술-스택.md) |
 | **Assignee** | @knowledge-owner-2 |
 | **Reviewer** | @team-lead |
-| **Status** | TODO |
+| **Status** | DONE |
 
 ---
 
