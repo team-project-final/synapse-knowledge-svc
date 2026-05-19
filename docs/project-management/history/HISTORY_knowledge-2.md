@@ -13,7 +13,7 @@
 | ------ | ------------------------- | ----------- | ---------- | ---------- | ------------------------------------- |
 | Step 1 | Spring Modulith 모듈 정의 | Done        | 2026-05-15 | 2026-05-15 | Modulith verify + internal 경계 반영  |
 | Step 2 | ArchUnit 경계 검증        | Done        | 2026-05-15 | 2026-05-15 | 경계 테스트 3건 + CI 단계 + FAIL 재현 |
-| Step 3 | Schema Registry 연동 검증 | Not Started | —          | —          |                                       |
+| Step 3 | Schema Registry 연동 검증 | In Progress | 2026-05-19 | —          | synapse-shared 스키마/스크립트 반영, Docker daemon 기동 후 런타임 검증 대기 |
 
 **W1 진행률**: 2/3 Steps 완료
 
@@ -108,9 +108,15 @@
 #### 2026-05-19 (화)
 
 - **완료**:
+  - feat(schema): `synapse-shared`에 `note-created-v1.avsc`, compatible/incompatible 샘플 스키마, Schema Registry 스크립트, 로컬 compose 파일 추가
+  - chore(build): `synapse-shared`에 `testSchemasTask`를 추가해 Avro 코드 생성과 Registry 호환성 검사 경로를 연결
+  - docs(step3): Step3 Task/Workflow를 `BACKWARD_TRANSITIVE`, 실제 subject 명, 런타임 검증 대기 상태에 맞게 동기화
 - **진행 중**:
+  - W1 Step 3 로컬 Schema Registry 기동 후 등록/호환성 런타임 검증
 - **이슈**:
+  - Docker CLI는 사용 가능하지만 local daemon이 꺼져 있어 `docker compose up` 기반 Registry 검증을 아직 수행하지 못함
 - **다음**:
+  - Docker daemon 기동 후 `register-schema.ps1`, `check-schema-compatibility.ps1`로 positive/negative 시나리오 실행
 
 #### 2026-05-20 (수)
 

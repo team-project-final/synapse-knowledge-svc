@@ -50,13 +50,13 @@
 | 필드 | 내용 |
 |------|------|
 | **Step Name** | Avro 스키마 등록 및 호환성 검증 |
-| **Step Goal** | knowledge-owner-2가 Avro 스키마를 Schema Registry에 등록하고 BACKWARD 호환성 검증이 동작한다. |
-| **Done When** | note-created-v1.avsc 등록 + 비호환 스키마 거부 확인 |
-| **Scope** | **In**: Avro 스키마 정의, Schema Registry 연동, 호환성 모드 설정 / **Out**: Kafka Producer/Consumer 구현, 이벤트 핸들러 |
-| **Input** | note-created 이벤트 명세 (PRD_W1), Confluent Schema Registry 문서, Avro 스키마 규격 |
-| **Instructions** | 1. `note-created-v1.avsc` 스키마 파일 작성 (noteId, title, content, createdAt 필드)<br>2. Schema Registry Docker 컨테이너 구성 (docker-compose)<br>3. Gradle Avro 플러그인 설정 및 코드 생성 확인<br>4. Schema Registry에 스키마 등록 스크립트 작성<br>5. BACKWARD 호환성 모드 설정<br>6. 비호환 변경(필드 삭제) 시 등록 거부 테스트<br>7. 호환 변경(optional 필드 추가) 시 등록 성공 테스트 |
-| **Output Format** | Avro 스키마 파일 + docker-compose 설정 + 등록/거부 API 응답 로그 |
-| **Constraints** | - Schema Registry 호환성 모드: BACKWARD<br>- 스키마 subject 네이밍: `{topic}-value`<br>- 필수 필드 삭제 불가, optional 필드만 추가 허용<br>- 스키마 ID는 자동 증분 관리 |
+| **Step Goal** | knowledge-owner-2가 `synapse-shared`의 knowledge note Avro 스키마를 Schema Registry에 등록하고 `knowledge.note.note-created-v1-value` subject에 대해 `BACKWARD_TRANSITIVE` 호환성 검증 경로를 제공한다. |
+| **Done When** | `synapse-shared/src/main/avro/knowledge/note-created-v1.avsc` 추가 + compatible 샘플 통과 경로 확보 + default 없는 required 필드 추가 샘플 거부 확인 |
+| **Scope** | **In**: `synapse-shared` Avro 스키마 정의, Schema Registry 연동 스크립트, 호환성 모드 설정, `knowledge-svc` Step3 문서 동기화 / **Out**: Kafka Producer/Consumer 구현, 이벤트 핸들러, CloudEvents envelope 전면 리팩토링 |
+| **Input** | note-created 이벤트 명세 (PRD_W1), Confluent Schema Registry 문서, Avro 스키마 규격, `docs/rules/08-kafka-event.md` |
+| **Instructions** | 1. `synapse-shared/src/main/avro/knowledge/note-created-v1.avsc` 스키마 파일 작성 (`noteId`, `tenantId`, `title`, `content`, `createdAt` 필드)<br>2. `docker-compose.schema-registry.yml`로 로컬 Schema Registry 구동 경로 구성<br>3. Gradle Avro 플러그인 기반 코드 생성 및 `testSchemasTask` 검증 task 추가<br>4. Schema Registry subject `knowledge.note.note-created-v1-value` 등록 스크립트 작성<br>5. subject 호환성 모드 `BACKWARD_TRANSITIVE` 설정<br>6. 비호환 변경(default 없는 required 필드 추가) 시 등록 거부 테스트<br>7. 호환 변경(optional 필드 추가) 시 등록 성공 테스트<br>8. 구현 결과에 맞춰 `TASK/WORKFLOW/HISTORY` 문서 동기화 |
+| **Output Format** | Avro 스키마 파일 + sample 스키마 2종 + docker-compose 설정 + 등록/호환성 검사 스크립트 + 문서 동기화 결과 |
+| **Constraints** | - Schema Registry 호환성 모드: `BACKWARD_TRANSITIVE`<br>- 스키마 subject 네이밍: `knowledge.note.note-created-v1-value`<br>- 모든 신규 필드는 default 포함 또는 optional union 사용<br>- 비호환 검증은 default 없는 required 필드 추가로 재현<br>- 스키마 ID는 Registry 자동 증분 관리 |
 | **Duration** | 1.5일 |
 | **RULE Reference** | [03-아키텍처](../../wiki/03-아키텍처.md) · [18-기술-스택](../../wiki/18-기술-스택.md) · [14-배포-가이드](../../wiki/14-배포-가이드.md) |
 | **Assignee** | @knowledge-owner-2 |
