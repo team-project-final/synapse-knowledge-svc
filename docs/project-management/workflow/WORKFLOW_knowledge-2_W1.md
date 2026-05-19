@@ -138,11 +138,11 @@
 - [x] Schema Registry Docker Compose 파일 구성 및 `docker compose ... config` 검증
 - [x] 스키마 등록 스크립트 작성
 - [x] `BACKWARD_TRANSITIVE` 호환성 검사 스크립트/Gradle task 추가
-- [ ] 로컬 Docker daemon 기동 후 Registry 컨테이너 실행 확인
-- [ ] 비호환 변경(default 없는 required 필드 추가) 시 등록 거부 런타임 검증
-- [ ] 호환 변경(optional 필드 추가) 시 등록 성공 런타임 검증
-- [x] Avro 코드 생성 및 `testSchemasTask` compile-only 실행 확인
+- [x] 로컬 Docker daemon 기동 후 Registry 컨테이너 실행 확인
+- [x] 비호환 변경(default 없는 required 필드 추가) 시 등록 거부 런타임 검증
+- [x] 호환 변경(optional 필드 추가) 시 등록 성공 런타임 검증
+- [x] Avro 코드 생성 및 `testSchemasTask` live Registry 실행 확인
 
 ### 3.6 ~ 3.10 N/A (스키마 등록 — DTO/Entity/Repository/Service/Controller/View 해당 없음)
 
-**Step 3 Status**: [ ] Not Started / [x] In Progress / [ ] Done
+**Step 3 Status**: [ ] Not Started / [ ] In Progress / [x] Done
