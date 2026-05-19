@@ -103,42 +103,46 @@
 
 ## Step 3: Avro 스키마 등록 및 호환성 검증
 
+> **구현 레포**: `synapse-shared` (스키마/스크립트/compose)  
+> **문서 동기화 레포**: `synapse-knowledge-svc`
+
 ### 3.1 TASK 시작
 
-- [ ] Step Goal / Done When / Scope / Input 확인
-- [ ] PRD_W1 해당 요구사항 확인 (이벤트 스키마 관리)
-- [ ] Duration 산정 확인 (1.5일)
+- [x] Step Goal / Done When / Scope / Input 확인
+- [x] PRD_W1 해당 요구사항 확인 (이벤트 스키마 관리)
+- [x] Duration 산정 확인 (1.5일)
 
 ### 3.2 요구사항 분석
 
-- [ ] note-created 이벤트 명세 분석 (noteId, title, content, createdAt)
-- [ ] Schema Registry 호환성 모드 (BACKWARD) 분석
-- [ ] Avro 스키마 네이밍 규칙 (`{topic}-value`) 확인
-- [ ] Instructions 초안 → TASK 문서 반영
+- [x] note-created 이벤트 명세 분석 (noteId, title, content, createdAt)
+- [x] Schema Registry 호환성 모드 (`BACKWARD_TRANSITIVE`) 분석
+- [x] Avro 스키마 네이밍 규칙 (`knowledge.note.note-created-v1-value`) 확인
+- [x] Instructions 초안 → TASK 문서 반영
 
 ### 3.3 Security 1차 검토
 
-- [ ] 인증 필요 여부: No (Schema Registry 내부 접근)
-- [ ] 권한 종류: 없음 (인프라 간 통신)
-- [ ] 공개 API 여부: No (내부 서비스 전용)
-- [ ] 결과 → TASK Constraints 반영
+- [x] 인증 필요 여부: No (Schema Registry 내부 접근)
+- [x] 권한 종류: 없음 (인프라 간 통신)
+- [x] 공개 API 여부: No (내부 서비스 전용)
+- [x] 결과 → TASK Constraints 반영
 
 ### 3.4 스키마 설계
 
-- [ ] `note-created-v1.avsc` 스키마 파일 작성
-- [ ] 필수 필드 정의 (noteId, title, content, createdAt)
-- [ ] subject 네이밍 확정 (`note-created-value`)
-- [ ] Gradle Avro 플러그인 설정
+- [x] `note-created-v1.avsc` 스키마 파일 작성
+- [x] 필수 필드 정의 (`noteId`, `tenantId`, `title`, `content`, `createdAt`)
+- [x] subject 네이밍 확정 (`knowledge.note.note-created-v1-value`)
+- [x] Gradle Avro 플러그인 기반 `testSchemasTask` 설정
 
 ### 3.5 스키마 등록 및 검증
 
-- [ ] Schema Registry Docker 컨테이너 구성
-- [ ] 스키마 등록 스크립트 작성
-- [ ] BACKWARD 호환성 모드 설정
-- [ ] 비호환 변경(필드 삭제) 시 등록 거부 테스트
-- [ ] 호환 변경(optional 필드 추가) 시 등록 성공 테스트
-- [ ] Avro 코드 생성 확인
+- [x] Schema Registry Docker Compose 파일 구성 및 `docker compose ... config` 검증
+- [x] 스키마 등록 스크립트 작성
+- [x] `BACKWARD_TRANSITIVE` 호환성 검사 스크립트/Gradle task 추가
+- [x] 로컬 Docker daemon 기동 후 Registry 컨테이너 실행 확인
+- [x] 비호환 변경(default 없는 required 필드 추가) 시 등록 거부 런타임 검증
+- [x] 호환 변경(optional 필드 추가) 시 등록 성공 런타임 검증
+- [x] Avro 코드 생성 및 `testSchemasTask` live Registry 실행 확인
 
 ### 3.6 ~ 3.10 N/A (스키마 등록 — DTO/Entity/Repository/Service/Controller/View 해당 없음)
 
-**Step 3 Status**: [ ] Not Started / [ ] In Progress / [ ] Done
+**Step 3 Status**: [ ] Not Started / [ ] In Progress / [x] Done

@@ -13,7 +13,7 @@
 | ------ | ------------------------- | ----------- | ---------- | ---------- | ------------------------------------- |
 | Step 1 | Spring Modulith 모듈 정의 | Done        | 2026-05-15 | 2026-05-15 | Modulith verify + internal 경계 반영  |
 | Step 2 | ArchUnit 경계 검증        | Done        | 2026-05-15 | 2026-05-15 | 경계 테스트 3건 + CI 단계 + FAIL 재현 |
-| Step 3 | Schema Registry 연동 검증 | Not Started | —          | —          |                                       |
+| Step 3 | Schema Registry 연동 검증 | Done        | 2026-05-19 | 2026-05-19 | Runtime 등록/호환성 검증과 `testSchemasTask` live Registry 실행까지 완료 |
 
 **W1 진행률**: 2/3 Steps 완료
 
@@ -108,9 +108,17 @@
 #### 2026-05-19 (화)
 
 - **완료**:
+  - feat(schema): `synapse-shared`에 `note-created-v1.avsc`, compatible/incompatible 샘플 스키마, Schema Registry 스크립트, 로컬 compose 파일 추가
+  - chore(build): `synapse-shared`에 `testSchemasTask`를 추가해 Avro 코드 생성과 Registry 호환성 검사 경로를 연결
+  - docs(step3): Step3 Task/Workflow를 `BACKWARD_TRANSITIVE`, 실제 subject 명, 런타임 검증 대기 상태에 맞게 동기화
+  - verify(schema): Docker daemon 기동 후 실제 Registry 컨테이너 실행, 스키마 등록, 호환/비호환 샘플 검증, `testSchemasTask` live Registry 실행까지 완료
+  - fix(schema): PowerShell 스크립트 payload 직렬화와 `testSchemasTask` 응답 스트림 재사용 버그 수정
 - **진행 중**:
+  - 없음
 - **이슈**:
+  - 없음
 - **다음**:
+  - W2 Step 4 임베딩용 청크 분할 착수
 
 #### 2026-05-20 (수)
 
