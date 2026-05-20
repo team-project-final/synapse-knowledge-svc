@@ -7,7 +7,6 @@ import co.elastic.clients.elasticsearch._types.ElasticsearchException;
 import com.synapse.knowledge.note.application.NoteService;
 import com.synapse.knowledge.note.domain.NoteRepository;
 import com.synapse.knowledge.note.dto.NoteCreateRequest;
-import com.synapse.knowledge.note.dto.NoteResponse;
 import com.synapse.knowledge.search.dto.SearchPageResponse;
 import com.synapse.knowledge.search.dto.SearchRequest;
 import java.io.IOException;
@@ -164,6 +163,14 @@ class SearchElasticsearchIntegrationTest {
     }
 
     private void deleteIndexIfExists() throws IOException {
+        boolean exists = elasticsearchClient.indices()
+            .exists(request -> request.index(INDEX_NAME))
+            .value();
+
+        if (!exists) {
+            return;
+        }
+
         try {
             elasticsearchClient.indices().delete(delete -> delete.index(INDEX_NAME));
         } catch (ElasticsearchException ex) {
