@@ -9,23 +9,23 @@
 
 ### W1 (2026-05-12 ~ 05-15)
 
-| Step   | 내용                      | 상태        | 시작일     | 완료일     | 비고                                  |
-| ------ | ------------------------- | ----------- | ---------- | ---------- | ------------------------------------- |
-| Step 1 | Spring Modulith 모듈 정의 | Done        | 2026-05-15 | 2026-05-15 | Modulith verify + internal 경계 반영  |
-| Step 2 | ArchUnit 경계 검증        | Done        | 2026-05-15 | 2026-05-15 | 경계 테스트 3건 + CI 단계 + FAIL 재현 |
-| Step 3 | Schema Registry 연동 검증 | Done        | 2026-05-19 | 2026-05-19 | Runtime 등록/호환성 검증과 `testSchemasTask` live Registry 실행까지 완료 |
+| Step   | 내용                      | 상태 | 시작일     | 완료일     | 비고                                                                     |
+| ------ | ------------------------- | ---- | ---------- | ---------- | ------------------------------------------------------------------------ |
+| Step 1 | Spring Modulith 모듈 정의 | Done | 2026-05-15 | 2026-05-15 | Modulith verify + internal 경계 반영                                     |
+| Step 2 | ArchUnit 경계 검증        | Done | 2026-05-15 | 2026-05-15 | 경계 테스트 3건 + CI 단계 + FAIL 재현                                    |
+| Step 3 | Schema Registry 연동 검증 | Done | 2026-05-19 | 2026-05-19 | Runtime 등록/호환성 검증과 `testSchemasTask` live Registry 실행까지 완료 |
 
-**W1 진행률**: 2/3 Steps 완료
+**W1 진행률**: 3/3 Steps 완료
 
 ### W2 (2026-05-18 ~ 05-22)
 
-| Step   | 내용               | 상태        | 시작일 | 완료일 | 비고 |
-| ------ | ------------------ | ----------- | ------ | ------ | ---- |
-| Step 4 | chunking 전략 구현 | Not Started | —      | —      |      |
-| Step 5 | BM25 검색 엔진     | Not Started | —      | —      |      |
-| Step 6 | 검색 인덱싱        | Not Started | —      | —      |      |
+| Step   | 내용               | 상태        | 시작일     | 완료일     | 비고                                                                 |
+| ------ | ------------------ | ----------- | ---------- | ---------- | -------------------------------------------------------------------- |
+| Step 4 | chunking 전략 구현 | Done        | 2026-05-19 | 2026-05-19 | Spring event + @Async 기반 비동기 청크 분할, 수정/삭제 정리까지 구현 |
+| Step 5 | BM25 검색 엔진     | Not Started | —          | —          |                                                                      |
+| Step 6 | 검색 인덱싱        | Not Started | —          | —          |                                                                      |
 
-**W2 진행률**: 0/3 Steps 완료
+**W2 진행률**: 1/3 Steps 완료
 
 ### W3 (2026-05-26 ~ 05-29)
 
@@ -113,12 +113,18 @@
   - docs(step3): Step3 Task/Workflow를 `BACKWARD_TRANSITIVE`, 실제 subject 명, 런타임 검증 대기 상태에 맞게 동기화
   - verify(schema): Docker daemon 기동 후 실제 Registry 컨테이너 실행, 스키마 등록, 호환/비호환 샘플 검증, `testSchemasTask` live Registry 실행까지 완료
   - fix(schema): PowerShell 스크립트 payload 직렬화와 `testSchemasTask` 응답 스트림 재사용 버그 수정
+  - feat(chunking): `note_chunks` 엔티티/리포지토리/Flyway 마이그레이션과 Spring event + `@Async` 기반 비동기 청크 분할 경로 구현
+  - feat(chunking): 노트 저장/수정 시 청크 재생성, 노트 soft delete 시 관련 청크 비동기 정리, 공백 기준 token counter + overlap 정책 적용
+  - test(chunking): 분할 로직 단위 테스트 5건, 저장/수정/삭제 비동기 청크 통합 테스트 3건 추가 후 `./gradlew.bat test` 통과
+  - docs(step4): Step4 Task/Workflow/HISTORY를 Spring event 우선 구현 결정과 실제 완료 상태에 맞게 동기화
 - **진행 중**:
   - 없음
 - **이슈**:
-  - 없음
+  - Kafka transport는 아직 미구현이라 현재 Step 4는 Spring Application Event + `@Async`를 transport로 사용
+  - Step 4 Workflow의 `노트 삭제 시 관련 청크 cascade 삭제 확인`, `ChunkCreateEvent 정의` 체크 문구가 실제 구현(`soft delete + 비동기 deleteByNoteId`, `NoteChunkingRequested`)과 아직 완전히 일치하지 않음
+  - `application-test.yml`에서 Flyway가 비활성화되어 있어 Step 4 테스트 통과는 H2 + JPA 스키마 생성 경로 기준이며, `V3__init_note_chunks_table.sql`과 pgvector 적용은 별도 Postgres 검증이 추가로 필요함
 - **다음**:
-  - W2 Step 4 임베딩용 청크 분할 착수
+  - W2 Step 5 BM25 기반 Elasticsearch 검색 착수
 
 #### 2026-05-20 (수)
 
