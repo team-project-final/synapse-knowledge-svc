@@ -80,68 +80,68 @@
 ## Step 5: 검색 BM25 통합 — ES nori 기반 한국어 검색
 
 ### 5.1 TASK 시작
-- [ ] Step Goal / Done When / Scope / Input 확인
-- [ ] PRD_W2 해당 요구사항 확인 (BM25 검색)
-- [ ] Duration 산정 확인
+- [x] Step Goal / Done When / Scope / Input 확인
+- [x] PRD_W2 해당 요구사항 확인 (BM25 검색)
+- [x] Duration 산정 확인
 
 ### 5.2 요구사항 분석
-- [ ] 검색 API 요건 정의 (키워드 검색, 필터, 정렬, 페이지네이션)
-- [ ] ES nori 분석기 한국어 형태소 분석 요건
-- [ ] 하이라이팅(검색어 강조) 요건 분석
-- [ ] 검색 범위 (title, content, tags)
-- [ ] Instructions 초안 → TASK 문서 반영
+- [x] 검색 API 요건 정의 (키워드 검색, 태그 필터, relevance 정렬, cursor 페이지네이션)
+- [x] ES nori 분석기 한국어 형태소 분석 요건
+- [x] 하이라이팅(검색어 강조) 요건 분석
+- [x] 검색 범위 (title, content, tags)
+- [x] Instructions 초안 → TASK 문서 반영
 
 ### 5.3 Security 1차 검토
-- [ ] 인증 필요 여부: Yes (JWT 인증 필요)
-- [ ] 권한 종류: 로그인 사용자 (본인 노트만 검색)
-- [ ] 공개 API 여부: No
-- [ ] 결과 → TASK Constraints 반영
+- [x] 인증 필요 여부: Yes (JWT 인증 필요)
+- [x] 권한 종류: 로그인 사용자 (본인 노트만 검색)
+- [x] 공개 API 여부: No
+- [x] 결과 → TASK Constraints 반영
 
 ### 5.4 인프라 설계
-- [ ] ES 인덱스 매핑 설계 (nori analyzer + BM25 scoring)
-- [ ] nori_tokenizer + nori_part_of_speech 필터 설정
-- [ ] multi_match 쿼리 전략 (best_fields / cross_fields)
-- [ ] 하이라이팅 태그 설정 (<em> 또는 <mark>)
-- [ ] Duration(final) 갱신
+- [x] ES 인덱스 매핑 설계 (nori analyzer + BM25 scoring)
+- [x] nori_tokenizer + nori_part_of_speech 필터 설정
+- [x] multi_match 쿼리 전략 (AND multi_match + field boost)
+- [x] 하이라이팅 태그 설정 (`<mark>`)
+- [x] Duration(final) 갱신
 
 ### 5.5 Security 2차 검토
-- [ ] 검색 결과 userId 필터 강제 (본인 노트만)
-- [ ] 검색 쿼리 인젝션 방지 (쿼리 이스케이프)
-- [ ] 검색 결과 민감정보 노출 방지
-- [ ] 결과 → TASK Constraints 반영
+- [x] 검색 결과 userId 필터 강제 (본인 노트만)
+- [x] 검색 쿼리 인젝션 방지 (구조화된 ES DSL 사용, 문자열 concat 미사용)
+- [x] 검색 결과 민감정보 노출 방지 (title, highlights, score만 응답)
+- [x] 결과 → TASK Constraints 반영
 
 ### 5.6 DTO / Entity 설계 (API First)
-- [ ] SearchRequest 정의 (query, filters, cursor, limit)
-- [ ] SearchResultResponse 정의 (noteId, title, highlights[], score)
-- [ ] SearchPageResponse 정의 (results[], totalCount, cursor — cursor-based pagination)
-- [ ] Output Format → TASK 반영
+- [x] SearchRequest 정의 (query, tags, cursor, limit)
+- [x] SearchResultResponse 정의 (noteId, title, highlights[], score)
+- [x] SearchPageResponse 정의 (results[], totalCount, nextCursor, hasNext)
+- [x] Output Format → TASK 반영
 
 ### 5.7 Repository 구현
-- [ ] NoteSearchRepository 갱신 (BM25 검색 메서드 추가)
-- [ ] ES 인덱스 매핑 JSON 갱신 (nori analyzer 설정)
-- [ ] multi_match + highlight 쿼리 빌더 구현
+- [x] NoteSearchRepository 추가 (BM25 검색/인덱싱/삭제 메서드)
+- [x] ES 인덱스 매핑 코드 추가 (nori analyzer 설정)
+- [x] multi_match + highlight 쿼리 빌더 구현
 
 ### 5.8 Service + Test
-- [ ] SearchService 구현 (search, searchWithHighlight)
-- [ ] BM25 키워드 검색 구현 (multi_match query)
-- [ ] 하이라이팅 결과 파싱 구현
-- [ ] userId 필터 강제 적용
-- [ ] 페이지네이션 처리
-- [ ] 단위 테스트 작성 (Mockito)
-- [ ] 한국어 형태소 분석 검증 테스트
-- [ ] 테스트 통과 확인
+- [x] SearchService 구현 (search)
+- [x] BM25 키워드 검색 구현 (multi_match query)
+- [x] 하이라이팅 결과 파싱 구현
+- [x] userId 필터 강제 적용
+- [x] 페이지네이션 처리 (`search_after` cursor)
+- [x] 단위 테스트 작성 (Mockito)
+- [x] 한국어 형태소 분석 검증 테스트
+- [x] 테스트 통과 확인
 
 ### 5.9 Controller + Test
-- [ ] GET /notes/search?q={query}&cursor=...&limit=20 엔드포인트 구현
-- [ ] 슬라이스 테스트 (@WebMvcTest)
-- [ ] 401/403 응답 테스트
-- [ ] 통합 테스트 (인덱싱 → 검색 → 하이라이팅 검증)
-- [ ] 한국어 검색 통합 테스트 (nori 형태소 분석)
-- [ ] 테스트 통과 확인
+- [x] GET /api/v1/notes/search?q={query}&cursor=...&limit=20 엔드포인트 구현
+- [x] MockMvc 컨트롤러 테스트 (Boot 4 webmvc-test)
+- [x] 401/403 응답 테스트
+- [x] 통합 테스트 (인덱싱 → 검색 → 하이라이팅 검증)
+- [x] 한국어 검색 통합 테스트 (nori 형태소 분석)
+- [x] 테스트 통과 확인
 
 ### 5.10 View + Test (해당 시)
-- [ ] Flutter 화면 연동: 해당 없음 (프론트 별도)
-- [ ] Swagger API 문서 확인
-- [ ] RULE Reference → TASK 반영
+- [x] Flutter 화면 연동: 해당 없음 (프론트 별도)
+- [x] Swagger API 문서 확인 (현재 프로젝트에 Swagger/OpenAPI 미구성 상태 확인)
+- [x] RULE Reference → TASK 반영
 
-**Step 5 Status**: [ ] Not Started / [ ] In Progress / [ ] Done
+**Step 5 Status**: [ ] Not Started / [ ] In Progress / [x] Done

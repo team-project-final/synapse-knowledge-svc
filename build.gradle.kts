@@ -22,6 +22,9 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-validation")
 	implementation("org.springframework.boot:spring-boot-starter-web")
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+	implementation("org.springframework.boot:spring-boot-starter-security")
+	implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
+	implementation("org.springframework.boot:spring-boot-starter-data-elasticsearch")
 	implementation("com.googlecode.owasp-java-html-sanitizer:owasp-java-html-sanitizer:20240325.1")
 	implementation("org.mapstruct:mapstruct:1.6.3")
 	compileOnly("org.projectlombok:lombok")
@@ -34,8 +37,12 @@ dependencies {
 	implementation("org.springframework.modulith:spring-modulith-starter-core")
 	implementation("org.springframework.modulith:spring-modulith-events-api")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
+	testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
+	testImplementation("org.springframework.security:spring-security-test")
 	testImplementation("org.springframework.modulith:spring-modulith-starter-test")
 	testImplementation("com.tngtech.archunit:archunit-junit5:1.3.0")
+	testImplementation("org.testcontainers:junit-jupiter:1.20.6")
+	testImplementation("org.testcontainers:testcontainers:1.20.6")
 }
 
 tasks.withType<Test> {

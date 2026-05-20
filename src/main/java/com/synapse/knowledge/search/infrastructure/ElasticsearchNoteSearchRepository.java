@@ -1,0 +1,215 @@
+package com.synapse.knowledge.search.infrastructure;
+
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.analysis.NoriDecompoundMode;
+import co.elastic.clients.elasticsearch._types.FieldValue;
+import co.elastic.clients.elasticsearch._types.SortOrder;
+import co.elastic.clients.elasticsearch._types.mapping.Property;
+import co.elastic.clients.elasticsearch._types.query_dsl.Operator;
+import co.elastic.clients.elasticsearch.core.DeleteRequest;
+import co.elastic.clients.elasticsearch.core.IndexRequest;
+import co.elastic.clients.elasticsearch.core.SearchResponse;
+import co.elastic.clients.elasticsearch.core.search.Hit;
+import co.elastic.clients.elasticsearch.core.search.HighlightField;
+import co.elastic.clients.util.NamedValue;
+import com.synapse.knowledge.search.application.SearchCursorCodec;
+import com.synapse.knowledge.search.application.SearchCursorCodec.CursorPayload;
+import com.synapse.knowledge.search.domain.NoteSearchRepository;
+import com.synapse.knowledge.search.dto.SearchPageResponse;
+import com.synapse.knowledge.search.dto.SearchRequest;
+import com.synapse.knowledge.search.dto.SearchResultResponse;
+import java.io.IOException;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Repository;
+
+@Repository
+@RequiredArgsConstructor
+public class ElasticsearchNoteSearchRepository implements NoteSearchRepository {
+
+    static final String INDEX_NAME = "notes-v1";
+
+    private final ElasticsearchClient elasticsearchClient;
+    private final SearchCursorCodec searchCursorCodec;
+    private final AtomicBoolean indexEnsured = new AtomicBoolean(false);
+
+    @Override
+    public SearchPageResponse search(Long userId, SearchRequest request) {
+        try {
+            ensureIndex();
+
+            SearchResponse<NoteSearchDocument> response = elasticsearchClient.search(search -> {
+                var builder = search
+                    .index(INDEX_NAME)
+                    .size(request.limit() + 1)
+                    .query(query -> query.bool(bool -> {
+                        bool.must(must -> must.multiMatch(multiMatch -> multiMatch
+                            .query(request.query())
+                            .fields("title^3", "content", "tags^2")
+                            .operator(Operator.And)
+                        ));
+                        bool.filter(filter -> filter.term(term -> term.field("userId").value(userId)));
+
+                        if (request.tags() != null && !request.tags().isEmpty()) {
+                            bool.filter(filter -> filter.terms(terms -> terms
+                                .field("tags.keyword")
+                                .terms(values -> values.value(request.tags().stream()
+                                    .map(FieldValue::of)
+                                    .toList()))
+                            ));
+                        }
+
+                        return bool;
+                    }))
+                    .highlight(highlight -> highlight
+                        .preTags("<mark>")
+                        .postTags("</mark>")
+                        .fields(List.of(
+                            NamedValue.of("title", HighlightField.of(field -> field.numberOfFragments(0))),
+                            NamedValue.of("content", HighlightField.of(field -> field.fragmentSize(150).numberOfFragments(3)))
+                        ))
+                    )
+                    .sort(sort -> sort.score(score -> score.order(SortOrder.Desc)))
+                    .sort(sort -> sort.field(field -> field.field("noteId").order(SortOrder.Desc)));
+
+                if (request.cursor() != null && !request.cursor().isBlank()) {
+                    CursorPayload payload = searchCursorCodec.decode(request.cursor());
+                    builder.searchAfter(List.of(FieldValue.of(payload.score()), FieldValue.of(payload.noteId())));
+                }
+
+                return builder;
+            }, NoteSearchDocument.class);
+
+            return toPageResponse(response, request.limit());
+        } catch (IOException ex) {
+            throw new IllegalStateException("Elasticsearch 검색 요청에 실패했습니다", ex);
+        }
+    }
+
+    @Override
+    public void upsert(NoteSearchDocument document) {
+        try {
+            ensureIndex();
+            elasticsearchClient.index(IndexRequest.of(index -> index
+                .index(INDEX_NAME)
+                .id(document.noteId().toString())
+                .document(new NoteSearchDocument(
+                    document.noteId(),
+                    document.tenantId(),
+                    document.userId(),
+                    document.title(),
+                    document.content(),
+                    document.tags(),
+                    document.updatedAt() == null ? Instant.now() : document.updatedAt()
+                ))
+            ));
+        } catch (IOException ex) {
+            throw new IllegalStateException("노트 검색 인덱싱에 실패했습니다", ex);
+        }
+    }
+
+    @Override
+    public void deleteByNoteId(Long noteId) {
+        try {
+            if (!indexEnsured.get()) {
+                return;
+            }
+            elasticsearchClient.delete(DeleteRequest.of(delete -> delete.index(INDEX_NAME).id(noteId.toString())));
+        } catch (IOException ex) {
+            throw new IllegalStateException("노트 검색 인덱스 삭제에 실패했습니다", ex);
+        }
+    }
+
+    private SearchPageResponse toPageResponse(SearchResponse<NoteSearchDocument> response, int limit) {
+        List<Hit<NoteSearchDocument>> hits = response.hits().hits();
+        boolean hasNext = hits.size() > limit;
+        List<Hit<NoteSearchDocument>> pageHits = hasNext ? hits.subList(0, limit) : hits;
+
+        List<SearchResultResponse> results = pageHits.stream()
+            .map(this::toSearchResult)
+            .toList();
+
+        String nextCursor = null;
+        if (hasNext && !pageHits.isEmpty()) {
+            Hit<NoteSearchDocument> lastHit = pageHits.get(pageHits.size() - 1);
+            double score = lastHit.score() == null ? 0.0d : lastHit.score();
+            long noteId = lastHit.source() == null ? 0L : lastHit.source().noteId();
+            nextCursor = searchCursorCodec.encode(score, noteId);
+        }
+
+        long totalCount = response.hits().total() == null ? results.size() : response.hits().total().value();
+        return new SearchPageResponse(results, totalCount, nextCursor, hasNext);
+    }
+
+    private SearchResultResponse toSearchResult(Hit<NoteSearchDocument> hit) {
+        NoteSearchDocument source = hit.source();
+        List<String> highlights = new ArrayList<>();
+        Map<String, List<String>> highlightMap = hit.highlight();
+        if (highlightMap != null) {
+            highlights = highlightMap.values().stream()
+                .flatMap(List::stream)
+                .distinct()
+                .collect(Collectors.toList());
+        }
+
+        return new SearchResultResponse(
+            source == null ? null : source.noteId(),
+            source == null ? null : source.title(),
+            highlights,
+            hit.score() == null ? 0.0f : hit.score().floatValue()
+        );
+    }
+
+    private void ensureIndex() throws IOException {
+        if (indexEnsured.get()) {
+            return;
+        }
+
+        boolean exists = elasticsearchClient.indices().exists(existsRequest -> existsRequest.index(INDEX_NAME)).value();
+        if (!exists) {
+            elasticsearchClient.indices().create(create -> create
+                .index(INDEX_NAME)
+                .settings(settings -> settings
+                    .analysis(analysis -> analysis
+                        .tokenizer("korean_nori_tokenizer", tokenizer -> tokenizer
+                            .definition(definition -> definition.noriTokenizer(nori -> nori.decompoundMode(NoriDecompoundMode.Mixed)))
+                        )
+                        .filter("korean_nori_pos_filter", filter -> filter
+                            .definition(definition -> definition.noriPartOfSpeech(pos -> pos
+                                .stoptags("E", "IC", "J", "MAG", "MAJ", "MM", "SP", "SSC", "SSO", "SC", "SE", "XPN", "XSA", "XSN", "XSV", "UNA", "NA", "VSV")
+                            ))
+                        )
+                        .analyzer("korean_nori", analyzer -> analyzer
+                            .custom(custom -> custom
+                                .tokenizer("korean_nori_tokenizer")
+                                .filter("lowercase", "korean_nori_pos_filter")
+                            )
+                        )
+                    )
+                )
+                .mappings(mappings -> mappings
+                    .properties("noteId", Property.of(property -> property.long_(field -> field)))
+                    .properties("tenantId", Property.of(property -> property.keyword(field -> field)))
+                    .properties("userId", Property.of(property -> property.long_(field -> field)))
+                    .properties("title", Property.of(property -> property.text(field -> field
+                        .analyzer("korean_nori")
+                        .fields("keyword", sub -> sub.keyword(keyword -> keyword))
+                    )))
+                    .properties("content", Property.of(property -> property.text(field -> field.analyzer("korean_nori"))))
+                    .properties("tags", Property.of(property -> property.text(field -> field
+                        .analyzer("korean_nori")
+                        .fields("keyword", sub -> sub.keyword(keyword -> keyword))
+                    )))
+                    .properties("updatedAt", Property.of(property -> property.date(field -> field)))
+                )
+            );
+        }
+
+        indexEnsured.set(true);
+    }
+}

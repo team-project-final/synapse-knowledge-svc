@@ -9,6 +9,7 @@ import com.synapse.knowledge.note.dto.NoteResponse;
 import com.synapse.knowledge.shared.AccessDeniedException;
 import com.synapse.knowledge.shared.MarkdownSanitizer;
 import com.synapse.knowledge.shared.NoteChunkingRequested;
+import com.synapse.knowledge.shared.NoteSearchSyncRequested;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
@@ -37,11 +38,12 @@ public class NoteService {
         String sanitizedMd = sanitizer.sanitize(request.contentMd());
         String plainText = extractPlainText(sanitizedMd);
         
-        Note note = Note.create(request.tenantId(), userId, request.title(), sanitizedMd, plainText);
+        Note note = Note.create(request.tenantId(), userId, request.title(), sanitizedMd, plainText, request.tags());
         Note savedNote = noteRepository.save(note);
         
         updateWikiLinks(savedNote.getId(), request.tenantId(), sanitizedMd);
         publishChunkingRequested(savedNote, "created");
+        publishSearchSyncRequested(savedNote, false);
         return NoteResponse.from(savedNote);
     }
 
@@ -64,10 +66,11 @@ public class NoteService {
         String sanitizedMd = sanitizer.sanitize(request.contentMd());
         String plainText = extractPlainText(sanitizedMd);
         
-        note.update(request.title(), sanitizedMd, plainText);
+        note.update(request.title(), sanitizedMd, plainText, request.tags());
         
         updateWikiLinks(note.getId(), note.getTenantId(), sanitizedMd);
         publishChunkingRequested(note, "updated");
+        publishSearchSyncRequested(note, false);
         return NoteResponse.from(note);
     }
 
@@ -85,6 +88,7 @@ public class NoteService {
                 Instant.now()
             )
         );
+        publishSearchSyncRequested(note, true);
     }
 
     public List<NoteResponse> getBacklinks(Long userId, Long noteId) {
@@ -133,6 +137,21 @@ public class NoteService {
                 note.getTenantId(),
                 note.getContentPlain(),
                 reason,
+                Instant.now()
+            )
+        );
+    }
+
+    private void publishSearchSyncRequested(Note note, boolean deleted) {
+        eventPublisher.publishEvent(
+            new NoteSearchSyncRequested(
+                note.getId(),
+                note.getTenantId(),
+                note.getUserId(),
+                note.getTitle(),
+                note.getContentPlain(),
+                note.getTags(),
+                deleted,
                 Instant.now()
             )
         );

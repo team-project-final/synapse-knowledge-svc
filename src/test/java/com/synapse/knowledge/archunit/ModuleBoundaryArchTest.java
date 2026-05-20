@@ -27,27 +27,39 @@ class ModuleBoundaryArchTest {
                 .that().resideInAPackage("com.synapse.knowledge.note..")
                 .should().dependOnClassesThat().resideInAnyPackage(
                         "com.synapse.knowledge.graph..",
-                        "com.synapse.knowledge.chunking..")
+                        "com.synapse.knowledge.chunking..",
+                        "com.synapse.knowledge.search..")
                 .because("note 모듈은 graph 또는 chunking을 직접 참조하면 안 된다.");
 
         var graphMustNotDependOnOtherDomains = noClasses()
                 .that().resideInAPackage("com.synapse.knowledge.graph..")
                 .should().dependOnClassesThat().resideInAnyPackage(
                         "com.synapse.knowledge.note..",
-                        "com.synapse.knowledge.chunking..")
+                        "com.synapse.knowledge.chunking..",
+                        "com.synapse.knowledge.search..")
                 .because("graph 모듈은 note 또는 chunking을 직접 참조하면 안 된다.");
 
         var chunkingMustNotDependOnOtherDomains = noClasses()
                 .that().resideInAPackage("com.synapse.knowledge.chunking..")
                 .should().dependOnClassesThat().resideInAnyPackage(
                         "com.synapse.knowledge.note..",
-                        "com.synapse.knowledge.graph..")
+                        "com.synapse.knowledge.graph..",
+                        "com.synapse.knowledge.search..")
                 .because("chunking 모듈은 note 또는 graph를 직접 참조하면 안 된다.");
+
+        var searchMustNotDependOnOtherDomains = noClasses()
+                .that().resideInAPackage("com.synapse.knowledge.search..")
+                .should().dependOnClassesThat().resideInAnyPackage(
+                        "com.synapse.knowledge.note..",
+                        "com.synapse.knowledge.graph..",
+                        "com.synapse.knowledge.chunking..")
+                .because("search 모듈은 note, graph 또는 chunking을 직접 참조하면 안 된다.");
 
         // When & Then
         noteMustNotDependOnOtherDomains.check(classes);
         graphMustNotDependOnOtherDomains.check(classes);
         chunkingMustNotDependOnOtherDomains.check(classes);
+        searchMustNotDependOnOtherDomains.check(classes);
     }
 
     @Test
@@ -80,6 +92,11 @@ class ModuleBoundaryArchTest {
                 .should().dependOnClassesThat().resideInAnyPackage("com.synapse.knowledge.chunking.internal..")
                 .because("chunking.internal은 chunking 모듈 외부에서 접근하면 안 된다.");
 
+        var searchInternalMustStayPrivate = noClasses()
+                .that().resideOutsideOfPackage("com.synapse.knowledge.search..")
+                .should().dependOnClassesThat().resideInAnyPackage("com.synapse.knowledge.search.internal..")
+                .because("search.internal은 search 모듈 외부에서 접근하면 안 된다.");
+
         var sharedInternalMustStayPrivate = noClasses()
                 .that().resideOutsideOfPackage("com.synapse.knowledge.shared..")
                 .should().dependOnClassesThat().resideInAnyPackage("com.synapse.knowledge.shared.internal..")
@@ -89,6 +106,7 @@ class ModuleBoundaryArchTest {
         noteInternalMustStayPrivate.check(classes);
         graphInternalMustStayPrivate.check(classes);
         chunkingInternalMustStayPrivate.check(classes);
+        searchInternalMustStayPrivate.check(classes);
         sharedInternalMustStayPrivate.check(classes);
     }
 }
