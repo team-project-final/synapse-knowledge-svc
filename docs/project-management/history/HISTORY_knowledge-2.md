@@ -22,10 +22,10 @@
 | Step   | 내용               | 상태        | 시작일     | 완료일     | 비고                                                                 |
 | ------ | ------------------ | ----------- | ---------- | ---------- | -------------------------------------------------------------------- |
 | Step 4 | chunking 전략 구현 | Done        | 2026-05-19 | 2026-05-19 | Spring event + @Async 기반 비동기 청크 분할, 수정/삭제 정리까지 구현 |
-| Step 5 | BM25 검색 엔진     | Not Started | —          | —          |                                                                      |
+| Step 5 | BM25 검색 엔진     | Done        | 2026-05-20 | 2026-05-20 | JWT 검증 골격 + BM25 검색 API/비동기 인덱싱 + live ES nori 통합 검증 완료 |
 | Step 6 | 검색 인덱싱        | Not Started | —          | —          |                                                                      |
 
-**W2 진행률**: 1/3 Steps 완료
+**W2 진행률**: 2/3 Steps 완료
 
 ### W3 (2026-05-26 ~ 05-29)
 
@@ -129,9 +129,18 @@
 #### 2026-05-20 (수)
 
 - **완료**:
+  - feat(search): `search` Modulith 모듈, BM25 multi_match 검색, `search_after` cursor, highlight 파싱, 비동기 ES 인덱싱 리스너 구현
+  - feat(auth): `/api/v1/notes/**` JWT Resource Server 검증 골격과 `CurrentUser` userId 해석 경로 추가, 기존 note API의 `mockUserId` 제거
+  - feat(note): 노트 태그 저장을 위한 `note_tags` 테이블과 DTO/엔티티 반영, 검색 인덱스에 tags 필드 포함
+  - test(search): cursor/service/controller 테스트와 401/403 MockMvc 검증, Testcontainers 기반 live Elasticsearch+nori 통합 테스트 추가 후 `./gradlew.bat test` 통과
+  - docs(step5): Step 5 Workflow/Task/HISTORY를 완료 상태와 live ES 검증 결과까지 포함해 동기화
 - **진행 중**:
+  - 없음
 - **이슈**:
+  - Boot 4 테스트 환경에서 컨트롤러 검증은 기존 `@WebMvcTest` 대신 `spring-boot-starter-webmvc-test` 기반 MockMvc 조합으로 맞춤
+  - Swagger/OpenAPI는 현재 프로젝트에 미구성 상태라 확인 항목만 반영했고, 문서 자동화가 필요하면 별도 범위로 다루는 편이 맞음
 - **다음**:
+  - W3 Step 6 하이브리드 검색(RRF) 착수
 
 #### 2026-05-21 (목)
 

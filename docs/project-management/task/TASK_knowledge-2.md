@@ -92,17 +92,17 @@
 |------|------|
 | **Step Name** | BM25 기반 Elasticsearch 검색 |
 | **Step Goal** | 사용자가 키워드로 노트를 BM25 기반 Elasticsearch 검색할 수 있다. |
-| **Done When** | 키워드 검색 API + BM25 스코어링 + 페이지네이션 + 테스트 통과 |
-| **Scope** | **In**: Elasticsearch 인덱스 설정, BM25 검색 API, 노트 인덱싱 / **Out**: 시맨틱 검색, 하이브리드 검색, 검색 튜닝 |
+| **Done When** | 키워드 검색 API + BM25 스코어링 + 페이지네이션 + JWT 기반 사용자 필터 + live Elasticsearch+nori 통합 테스트 통과 |
+| **Scope** | **In**: Elasticsearch 인덱스 설정, BM25 검색 API, 노트 인덱싱, JWT 검증 기반 사용자 컨텍스트 소비, 노트 태그 저장/검색 반영 / **Out**: 시맨틱 검색, 하이브리드 검색, 검색 튜닝, 로그인/토큰 발급 |
 | **Input** | Step 4 완료된 청크 데이터, Elasticsearch 공식 문서, PRD_W2 검색 요구사항 |
-| **Instructions** | 1. Elasticsearch Docker 컨테이너 구성 (docker-compose)<br>2. 노트 인덱스 매핑 정의 (title, content, tags 필드)<br>3. 노트 생성/수정 시 Elasticsearch 인덱싱 연동<br>4. BM25 기반 키워드 검색 API 구현 (`GET /notes/search?q=...` — `/api/v1/` 접두사 제거)<br>5. 검색 결과 하이라이팅 적용<br>6. 페이지네이션 및 정렬 옵션 구현<br>7. 통합 테스트: 키워드 검색 정확도 검증 |
-| **Output Format** | Elasticsearch 인덱스 매핑 + 검색 API 응답 예시 + 테스트 결과 |
-| **Constraints** | - Elasticsearch 8.x 사용<br>- BM25 기본 파라미터 (k1=1.2, b=0.75)<br>- 검색 결과 최대 100건 페이지네이션<br>- 한국어 형태소 분석기 (nori) 적용<br>- 인덱싱은 비동기 처리 |
+| **Instructions** | 1. Elasticsearch 인덱스 매핑 정의 (title, content, tags 필드 + nori analyzer)<br>2. 노트 생성/수정/삭제 시 Elasticsearch 비동기 인덱싱 연동<br>3. BM25 기반 키워드 검색 API 구현 (`GET /api/v1/notes/search?q=...`)<br>4. JWT Resource Server 검증 골격과 현재 사용자 userId 추출 경로 구현<br>5. 검색 결과 하이라이팅 적용 (`&lt;mark&gt;` 태그)<br>6. `search_after` 기반 cursor 페이지네이션 구현<br>7. 단위 테스트 + MockMvc 인증/인가 테스트 + 남은 ES 통합 검증 TODO 문서화 |
+| **Output Format** | Elasticsearch 인덱스 매핑 코드 + 검색 API 응답 예시 + 테스트 결과 + Workflow/HISTORY 동기화 + live ES 검증 경로 |
+| **Constraints** | - Elasticsearch 8.x 사용<br>- BM25 기본 파라미터 (k1=1.2, b=0.75)<br>- 검색 결과 최대 100건 페이지네이션<br>- 한국어 형태소 분석기 (nori) 적용<br>- 인덱싱은 비동기 처리<br>- JWT는 검증/사용자 식별만 구현하고 발급 기능은 포함하지 않음 |
 | **Duration** | 1.5일 |
 | **RULE Reference** | [03-아키텍처](../../wiki/03-아키텍처.md) · [18-기술-스택](../../wiki/18-기술-스택.md) · [14-배포-가이드](../../wiki/14-배포-가이드.md) |
 | **Assignee** | @knowledge-owner-2 |
 | **Reviewer** | @team-lead |
-| **Status** | TODO |
+| **Status** | DONE |
 
 ---
 
