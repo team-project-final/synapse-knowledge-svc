@@ -1,6 +1,6 @@
 package com.synapse.knowledge.note.dto;
 
-import com.synapse.knowledge.note.domain.Note;
+import com.synapse.knowledge.note.entity.Note;
 import java.time.LocalDateTime;
 import java.util.List;
 

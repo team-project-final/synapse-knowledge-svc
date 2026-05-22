@@ -1,6 +1,6 @@
 package com.synapse.knowledge.chunking.dto;
 
-import com.synapse.knowledge.chunking.domain.NoteChunk;
+import com.synapse.knowledge.chunking.entity.NoteChunk;
 import java.util.List;
 import org.mapstruct.Mapper;
 

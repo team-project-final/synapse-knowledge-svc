@@ -152,9 +152,17 @@
 #### 2026-05-22 (금)
 
 - **완료**:
+  - refactor(structure): template `skeleton/knowledge/w1` README 기준으로 knowledge 도메인 패키지 골격 정렬
+    - `note`, `graph`, `chunking`, `search`의 혼합 패키지 구조를 `controller/service/repository/entity/dto` 기준으로 재배치
+    - `chunking`, `search`의 보조 컴포넌트는 `service/listener`, `service/support`로 분리해 역할에 맞게 정리
+    - `chunking`의 빈 `ChunkingController`를 제거하고, 관련 테스트 패키지와 import를 함께 동기화
+  - verify(test): `./gradlew.bat test` 통과
 - **진행 중**:
+  - 없음
 - **이슈**:
+  - `checkstyleMain`, `spotbugsMain` task가 현재 Gradle 설정에 없어 정적 분석 검증은 실행 불가
 - **주간 요약**:
+  - 기존 기능은 유지한 채 template W1 README가 설명하는 도메인별 골격으로 패키지 구조를 정렬했다. 특히 `chunking`, `search`의 보조 컴포넌트는 `service` 하위 `listener/support`로 분리해 템플릿 뼈대와 역할 의미를 함께 맞췄다.
 
 ### W3 (2026-05-26 ~ 05-29)
 

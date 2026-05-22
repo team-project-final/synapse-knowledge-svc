@@ -1,7 +1,7 @@
 package com.synapse.knowledge.search.internal;
 
 import com.synapse.knowledge.search.SearchModuleApi;
-import com.synapse.knowledge.search.application.SearchService;
+import com.synapse.knowledge.search.service.SearchService;
 import com.synapse.knowledge.search.dto.SearchPageResponse;
 import com.synapse.knowledge.search.dto.SearchRequest;
 import lombok.RequiredArgsConstructor;
