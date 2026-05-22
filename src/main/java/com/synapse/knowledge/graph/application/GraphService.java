@@ -23,6 +23,29 @@ public class GraphService {
     private static final int PAGE_RANK_ITERATIONS = 10;
 
     private final GraphQueryPort graphQueryPort;
+    private final GraphMapper graphMapper;
+
+    public GraphDataResponse getNeighborGraph(Long noteId, int depth) {
+        List<GraphLinkData> links = graphQueryPort.findNeighborLinksByDepth(noteId, depth);
+        Set<Long> noteIds = links.stream()
+                .flatMap(l -> java.util.stream.Stream.of(l.sourceNoteId(), l.targetNoteId()))
+                .collect(Collectors.toSet());
+        noteIds.add(noteId);
+        List<GraphNoteData> notes = graphQueryPort.findNotesByIds(new java.util.ArrayList<>(noteIds));
+        Set<Long> validIds = notes.stream().map(GraphNoteData::id).collect(Collectors.toSet());
+        Map<Long, Integer> inDegree = computeInDegree(validIds, links);
+        Map<Long, Double> pageRanks = computePageRank(validIds, links);
+        List<GraphNodeResponse> nodes = notes.stream()
+                .map(note -> graphMapper.toNodeResponse(note,
+                        inDegree.getOrDefault(note.id(), 0),
+                        pageRanks.getOrDefault(note.id(), notes.isEmpty() ? 0.0 : 1.0 / notes.size())))
+                .toList();
+        List<GraphEdgeResponse> edges = links.stream()
+                .filter(l -> validIds.contains(l.sourceNoteId()) && validIds.contains(l.targetNoteId()))
+                .map(graphMapper::toEdgeResponse)
+                .toList();
+        return new GraphDataResponse(nodes, edges);
+    }
 
     public GraphDataResponse getGraphData(Long userId) {
         List<GraphNoteData> notes = graphQueryPort.findAllNoteByUserId(userId);
@@ -34,17 +57,14 @@ public class GraphService {
         Map<Long, Double> pageRanks = computePageRank(noteIds, links);
 
         List<GraphNodeResponse> nodes = notes.stream()
-                .map(note -> new GraphNodeResponse(
-                        note.id(),
-                        note.title(),
+                .map(note -> graphMapper.toNodeResponse(note,
                         inDegree.getOrDefault(note.id(), 0),
-                        pageRanks.getOrDefault(note.id(), 1.0 / notes.size())
-                ))
+                        pageRanks.getOrDefault(note.id(), 1.0 / notes.size())))
                 .toList();
 
         List<GraphEdgeResponse> edges = links.stream()
                 .filter(link -> noteIds.contains(link.sourceNoteId()) && noteIds.contains(link.targetNoteId()))
-                .map(link -> new GraphEdgeResponse(link.sourceNoteId(), link.targetNoteId(), "wikilink"))
+                .map(graphMapper::toEdgeResponse)
                 .toList();
 
         return new GraphDataResponse(nodes, edges);

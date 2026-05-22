@@ -28,7 +28,7 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/v1/notes/**").authenticated()
-                .requestMatchers("/api/graph/**").authenticated()
+                .requestMatchers("/api/v1/graph/**").authenticated()
                 .anyRequest().permitAll()
             )
             .oauth2ResourceServer(oauth -> oauth.jwt(Customizer.withDefaults()))

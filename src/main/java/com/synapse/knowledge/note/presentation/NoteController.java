@@ -53,4 +53,9 @@ public class NoteController {
     public List<NoteResponse> getBacklinks(@CurrentUserAuth CurrentUser currentUser, @PathVariable Long id) {
         return noteService.getBacklinks(currentUser.userId(), id);
     }
+
+    @GetMapping("/{id}/outlinks")
+    public List<NoteResponse> getOutlinks(@CurrentUserAuth CurrentUser currentUser, @PathVariable Long id) {
+        return noteService.getOutlinks(currentUser.userId(), id);
+    }
 }

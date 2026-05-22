@@ -34,6 +34,7 @@ dependencies {
 	implementation("org.flywaydb:flyway-database-postgresql")
 	runtimeOnly("org.postgresql:postgresql")
 	testRuntimeOnly("com.h2database:h2")
+	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.6")
 	implementation("org.springframework.modulith:spring-modulith-starter-core")
 	implementation("org.springframework.modulith:spring-modulith-events-api")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
@@ -43,6 +44,7 @@ dependencies {
 	testImplementation("com.tngtech.archunit:archunit-junit5:1.3.0")
 	testImplementation("org.testcontainers:junit-jupiter:1.20.6")
 	testImplementation("org.testcontainers:testcontainers:1.20.6")
+	testImplementation("org.testcontainers:postgresql:1.20.6")
 }
 
 tasks.withType<Test> {
