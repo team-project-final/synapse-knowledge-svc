@@ -152,9 +152,24 @@
 #### 2026-05-22 (금)
 
 - **완료**:
+  - refactor(structure): template `skeleton/knowledge/w1` README 기준으로 knowledge 도메인 패키지 골격 정렬
+    - `note`, `graph`, `chunking`, `search`의 혼합 패키지 구조를 `controller/service/repository/entity/dto` 기준으로 재배치
+    - `chunking`, `search`의 보조 컴포넌트는 `service/listener`, `service/support`로 분리해 역할에 맞게 정리
+    - `chunking`의 빈 `ChunkingController`를 제거하고, 관련 테스트 패키지와 import를 함께 동기화
+  - refactor(global): template `skeleton/knowledge/w2` README 기준으로 `global/` 횡단 골격 추가
+    - `config`와 `shared`에 섞여 있던 보안, MVC resolver, 예외 처리, sanitizer를 `global/config`, `global/security`, `global/exception`, `global/util`로 재배치
+    - `shared`는 `BaseEntity`, 이벤트 계약, graph query port 같은 모듈 간 공통 계약 위주로 축소
+    - `application.properties`를 `application.yml` + `application-{local,dev,prod}.yml` 골격으로 전환
+  - refactor(api): `note`, `graph`, `search` HTTP 응답을 `global/response/ApiResponse<T>` 구조로 정렬
+  - verify(modulith): `global` 모듈을 OPEN으로 선언하고 도메인 `allowedDependencies`를 조정해 `ApplicationModules.verify()` 경계 검증 통과
+  - verify(test): `./gradlew.bat test` 통과
 - **진행 중**:
+  - 없음
 - **이슈**:
+  - `checkstyleMain`, `spotbugsMain` task가 현재 Gradle 설정에 없어 정적 분석 검증은 실행 불가
 - **주간 요약**:
+  - 기존 기능은 유지한 채 template W1 README가 설명하는 도메인별 골격으로 패키지 구조를 정렬했다. 특히 `chunking`, `search`의 보조 컴포넌트는 `service` 하위 `listener/support`로 분리해 템플릿 뼈대와 역할 의미를 함께 맞췄다.
+  - 이어서 template W2 README 기준의 `global/` 횡단 골격과 환경별 설정 파일 뼈대를 추가해, 템플릿과 완전히 동일한 구현은 아니더라도 공통 파일을 `global`로 관리하는 구조는 맞췄다.
 
 ### W3 (2026-05-26 ~ 05-29)
 

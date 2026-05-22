@@ -1,7 +1,7 @@
 package com.synapse.knowledge.chunking.internal;
 
 import com.synapse.knowledge.chunking.ChunkingModuleApi;
-import com.synapse.knowledge.chunking.application.ChunkingService;
+import com.synapse.knowledge.chunking.service.ChunkingService;
 import com.synapse.knowledge.chunking.dto.ChunkResponse;
 import java.util.List;
 import lombok.RequiredArgsConstructor;

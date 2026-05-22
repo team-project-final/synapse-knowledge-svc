@@ -1,6 +1,6 @@
 package com.synapse.knowledge.chunking.dto;
 
-import com.synapse.knowledge.chunking.domain.NoteChunk;
+import com.synapse.knowledge.chunking.entity.NoteChunk;
 
 public record ChunkResponse(
     Long id,
