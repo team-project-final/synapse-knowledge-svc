@@ -1,6 +1,6 @@
-package com.synapse.knowledge.config;
+package com.synapse.knowledge.global.config;
 
-import com.synapse.knowledge.shared.CurrentUserArgumentResolver;
+import com.synapse.knowledge.global.security.CurrentUserArgumentResolver;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;

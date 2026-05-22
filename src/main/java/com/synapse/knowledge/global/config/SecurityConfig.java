@@ -1,4 +1,4 @@
-package com.synapse.knowledge.config;
+package com.synapse.knowledge.global.config;
 
 import java.security.KeyFactory;
 import java.security.KeyPair;
@@ -29,6 +29,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/v1/notes/**").authenticated()
                 .requestMatchers("/api/graph/**").authenticated()
+                .requestMatchers("/actuator/health").permitAll()
                 .anyRequest().permitAll()
             )
             .oauth2ResourceServer(oauth -> oauth.jwt(Customizer.withDefaults()))

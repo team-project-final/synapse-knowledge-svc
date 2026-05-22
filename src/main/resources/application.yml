@@ -1,0 +1,11 @@
+spring:
+  application:
+    name: knowledge-svc
+  profiles:
+    default: local
+  elasticsearch:
+    uris: ${ELASTICSEARCH_URIS:http://localhost:9200}
+
+security:
+  jwt:
+    public-key-pem: ${SECURITY_JWT_PUBLIC_KEY_PEM:}

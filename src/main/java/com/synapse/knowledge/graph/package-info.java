@@ -1,5 +1,5 @@
 @org.springframework.modulith.ApplicationModule(
     displayName = "Graph Module",
-    allowedDependencies = {"shared"}
+    allowedDependencies = {"shared", "global"}
 )
 package com.synapse.knowledge.graph;

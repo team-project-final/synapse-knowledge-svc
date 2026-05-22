@@ -1,7 +1,6 @@
-package com.synapse.knowledge.shared;
+package com.synapse.knowledge.global.exception;
 
 import jakarta.validation.ConstraintViolationException;
-import java.time.LocalDateTime;
 import java.util.stream.Collectors;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.jwt.JwtException;
@@ -15,7 +14,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ErrorResponse> handleBusinessException(BusinessException ex) {
         return ResponseEntity.status(ex.getStatus())
-            .body(new ErrorResponse(ex.getErrorCode(), ex.getMessage(), LocalDateTime.now()));
+            .body(ErrorResponse.of(ex.getErrorCode(), ex.getMessage()));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -25,26 +24,24 @@ public class GlobalExceptionHandler {
             .collect(Collectors.joining(", "));
 
         return ResponseEntity.badRequest()
-            .body(new ErrorResponse("KNOW-400", message, LocalDateTime.now()));
+            .body(ErrorResponse.of(ErrorCode.COMMON_BAD_REQUEST, message));
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<ErrorResponse> handleConstraintViolationException(ConstraintViolationException ex) {
         return ResponseEntity.badRequest()
-            .body(new ErrorResponse("KNOW-400", ex.getMessage(), LocalDateTime.now()));
+            .body(ErrorResponse.of(ErrorCode.COMMON_BAD_REQUEST, ex.getMessage()));
     }
 
     @ExceptionHandler(JwtException.class)
     public ResponseEntity<ErrorResponse> handleJwtException(JwtException ex) {
-        return ResponseEntity.status(401)
-            .body(new ErrorResponse("KNOW-401", "유효하지 않은 토큰입니다", LocalDateTime.now()));
+        return ResponseEntity.status(ErrorCode.AUTHENTICATION_REQUIRED.status())
+            .body(ErrorResponse.of(ErrorCode.AUTHENTICATION_REQUIRED, "유효하지 않은 토큰입니다"));
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleException(Exception ex) {
         return ResponseEntity.internalServerError()
-            .body(new ErrorResponse("KNOW-500", "Internal server error occurred", LocalDateTime.now()));
+            .body(ErrorResponse.of(ErrorCode.INTERNAL_ERROR, "Internal server error occurred"));
     }
-
-    public record ErrorResponse(String code, String message, LocalDateTime timestamp) {}
 }

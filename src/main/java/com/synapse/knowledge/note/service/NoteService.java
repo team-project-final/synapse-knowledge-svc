@@ -1,28 +1,27 @@
 package com.synapse.knowledge.note.service;
 
-import com.synapse.knowledge.note.entity.Note;
-import com.synapse.knowledge.note.entity.NoteLink;
+import com.synapse.knowledge.global.exception.AccessDeniedException;
+import com.synapse.knowledge.global.util.MarkdownSanitizer;
 import com.synapse.knowledge.note.dto.NoteCreateRequest;
 import com.synapse.knowledge.note.dto.NoteResponse;
+import com.synapse.knowledge.note.entity.Note;
+import com.synapse.knowledge.note.entity.NoteLink;
 import com.synapse.knowledge.note.repository.NoteLinkRepository;
 import com.synapse.knowledge.note.repository.NoteRepository;
 import com.synapse.knowledge.note.service.support.WikiLinkParser;
-import com.synapse.knowledge.shared.AccessDeniedException;
-import com.synapse.knowledge.shared.MarkdownSanitizer;
 import com.synapse.knowledge.shared.NoteChunkingRequested;
 import com.synapse.knowledge.shared.NoteSearchSyncRequested;
+import java.time.Instant;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.annotation.Propagation;
-
-import java.time.Instant;
-import java.util.List;
-import java.util.Set;
-import java.util.Optional;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -38,10 +37,10 @@ public class NoteService {
     public NoteResponse create(Long userId, NoteCreateRequest request) {
         String sanitizedMd = sanitizer.sanitize(request.contentMd());
         String plainText = extractPlainText(sanitizedMd);
-        
+
         Note note = Note.create(request.tenantId(), userId, request.title(), sanitizedMd, plainText, request.tags());
         Note savedNote = noteRepository.save(note);
-        
+
         updateWikiLinks(savedNote.getId(), request.tenantId(), sanitizedMd);
         publishChunkingRequested(savedNote, "created");
         publishSearchSyncRequested(savedNote, false);
@@ -63,12 +62,12 @@ public class NoteService {
     public NoteResponse update(Long userId, Long noteId, NoteCreateRequest request) {
         Note note = findValidNote(noteId);
         validateOwner(userId, note);
-        
+
         String sanitizedMd = sanitizer.sanitize(request.contentMd());
         String plainText = extractPlainText(sanitizedMd);
-        
+
         note.update(request.title(), sanitizedMd, plainText, request.tags());
-        
+
         updateWikiLinks(note.getId(), note.getTenantId(), sanitizedMd);
         publishChunkingRequested(note, "updated");
         publishSearchSyncRequested(note, false);
@@ -106,7 +105,7 @@ public class NoteService {
 
     private void updateWikiLinks(Long sourceNoteId, String tenantId, String contentMd) {
         noteLinkRepository.deleteBySourceNoteId(sourceNoteId);
-        
+
         Set<String> titles = linkParser.parse(contentMd);
         for (String title : titles) {
             Optional<Note> targetNote = noteRepository.findByTenantIdAndTitleAndDeletedAtIsNull(tenantId, title);
@@ -127,7 +126,9 @@ public class NoteService {
     }
 
     private String extractPlainText(String htmlOrMd) {
-        if (htmlOrMd == null) return null;
+        if (htmlOrMd == null) {
+            return null;
+        }
         return htmlOrMd.replaceAll("<[^>]*>", "").replaceAll("\\[|\\]|\\(|\\)|#|\\*|`", "").trim();
     }
 

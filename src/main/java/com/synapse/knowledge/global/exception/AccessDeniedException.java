@@ -1,7 +1,7 @@
-package com.synapse.knowledge.shared;
+package com.synapse.knowledge.global.exception;
 
 public class AccessDeniedException extends BusinessException {
     public AccessDeniedException(String message) {
-        super("KNOW-403", 403, message);
+        super(ErrorCode.ACCESS_DENIED, message);
     }
 }

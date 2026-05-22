@@ -1,4 +1,4 @@
-package com.synapse.knowledge.shared;
+package com.synapse.knowledge.global.security;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
