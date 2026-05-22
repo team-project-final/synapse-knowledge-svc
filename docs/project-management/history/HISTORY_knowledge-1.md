@@ -1,34 +1,258 @@
 # Work History: @knowledge-1
 
-> **담당**: knowledge-svc / 노트·위키  
+> **담당**: knowledge-svc / 노트·그래프  
 > **관련 문서**: [SCOPE](../scope/SCOPE_knowledge-1.md) | [TASK](../task/TASK_knowledge-1.md) | [WORKFLOW](../workflow/WORKFLOW_knowledge-1_W1.md)
 
 ---
 
 ## 진행 상태 대시보드
 
-### W1 (2026-05-12 ~ 05-16)
+### W1 (2026-05-12 ~ 05-15)
 
-| Step | 내용 | 상태 | 시작일 | 완료일 | 비고 |
-|------|------|------|--------|--------|------|
-| Step 1 | knowledge-svc 골격 생성 | Done | 2026-05-15 | 2026-05-15 | Modulith 구조 및 모듈 골격 생성 |
-| Step 2 | note Markdown CRUD | Done | 2026-05-18 | 2026-05-18 | 보안/아키텍처 규칙 반영 |
-| Step 3 | 위키링크 파싱 | Done | 2026-05-18 | 2026-05-18 | 정규식 파서 및 매핑 구현 |
+| Step   | 내용                    | 상태 | 시작일     | 완료일     | 비고 |
+| ------ | ----------------------- | ---- | ---------- | ---------- | ---- |
+| Step 1 | knowledge-svc 골격 생성 | Done | 2026-05-12 | 2026-05-19 | 누락 컨트롤러 05-19 추가 완료 |
+| Step 2 | note Markdown CRUD      | Done | 2026-05-15 | 2026-05-18 | PR #7 머지 |
+| Step 3 | 위키링크 파싱           | Done | 2026-05-18 | 2026-05-18 | PR #7 머지 |
 
 **W1 진행률**: 3/3 Steps 완료
-...
-### W2 (2026-05-19 ~ 05-23)
 
-#### 2026-05-19 (화)
+### W2 (2026-05-18 ~ 05-22)
 
-**한 일**
-- fix(arch): 누락된 GraphController, ChunkingController 골격 생성
-- chore(build): root 디렉토리에 Multi-stage Dockerfile 생성
-- docs: W1 Step 1 문서 (TASK, WORKFLOW, HISTORY) 누락된 진행 상태 동기화
+| Step   | 내용                       | 상태        | 시작일     | 완료일     | 비고 |
+| ------ | -------------------------- | ----------- | ---------- | ---------- | ---- |
+| Step 4 | 백링크/지식 그래프 API     | Done        | 2026-05-22 | 2026-05-22 | GraphQueryPort 패턴 적용 |
+| Step 5 | Kafka→ES 자동 동기화       | Not Started | —          | —          | Kafka 다음 주로 연기, ES+PG 우선 |
 
-**이슈**
-- 없음
+**W2 진행률**: 1/2 Steps 완료
 
-**내일 계획**
-- W2 Step 4: 백링크 및 D3.js 호환 그래프 데이터 API 구현
+### W3 (2026-05-26 ~ 05-29)
 
+| Step   | 내용                   | 상태        | 시작일 | 완료일 | 비고 |
+| ------ | ---------------------- | ----------- | ------ | ------ | ---- |
+| Step 6 | 노트 버전 이력/복원    | Not Started | —      | —      |      |
+| Step 7 | 태그 필터링/자동완성   | Not Started | —      | —      |      |
+
+**W3 진행률**: 0/2 Steps 완료
+
+### W5 (2026-06-08 ~ 06-12)
+
+| Step   | 내용                       | 상태        | 시작일 | 완료일 | 비고 |
+| ------ | -------------------------- | ----------- | ------ | ------ | ---- |
+| Step 8 | 노트/그래프 E2E 테스트     | Not Started | —      | —      |      |
+| Step 9 | P0 버그 수정 및 ES 안정화  | Not Started | —      | —      |      |
+
+**W5 진행률**: 0/2 Steps 완료
+
+---
+
+## 작업 로그
+
+### W1 (2026-05-12 ~ 05-15)
+
+#### 2026-05-12 (월)
+
+- **완료**:
+  - 프로젝트 초기 부트스트랩 (`chore: bootstrap initial commit`)
+  - GitHub Actions CI 워크플로 추가 (Phase 2 bootstrap)
+  - `parse-workflow.yml` Dashboard 자동 push 설정
+  - 코드 Rule북 17개 파일 배포 (`docs/rules/`)
+  - 트랙별 프로젝트 관리 문서 배포
+- **진행 중**: Step 1 — knowledge-svc 골격 생성
+- **이슈**: CI `parse-workflow.yml` GITOPS_TOKEN 설정 문제
+- **다음**: CI 토큰 문제 해결 후 Modulith 프로젝트 구조 생성
+
+#### 2026-05-13 (화)
+
+- **완료**: —
+- **진행 중**: Step 1 — Spring Boot 4 + Modulith 프로젝트 구조 설계
+- **이슈**: —
+- **다음**: note / graph / chunking 패키지 구조 생성
+
+#### 2026-05-14 (수)
+
+- **완료**:
+  - CI `parse-workflow.yml` 모든 브랜치 트리거 + push 재시도 설정 안정화
+- **진행 중**: Step 1 — 모듈 패키지 구조 생성
+- **이슈**: parse-workflow CI 간헐적 실패 → 재시도 로직 추가로 해결
+- **다음**: note CRUD 구현 시작
+
+#### 2026-05-15 (목)
+
+- **완료**:
+  - AGENTS.md + 프로젝트 compound 스킬 추가 (`docs(agent)`)
+  - Modulith 모듈 구조 설정 완료 (knowledge-2 협업, PR #2)
+  - W1 Step2 ArchUnit 모듈 경계 테스트 추가 (PR #3)
+- **진행 중**: Step 2 — Note Markdown CRUD 구현
+- **이슈**: —
+- **다음**: Note CRUD API 5개 엔드포인트 구현
+
+#### 2026-05-16 (금)
+
+- **완료**: —
+- **진행 중**: Step 2 — NoteService, NoteController 구현
+- **이슈**: —
+- **주간 요약**: W1 Step 1 골격 생성 완료. ArchUnit 모듈 경계 테스트 추가. Note CRUD 구현 진행 중.
+
+---
+
+### W2 (2026-05-18 ~ 05-22)
+
+#### 2026-05-18 (일)
+
+- **완료**:
+  - Step 2 — Note Markdown CRUD 완전 구현 (PR #7)
+    - Note 엔티티, NoteRepository, NoteService, NoteController (5개 엔드포인트)
+    - Shared 모듈 인프라: BaseEntity, GlobalExceptionHandler, MarkdownSanitizer (XSS 방어)
+    - 소유자 권한 검증 (IDOR 403), soft delete, NoteIntegrationTest 통과
+  - Step 3 — 위키링크 파싱 완전 구현 (PR #7)
+    - WikiLinkParser (정규식 `\[\[([^\]]+)\]\]`, ReDoS 방어)
+    - NoteService 연동 — 생성/수정 시 자동 링크 추출·저장
+    - `GET /notes/{id}/backlinks` API, NoteLinkIntegrationTest 통과
+  - Spring Modulith 2.0.6 기준 요구사항 정렬 (PR #6)
+  - CI gradlew 실행 권한 수정 100644→100755 (PR #8)
+- **진행 중**: Step 4 — 지식 그래프 API 설계
+- **이슈**: gradlew 실행 권한 누락으로 CI 빌드 실패 → 권한 수정으로 해결
+- **다음**: GraphController 구현, GraphQueryPort 패턴 설계
+
+#### 2026-05-19 (월)
+
+- **완료**:
+  - Step 1 보완 — 누락된 GraphController, ChunkingController 추가 (PR #11)
+    - W1 골격 생성 단계에서 누락된 컨트롤러 추가로 아키텍처 완성
+  - WORKFLOW W1 문서 상태 동기화 (PR #10)
+  - Step3 avro 완료 상태 동기화 (PR #9)
+  - TASK 파일 업데이트 (PR #12)
+- **진행 중**: Step 4 — 지식 그래프 API 구현
+- **이슈**: W1 Step 1 당시 graph/chunking 컨트롤러 누락 — 뒤늦게 발견 및 추가
+- **다음**: GraphQueryPort 인터페이스 설계 및 구현
+
+#### 2026-05-20 (화)
+
+- **완료**:
+  - Dockerfile EKS 배포용 multi-stage 빌드 개선 (PR #16)
+    - 빌드 스테이지 분리, 이미지 크기 최적화
+- **진행 중**: Step 4 — GraphQueryPort 설계
+- **이슈**: —
+- **다음**: GraphService, GraphController 구현
+
+#### 2026-05-21 (수)
+
+- **완료**:
+  - BM25 노트 검색 + JWT 인증 골격 추가 (PR #19, knowledge-2 협업)
+    - Elasticsearch nori 기반 검색 API, cursor 페이지네이션
+    - SecurityConfig, WebMvcConfig JWT 인증 골격
+    - SearchElasticsearchIntegrationTest 추가
+  - gstack skill routing rules CLAUDE.md 추가
+- **진행 중**: Step 4 — GraphQueryPort 구현 시작
+  - `shared/GraphQueryPort.java` 인터페이스 정의
+  - `shared/GraphNoteData.java` 레코드 정의
+- **이슈**: —
+- **다음**: GraphLinkData, NoteGraphAdapter, GraphService, GraphController 구현
+
+#### 2026-05-22 (목)
+
+- **완료**:
+  - Step 4 — 백링크/지식 그래프 API 완전 구현
+    - `shared/GraphLinkData.java` — (sourceNoteId, targetNoteId) 레코드
+    - `note/application/NoteGraphAdapter.java` — GraphQueryPort 구현체
+      - ArchUnit 모듈 경계 준수 (note → shared 단방향)
+      - `findTop1000ByUserIdAndDeletedAtIsNull`, `findBySourceNoteIdIn` 쿼리 추가
+    - `graph/application/GraphService.java` — linkCount(in-degree) + PageRank(10회 반복, damping=0.85)
+    - `graph/dto/` — GraphDataResponse, GraphNodeResponse, GraphEdgeResponse
+    - `graph/presentation/GraphController.java` — `GET /api/graph/data?userId={id}`
+    - `GraphIntegrationTest` 5개 케이스 통과
+    - ArchUnit 모듈 경계 테스트 통과
+  - TASK_knowledge-1.md Step 4 Done 상태 업데이트
+- **진행 중**: —
+- **이슈**: —
+- **다음**: Step 5 Kafka→ES 동기화 (다음 주, Kafka 환경 준비 후)
+
+#### 2026-05-23 (금)
+
+- **완료**: —
+- **진행 중**: —
+- **이슈**: —
+- **주간 요약**: Step 4 지식 그래프 API 완료. GraphQueryPort 포트 패턴으로 ArchUnit 모듈 경계 준수. `GET /api/graph/data?userId={id}` → D3.js 호환 JSON(nodes+edges) 반환. Step 5 Kafka 연동은 다음 주로 연기, ES+PostgreSQL 기반 우선 진행 예정.
+
+---
+
+### W3 (2026-05-26 ~ 05-29)
+
+#### 2026-05-26 (월)
+
+- **완료**:
+- **진행 중**:
+- **이슈**:
+- **다음**:
+
+#### 2026-05-27 (화)
+
+- **완료**:
+- **진행 중**:
+- **이슈**:
+- **다음**:
+
+#### 2026-05-28 (수)
+
+- **완료**:
+- **진행 중**:
+- **이슈**:
+- **다음**:
+
+#### 2026-05-29 (목)
+
+- **완료**:
+- **진행 중**:
+- **이슈**:
+- **다음**:
+
+#### 2026-05-30 (금)
+
+- **완료**:
+- **진행 중**:
+- **이슈**:
+- **주간 요약**:
+
+---
+
+### W5 (2026-06-08 ~ 06-12)
+
+#### 2026-06-09 (월)
+
+- **완료**:
+- **진행 중**:
+- **이슈**:
+- **다음**:
+
+#### 2026-06-10 (화)
+
+- **완료**:
+- **진행 중**:
+- **이슈**:
+- **다음**:
+
+#### 2026-06-11 (수)
+
+- **완료**:
+- **진행 중**:
+- **이슈**:
+- **다음**:
+
+#### 2026-06-12 (목)
+
+- **완료**:
+- **진행 중**:
+- **이슈**:
+- **다음**:
+
+---
+
+## 변경 이력
+
+| 날짜       | 변경 사항                                         |
+| ---------- | ------------------------------------------------- |
+| 2026-05-22 | W1 전체 + W2 05-22까지 커밋 기반 작업 로그 작성  |
+| 2026-05-22 | 대시보드 Step 번호/내용 TASK 파일 기준으로 정렬  |
+| 2026-05-11 | W2/W3/W4 대시보드 및 로그 템플릿 추가             |
+| 2026-05-11 | 초기 템플릿 생성                                  |
