@@ -164,11 +164,11 @@
 - **Step Name**: 백링크/지식 그래프 API
 - **Step Goal**: 사용자가 노트 간 백링크를 조회하고, D3.js 지식 그래프 데이터를 API로 받을 수 있다.
 - **Done When**:
-  - [ ] `GET /notes/{id}/backlinks` → 해당 노트를 참조하는 노트 목록 반환
-  - [ ] `GET /graph/data` → 전체 노트 그래프 데이터 반환 (nodes + edges 단일 엔드포인트, Wiki 기준 — `/graph/nodes`·`/graph/edges` 분리 없음)
+  - [x] `GET /notes/{id}/backlinks` → 해당 노트를 참조하는 노트 목록 반환
+  - [x] `GET /graph/data` → 전체 노트 그래프 데이터 반환 (nodes + edges 단일 엔드포인트, Wiki 기준 — `/graph/nodes`·`/graph/edges` 분리 없음)
     - 쿼리 파라미터로 `userId={id}` 지원 (구 `GET /graph?userId={id}` 대체)
-  - [ ] D3.js force-directed graph 호환 JSON 포맷
-  - [ ] 통합 테스트 통과
+  - [x] D3.js force-directed graph 호환 JSON 포맷
+  - [x] 통합 테스트 통과
 - **Scope**:
   - In Scope:
     - 백링크 조회 API (note_links 역방향 조회)
@@ -204,7 +204,7 @@
 - **Assignee**: @knowledge-owner-1
 - **Reviewer**: @team-lead
 
-**Status**: [ ] Not Started / [ ] In Progress / [ ] Done
+**Status**: [ ] Not Started / [ ] In Progress / [x] Done
 
 ---
 
