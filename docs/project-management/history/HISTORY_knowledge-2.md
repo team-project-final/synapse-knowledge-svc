@@ -23,19 +23,17 @@
 | ------ | ------------------ | ----------- | ---------- | ---------- | -------------------------------------------------------------------- |
 | Step 4 | chunking 전략 구현 | Done        | 2026-05-19 | 2026-05-19 | Spring event + @Async 기반 비동기 청크 분할, 수정/삭제 정리까지 구현 |
 | Step 5 | BM25 검색 엔진     | Done        | 2026-05-20 | 2026-05-20 | JWT 검증 골격 + BM25 검색 API/비동기 인덱싱 + live ES nori 통합 검증 완료 |
-| Step 6 | 검색 인덱싱        | Not Started | —          | —          |                                                                      |
 
-**W2 진행률**: 2/3 Steps 완료
+**W2 진행률**: 2/2 Steps 완료
 
 ### W3 (2026-05-26 ~ 05-29)
 
 | Step   | 내용                   | 상태        | 시작일 | 완료일 | 비고 |
 | ------ | ---------------------- | ----------- | ------ | ------ | ---- |
-| Step 7 | RRF 랭킹 알고리즘      | Not Started | —      | —      |      |
-| Step 8 | 정확도 측정 파이프라인 | Not Started | —      | —      |      |
-| Step 9 | 검색 필터링            | Not Started | —      | —      |      |
+| Step 6 | 하이브리드 검색        | Done        | 2026-05-26 | 2026-05-26 | `/api/v1/ai/search/{semantic,hybrid}` + RRF 병합 + fallback 구현 |
+| Step 7 | 정확도 측정 파이프라인 | Not Started | —      | —      |      |
 
-**W3 진행률**: 0/3 Steps 완료
+**W3 진행률**: 1/2 Steps 완료
 
 ### W4 (2026-06-01 ~ 06-05)
 
@@ -177,12 +175,16 @@
 
 - **완료**:
   - docs(workflow): `WORKFLOW_knowledge-2_W3.md`의 Step 6/7 세부 체크 번호를 `1.x`에서 `6.x`/`7.x`로 정렬
+  - feat(search): `GET /api/v1/notes/search` BM25 경로를 유지한 채 `POST /api/v1/ai/search/semantic`, `POST /api/v1/ai/search/hybrid`와 learning-ai semantic 프록시를 추가
+  - feat(search): BM25 후보 조회 + semantic 후보 조회를 병렬 실행하고 RRF(k=60)로 병합하는 `HybridSearchService`와 fallback 경로를 구현
+  - test(search): semantic/hybrid MockMvc, RRF 병합 단위 테스트, fallback 테스트, ES 기반 hybrid 통합 테스트를 추가하고 `./gradlew.bat test` 통과
+  - docs(step6): Step 6 Task/Workflow/HISTORY를 `/api/v1` 규칙, Swagger 미구성 상태, 실제 하이브리드 검색 완료 상태에 맞게 동기화
 - **진행 중**:
   - 없음
 - **이슈**:
-  - 없음
+  - Step 6 Task 초안은 `/api/v1` 접두사 제거를 전제로 했지만, `docs/rules/02-function.md` 기준에 맞춰 `/api/v1` 엔드포인트로 정리함
 - **다음**:
-  - W3 Step 6 하이브리드 검색 구현 착수
+  - W3 Step 7 검색 정확도 측정 및 리포트 착수
 
 #### 2026-05-27 (수)
 

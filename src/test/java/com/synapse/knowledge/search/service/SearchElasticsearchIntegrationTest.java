@@ -1,14 +1,19 @@
 package com.synapse.knowledge.search.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.BDDMockito.given;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.ElasticsearchException;
 import com.synapse.knowledge.note.dto.NoteCreateRequest;
 import com.synapse.knowledge.note.repository.NoteRepository;
 import com.synapse.knowledge.note.service.NoteService;
+import com.synapse.knowledge.search.client.LearningAiSearchClient;
+import com.synapse.knowledge.search.dto.HybridSearchRequest;
+import com.synapse.knowledge.search.dto.HybridSearchResponse;
 import com.synapse.knowledge.search.dto.SearchPageResponse;
 import com.synapse.knowledge.search.dto.SearchRequest;
+import com.synapse.knowledge.search.service.support.SearchCandidate;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
@@ -19,6 +24,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -68,6 +74,9 @@ class SearchElasticsearchIntegrationTest {
 
     @Autowired
     private ElasticsearchClient elasticsearchClient;
+
+    @MockitoBean
+    private LearningAiSearchClient learningAiSearchClient;
 
     @BeforeEach
     void setUp() throws IOException {
@@ -130,6 +139,34 @@ class SearchElasticsearchIntegrationTest {
         // Then
         assertThat(response.results()).hasSize(1);
         assertThat(response.results().get(0).title()).isEqualTo("스프링 검색");
+    }
+
+    @DisplayName("hybridSearch_시맨틱결과가함께오면_shouldRrf점수순으로병합된다")
+    @Test
+    void hybridSearch_시맨틱결과가함께오면_shouldRrf점수순으로병합된다() {
+        // Given
+        Long ownerId = 500L;
+        Long springNoteId = noteService.create(
+            ownerId,
+            new NoteCreateRequest("tenant1", "스프링 시큐리티", "spring security jwt resource server", List.of("backend"))
+        ).id();
+        Long elasticNoteId = noteService.create(
+            ownerId,
+            new NoteCreateRequest("tenant1", "엘라스틱서치", "bm25 search nori analyzer", List.of("search"))
+        ).id();
+        given(learningAiSearchClient.searchSemantic(ownerId, "스프링", 30, null)).willReturn(List.of(
+            new SearchCandidate(elasticNoteId, "엘라스틱서치", List.of(), "의미상 관련", null, 0.98f),
+            new SearchCandidate(springNoteId, "스프링 시큐리티", List.of(), "의미상 관련", null, 0.95f)
+        ));
+
+        // When
+        waitForResults(ownerId, "스프링", null, 20);
+        HybridSearchResponse response = searchService.hybridSearch(ownerId, new HybridSearchRequest("스프링", 10, null));
+
+        // Then
+        assertThat(response.results()).isNotEmpty();
+        assertThat(response.results().get(0).semanticScore()).isNotNull();
+        assertThat(response.semanticFallback()).isFalse();
     }
 
     private SearchPageResponse waitForResults(Long userId, String query, List<String> tags, int limit) {

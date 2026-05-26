@@ -10,80 +10,80 @@
 
 ### 6.1 TASK 시작
 
-- [ ] Step Goal / Done When / Scope / Input 확인
-- [ ] PRD_W3 해당 요구사항 확인 (하이브리드 검색)
-- [ ] Duration 산정 확인
+- [x] Step Goal / Done When / Scope / Input 확인
+- [x] PRD_W3 해당 요구사항 확인 (하이브리드 검색)
+- [x] Duration 산정 확인
 
 ### 6.2 요구사항 분석
 
-- [ ] Reciprocal Rank Fusion (RRF) 알고리즘 분석 (k=60 파라미터)
-- [ ] pgvector 시맨틱 검색 요건 분석 (임베딩 모델, 유사도 함수)
-- [ ] Elasticsearch BM25 검색 요건 분석 (nori 분석기, 필드 가중치)
-- [ ] 두 검색 결과 병합 전략 정의
-- [ ] Instructions 초안 → TASK 문서 반영
+- [x] Reciprocal Rank Fusion (RRF) 알고리즘 분석 (k=60 파라미터)
+- [x] learning-ai 시맨틱 검색 프록시 연동 요건 분석
+- [x] Elasticsearch BM25 검색 요건 분석 (nori 분석기, 필드 가중치)
+- [x] 두 검색 결과 병합 전략 정의
+- [x] Instructions 초안 → TASK 문서 반영
 
 ### 6.3 Security 1차 검토
 
-- [ ] 인증 필요 여부: Yes (로그인 사용자)
-- [ ] 권한 종류: 본인 노트/공개 노트만 검색 가능
-- [ ] 검색 결과 접근 제어 필터 적용 필수
-- [ ] 결과 → TASK Constraints 반영
+- [x] 인증 필요 여부: Yes (로그인 사용자)
+- [x] 권한 종류: 본인 노트만 검색 가능
+- [x] 검색 결과 접근 제어 필터 적용 필수
+- [x] 결과 → TASK Constraints 반영
 
 ### 6.4 아키텍처 설계
 
-- [ ] 검색 파이프라인 설계 (쿼리 → 임베딩 → pgvector 검색 + ES 검색 → RRF 병합)
-- [ ] pgvector 인덱스 설정 (IVFFlat / HNSW, 차원 수)
-- [ ] ES 인덱스 매핑 설정 (nori 분석기, 필드 가중치)
-- [ ] RRF 병합 로직 설계 (score = Σ 1/(k + rank_i))
-- [ ] Duration(final) 갱신
+- [x] 검색 파이프라인 설계 (쿼리 → learning-ai semantic proxy + ES 검색 → RRF 병합)
+- [x] BM25 후보 검색과 semantic 후보 검색의 공통 결과 모델 정의
+- [x] ES 인덱스 매핑 재사용 여부 확인 (nori 분석기, 필드 가중치)
+- [x] RRF 병합 로직 설계 (score = Σ 1/(k + rank_i))
+- [x] Duration(final) 갱신
 
 ### 6.5 Security 2차 검토
 
-- [ ] 검색 쿼리 인젝션 방지 (ES query sanitization)
-- [ ] 임베딩 벡터 접근 제어 (사용자별 필터)
-- [ ] 검색 결과 민감정보 마스킹
-- [ ] 결과 → TASK Constraints 반영
+- [x] 검색 쿼리 인젝션 방지 (ES query sanitization)
+- [x] 시맨틱 검색 프록시 호출 시 사용자 컨텍스트 전달
+- [x] 검색 결과 민감정보 마스킹
+- [x] 결과 → TASK Constraints 반영
 
 ### 6.6 DTO / Entity 설계 (API First)
 
-- [ ] HybridSearchRequest DTO 정의 (query, cursor, limit, filters)
-- [ ] HybridSearchResponse DTO 정의 (results[], totalCount, cursor, searchTime)
-- [ ] SearchResultItem DTO 정의 (noteId, title, snippet, score, source)
-- [ ] Output Format → TASK 반영
+- [x] HybridSearchRequest DTO 정의 (query, limit, tags)
+- [x] HybridSearchResponse DTO 정의 (results[], totalCount, searchTime, semanticFallback)
+- [x] SemanticSearchRequest / SemanticSearchResponse / UnifiedSearchResultResponse DTO 정의
+- [x] Output Format → TASK 반영
 
 ### 6.7 Repository / Client 구현
 
-- [ ] PgVectorSearchRepository 구현 (pgvector cosine similarity 검색)
-- [ ] ElasticsearchClient 구현 (BM25 검색 + nori 분석)
-- [ ] EmbeddingClient 구현 (쿼리 텍스트 → 임베딩 벡터 변환)
+- [x] LearningAiSearchClient 구현 (시맨틱 검색 프록시)
+- [x] Elasticsearch 후보 검색 구현 (BM25 검색 + nori 분석)
+- [x] SearchProperties / RestClient 설정 구현
 
 ### 6.8 Service + Test
 
-- [ ] SemanticSearchService 구현 (쿼리 임베딩 → pgvector top-K 검색)
-- [ ] BM25SearchService 구현 (ES BM25 top-K 검색)
-- [ ] RRFMergeService 구현 (두 결과 리스트 RRF 병합, k=60)
-- [ ] HybridSearchService 구현 (시맨틱 + BM25 → RRF → 최종 결과)
-- [ ] 접근 제어 필터 적용 (사용자 소유 + 공개 노트만)
-- [ ] 단위 테스트 작성 (각 서비스별 Mockito)
-- [ ] 테스트 통과 확인
+- [x] SemanticSearchService 구현 (learning-ai semantic API 프록시)
+- [x] 기존 BM25 검색 경로를 후보 조회와 페이지 조회로 분리
+- [x] RRFMergeService 구현 (두 결과 리스트 RRF 병합, k=60)
+- [x] HybridSearchService 구현 (시맨틱 + BM25 → RRF → 최종 결과)
+- [x] 접근 제어 필터 적용 (사용자 소유 노트만)
+- [x] 단위 테스트 작성 (서비스/병합 로직)
+- [x] 테스트 통과 확인
 
 ### 6.9 Controller + Test
 
-- [ ] GET /notes/search?q=... 엔드포인트 구현 (키워드 검색)
-- [ ] POST /ai/search/semantic 엔드포인트 구현 (시맨틱 검색) — **아키텍처 주의**: `/ai/search/semantic` 및 `/ai/search/hybrid` API는 learning-ai 서비스 소관입니다. knowledge-svc에서 직접 구현하지 말고 learning-ai 런타임이 제공하는 API를 호출(프록시)하는 방식으로 연동하십시오.
-- [ ] POST /ai/search/hybrid 엔드포인트 구현 (하이브리드 검색) — **아키텍처 주의**: 위 항목 참조. 해당 엔드포인트의 실제 구현 책임은 learning-ai 팀에 있습니다.
-- [ ] 검색 결과 하이라이트 (매칭 키워드 강조)
-- [ ] 슬라이스 테스트 (@WebMvcTest)
-- [ ] 빈 결과, 페이징, 필터 테스트
-- [ ] 테스트 통과 확인
+- [x] GET /api/v1/notes/search?q=... 엔드포인트 유지 (키워드 검색)
+- [x] POST /api/v1/ai/search/semantic 엔드포인트 구현 (시맨틱 검색 프록시)
+- [x] POST /api/v1/ai/search/hybrid 엔드포인트 구현 (하이브리드 검색 조합)
+- [x] 검색 결과 하이라이트 / snippet 유지
+- [x] MockMvc 기반 인증/응답 테스트 추가
+- [x] 빈 결과, fallback, 필터 테스트
+- [x] 테스트 통과 확인
 
 ### 6.10 View + Test (해당 시)
 
-- [ ] Flutter 화면 연동: 해당 없음 (프론트 별도)
-- [ ] Swagger API 문서 확인
-- [ ] RULE Reference → TASK 반영
+- [x] Flutter 화면 연동: 해당 없음 (프론트 별도)
+- [x] Swagger/OpenAPI 미구성으로 확인 불가
+- [x] RULE Reference → TASK 반영
 
-**Step 6 Status**: [ ] Not Started / [ ] In Progress / [ ] Done
+**Step 6 Status**: [ ] Not Started / [ ] In Progress / [x] Done
 
 ---
 

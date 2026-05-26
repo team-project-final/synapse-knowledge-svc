@@ -9,3 +9,11 @@ spring:
 security:
   jwt:
     public-key-pem: ${SECURITY_JWT_PUBLIC_KEY_PEM:}
+
+search:
+  ai:
+    base-url: ${LEARNING_AI_BASE_URL:http://localhost:8083}
+    timeout: ${LEARNING_AI_TIMEOUT:3s}
+  hybrid:
+    rrf-k: ${SEARCH_HYBRID_RRF_K:60}
+    candidate-multiplier: ${SEARCH_HYBRID_CANDIDATE_MULTIPLIER:3}
