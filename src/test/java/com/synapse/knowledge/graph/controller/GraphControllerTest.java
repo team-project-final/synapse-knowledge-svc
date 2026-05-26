@@ -34,14 +34,14 @@ class GraphControllerTest {
     @Test
     @DisplayName("getGraphData_인증없음_shouldReturn401")
     void getGraphData_인증없음_shouldReturn401() throws Exception {
-        mockMvc.perform(get("/api/graph/data"))
+        mockMvc.perform(get("/api/v1/graphs"))
                 .andExpect(status().isUnauthorized());
     }
 
     @Test
     @DisplayName("getNeighborGraph_인증없음_shouldReturn401")
     void getNeighborGraph_인증없음_shouldReturn401() throws Exception {
-        mockMvc.perform(get("/api/graph/neighbor").param("noteId", "1").param("depth", "2"))
+        mockMvc.perform(get("/api/v1/graphs/neighbors").param("noteId", "1").param("depth", "2"))
                 .andExpect(status().isUnauthorized());
     }
 
@@ -55,7 +55,7 @@ class GraphControllerTest {
         given(graphService.getGraphData(1L)).willReturn(response);
 
         mockMvc.perform(
-                get("/api/graph/data")
+                get("/api/v1/graphs")
                         .with(jwt().jwt(j -> j.subject("1").claim("userId", 1L)))
                 )
                 .andExpect(status().isOk())
@@ -73,7 +73,7 @@ class GraphControllerTest {
         given(graphService.getNeighborGraph(1L, 2)).willReturn(response);
 
         mockMvc.perform(
-                get("/api/graph/neighbor")
+                get("/api/v1/graphs/neighbors")
                         .with(jwt().jwt(j -> j.subject("1").claim("userId", 1L)))
                         .param("noteId", "1")
                         .param("depth", "2")
