@@ -38,7 +38,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    JwtDecoder jwtDecoder(@Value("${security.jwt.public-key-pem:}") String publicKeyPem) {
+    JwtDecoder jwtDecoder(@Value("${synapse.jwt.public-key:}") String publicKeyPem) {
         RSAPublicKey publicKey = StringUtils.hasText(publicKeyPem)
             ? parsePublicKey(publicKeyPem)
             : generateEphemeralPublicKey();
@@ -55,7 +55,7 @@ public class SecurityConfig {
             X509EncodedKeySpec keySpec = new X509EncodedKeySpec(decoded);
             return (RSAPublicKey) KeyFactory.getInstance("RSA").generatePublic(keySpec);
         } catch (Exception ex) {
-            throw new IllegalStateException("security.jwt.public-key-pem 파싱에 실패했습니다", ex);
+            throw new IllegalStateException("synapse.jwt.public-key 파싱에 실패했습니다", ex);
         }
     }
 
