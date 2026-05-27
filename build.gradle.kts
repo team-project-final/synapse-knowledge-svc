@@ -48,6 +48,12 @@ dependencies {
 tasks.withType<Test> {
 	useJUnitPlatform()
 	systemProperty("spring.profiles.active", "test")
+	testLogging {
+		exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+		events("failed")
+		showStackTraces = true
+		showCauses = true
+	}
 }
 
 dependencyManagement {
