@@ -49,8 +49,11 @@ class SearchElasticsearchIntegrationTest {
             MountableFile.forClasspathResource("elasticsearch/elasticsearch-plugins.yml"),
             "/usr/share/elasticsearch/config/elasticsearch-plugins.yml"
         )
-        .waitingFor(Wait.forHttp("/").forStatusCode(200))
-        .withStartupTimeout(Duration.ofMinutes(4));
+        .waitingFor(
+            Wait.forHttp("/_cluster/health?wait_for_status=yellow&timeout=60s")
+                .forPort(9200)
+                .forStatusCode(200))
+        .withStartupTimeout(Duration.ofMinutes(5));
 
     @DynamicPropertySource
     static void registerElasticProperties(DynamicPropertyRegistry registry) {
