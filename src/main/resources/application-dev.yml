@@ -1,4 +1,24 @@
 spring:
-  config:
-    activate:
-      on-profile: dev
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/synapse}
+    username: ${DB_USERNAME:synapse}
+    password: ${DB_PASSWORD:synapse_local_pw}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  elasticsearch:
+    uris: ${ELASTICSEARCH_URIS:http://localhost:9200}
+
+synapse:
+  jwt:
+    public-key: ${JWT_PUBLIC_KEY:MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAspYublqbb7MHpuJ6d0SUkDTl63/92T74N+dg3Mibzrqz5U8KGZtz8v6sdzbMTaDPmxlDkBLkFaszU3Ym9PvSFoym55dIRzTZKpjLPMFyURgfd6nXfBPoAlzIb00cGYje6eQE1U1OAWoje7XffjZtTsbN3VtEOa6eNbRW2uv95IXkJDtcG/koeLiNb42BF28rhpAYmGE24iQxfARRqh7IZ3E6giWmuXIDsEaWJCKt/UlUbmKpUSAfnwriWxE78lALXHQSmFWl2WZ9ruXzUBWpQZJPEGO4RxX2898HxA7Jv5V7VqmGvEqB3ZYXs2wyaeXpFjfv/iWPC/+83PMyRi6VtQIDAQAB}
+    issuer: synapse-auth
+
+logging:
+  level:
+    com.synapse.knowledge: DEBUG
