@@ -38,7 +38,7 @@ class SearchElasticsearchIntegrationTest {
 
     @Container
     static final GenericContainer<?> elasticsearch = new GenericContainer<>(
-        DockerImageName.parse("docker.elastic.co/elasticsearch/elasticsearch:8.19.6")
+        DockerImageName.parse("docker.elastic.co/elasticsearch/elasticsearch:9.2.1")
     )
         .withExposedPorts(9200)
         .withEnv("discovery.type", "single-node")
