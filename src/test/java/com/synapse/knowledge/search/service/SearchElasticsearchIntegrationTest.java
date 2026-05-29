@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,11 +40,6 @@ import org.testcontainers.utility.MountableFile;
 @SpringBootTest
 @ActiveProfiles("test")
 @Testcontainers(disabledWithoutDocker = true)
-@Disabled("""
-    ES/OpenSearch 호환성 과제로 CI에서 일시 제외.
-    클라이언트(co.elastic.clients 9.2.1)는 ES 9.x 서버를 요구하나(8.x는 compatible-with 400),
-    운영은 OpenSearch 2.11(Lucene 9.x)이고 앱 Nori POS 설정이 ES 9.x(Lucene 10) POS.Tag와 불일치(POS.Tag.E).
-    테스트 서버 이미지/클라이언트/운영 OpenSearch/Nori 설정 정합은 별도 과제로 트래킹.""")
 class SearchElasticsearchIntegrationTest {
 
     private static final String INDEX_NAME = "notes-v1";
@@ -57,13 +51,14 @@ class SearchElasticsearchIntegrationTest {
         .withExposedPorts(9200)
         .withEnv("discovery.type", "single-node")
         .withEnv("xpack.security.enabled", "false")
+        .withEnv("xpack.security.http.ssl.enabled", "false")
         .withEnv("ES_JAVA_OPTS", "-Xms512m -Xmx512m")
         .withEnv("ingest.geoip.downloader.enabled", "false")
         .withCopyFileToContainer(
             MountableFile.forClasspathResource("elasticsearch/elasticsearch-plugins.yml"),
             "/usr/share/elasticsearch/config/elasticsearch-plugins.yml"
         )
-        .waitingFor(Wait.forHttp("/").forStatusCode(200))
+        .waitingFor(Wait.forHttp("/_cluster/health?wait_for_status=yellow&timeout=5s").forStatusCode(200))
         .withStartupTimeout(Duration.ofMinutes(4));
 
     @DynamicPropertySource
