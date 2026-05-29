@@ -211,7 +211,9 @@
   - refactor(search): semantic/hybrid 호출에 `SearchIdentity`를 도입해 BM25용 `userId`와 semantic용 actor 식별자를 분리
   - feat(search): `note_identity_map` 테이블과 조회 포트를 추가해 learning-ai UUID `note_id`를 knowledge `Long noteId`로 연결하고 hybrid semantic 결과를 실제 RRF 후보로 병합
   - feat(search): 검색 인덱스 이벤트/ES 문서/BM25 후보 모델에 `externalNoteId`를 반영해 BM25와 semantic 결과를 공통 UUID 키로 병합
-  - test(search): `HybridSearchServiceTest`, `RrfMergeServiceTest`, `SearchServiceTest`, `NoteIntegrationTest`, `ChunkingIntegrationTest`, `KnowledgeSvcApplicationTests` 재검증 통과
+  - fix(search): Elasticsearch 9.x(Lucene 9/10) Nori 분석기 POS 태그 호환성 수정
+    - 삭제된 `E`, `J` 태그를 `EP, EF, EC, ETN, ETM` 및 `JKS, JKC, JKG, JKO, JKB, JKV, JKQ, JX, JC`로 교체
+  - test(search): `SearchElasticsearchIntegrationTest` 포함 전체 테스트 재검증 통과
 - **이슈**:
   - 전체 `./gradlew.bat test`는 기존 `NeighborGraphIntegrationTest`의 Docker 환경 탐지 실패로 1건 실패
 - **다음**:

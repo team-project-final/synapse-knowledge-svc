@@ -231,7 +231,7 @@ public class ElasticsearchNoteSearchRepository implements NoteSearchRepository {
                         )
                         .filter("korean_nori_pos_filter", filter -> filter
                             .definition(definition -> definition.noriPartOfSpeech(pos -> pos
-                                .stoptags("E", "IC", "J", "MAG", "MAJ", "MM", "SP", "SSC", "SSO", "SC", "SE", "XPN", "XSA", "XSN", "XSV", "UNA", "NA", "VSV")
+                                .stoptags("EP", "EF", "EC", "ETN", "ETM", "IC", "JKS", "JKC", "JKG", "JKO", "JKB", "JKV", "JKQ", "JX", "JC", "MAG", "MAJ", "MM", "SP", "SSC", "SSO", "SC", "SE", "XPN", "XSA", "XSN", "XSV", "UNA", "NA", "VSV")
                             ))
                         )
                         .analyzer("korean_nori", analyzer -> analyzer
