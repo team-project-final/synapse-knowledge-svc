@@ -7,4 +7,9 @@ public interface GraphQueryPort {
 
     List<GraphLinkData> findAllLinksByUserId(Long userId);
 
+    List<GraphLinkData> findLinksByNoteId(Long noteId);
+
+    List<GraphNoteData> findNotesByIds(List<Long> noteIds);
+
+    List<GraphLinkData> findNeighborLinksByDepth(Long noteId, int maxDepth);
 }

@@ -40,4 +40,38 @@ public class NoteGraphAdapter implements GraphQueryPort {
                 .map(link -> new GraphLinkData(link.getSourceNoteId(), link.getTargetNoteId()))
                 .toList();
     }
+
+    @Override
+    public List<GraphLinkData> findLinksByNoteId(Long noteId) {
+        List<GraphLinkData> outLinks = noteLinkRepository.findBySourceNoteId(noteId)
+                .stream()
+                .filter(link -> link.getTargetNoteId() != null)
+                .map(link -> new GraphLinkData(link.getSourceNoteId(), link.getTargetNoteId()))
+                .toList();
+
+        List<GraphLinkData> inLinks = noteLinkRepository.findByTargetNoteId(noteId)
+                .stream()
+                .filter(link -> link.getSourceNoteId() != null)
+                .map(link -> new GraphLinkData(link.getSourceNoteId(), link.getTargetNoteId()))
+                .toList();
+
+        return java.util.stream.Stream.concat(outLinks.stream(), inLinks.stream()).toList();
+    }
+
+    @Override
+    public List<GraphNoteData> findNotesByIds(List<Long> noteIds) {
+        return noteRepository.findAllById(noteIds)
+                .stream()
+                .filter(note -> note.getDeletedAt() == null)
+                .map(note -> new GraphNoteData(note.getId(), note.getTitle(), note.getUserId()))
+                .toList();
+    }
+
+    @Override
+    public List<GraphLinkData> findNeighborLinksByDepth(Long noteId, int maxDepth) {
+        return noteLinkRepository.findNeighborLinksByDepthNative(noteId, maxDepth)
+                .stream()
+                .map(row -> new GraphLinkData(((Number) row[0]).longValue(), ((Number) row[1]).longValue()))
+                .toList();
+    }
 }

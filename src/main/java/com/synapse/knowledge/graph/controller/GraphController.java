@@ -8,10 +8,11 @@ import com.synapse.knowledge.graph.service.GraphService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/graph")
+@RequestMapping("/api/v1/graph")
 @RequiredArgsConstructor
 public class GraphController {
 
@@ -20,5 +21,13 @@ public class GraphController {
     @GetMapping("/data")
     public ApiResponse<GraphDataResponse> getGraphData(@CurrentUserAuth CurrentUser currentUser) {
         return ApiResponse.success(graphService.getGraphData(currentUser.userId()));
+    }
+
+    @GetMapping
+    public ApiResponse<GraphDataResponse> getNeighborGraph(
+            @CurrentUserAuth CurrentUser currentUser,
+            @RequestParam Long noteId,
+            @RequestParam(defaultValue = "2") int depth) {
+        return ApiResponse.success(graphService.getNeighborGraph(currentUser.userId(), noteId, depth));
     }
 }
