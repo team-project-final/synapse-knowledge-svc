@@ -54,7 +54,7 @@ class NeighborGraphIntegrationTest {
         NoteResponse noteA = noteService.create(userId, new NoteCreateRequest(tenantId, "A", "Links to [[B]]"));
 
         // When: depth=1 from A
-        GraphDataResponse response = graphService.getNeighborGraph(noteA.id(), 1);
+        GraphDataResponse response = graphService.getNeighborGraph(userId, noteA.id(), 1);
 
         // Then: A와 직접 이웃인 B만 포함 (C는 depth=2라 제외)
         assertThat(response.nodes()).hasSizeGreaterThanOrEqualTo(1);
@@ -72,7 +72,7 @@ class NeighborGraphIntegrationTest {
         NoteResponse noteA = noteService.create(userId, new NoteCreateRequest(tenantId, "A", "Links to [[B]]"));
 
         // When: depth=2 from A
-        GraphDataResponse response = graphService.getNeighborGraph(noteA.id(), 2);
+        GraphDataResponse response = graphService.getNeighborGraph(userId, noteA.id(), 2);
 
         // Then: A, B, C 모두 포함
         assertThat(response.edges()).hasSizeGreaterThanOrEqualTo(2);
@@ -86,7 +86,7 @@ class NeighborGraphIntegrationTest {
         NoteResponse isolated = noteService.create(userId, new NoteCreateRequest("t1", "Isolated", "No links"));
 
         // When
-        GraphDataResponse response = graphService.getNeighborGraph(isolated.id(), 2);
+        GraphDataResponse response = graphService.getNeighborGraph(userId, isolated.id(), 2);
 
         // Then
         assertThat(response.edges()).isEmpty();
