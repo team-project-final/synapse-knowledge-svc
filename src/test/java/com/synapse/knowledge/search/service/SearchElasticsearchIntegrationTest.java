@@ -30,8 +30,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.wait.strategy.Wait;
+import org.testcontainers.elasticsearch.ElasticsearchContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
@@ -45,25 +44,20 @@ class SearchElasticsearchIntegrationTest {
     private static final String INDEX_NAME = "notes-v1";
 
     @Container
-    static final GenericContainer<?> elasticsearch = new GenericContainer<>(
-        DockerImageName.parse("docker.elastic.co/elasticsearch/elasticsearch:8.19.6")
+    static final ElasticsearchContainer elasticsearch = new ElasticsearchContainer(
+        DockerImageName.parse("docker.elastic.co/elasticsearch/elasticsearch:9.2.1")
     )
-        .withExposedPorts(9200)
         .withEnv("discovery.type", "single-node")
         .withEnv("xpack.security.enabled", "false")
-        .withEnv("xpack.security.http.ssl.enabled", "false")
         .withEnv("ES_JAVA_OPTS", "-Xms512m -Xmx512m")
-        .withEnv("ingest.geoip.downloader.enabled", "false")
         .withCopyFileToContainer(
             MountableFile.forClasspathResource("elasticsearch/elasticsearch-plugins.yml"),
             "/usr/share/elasticsearch/config/elasticsearch-plugins.yml"
-        )
-        .waitingFor(Wait.forHttp("/_cluster/health?wait_for_status=yellow&timeout=5s").forStatusCode(200))
-        .withStartupTimeout(Duration.ofMinutes(4));
+        );
 
     @DynamicPropertySource
     static void registerElasticProperties(DynamicPropertyRegistry registry) {
-        registry.add("spring.elasticsearch.uris", () -> "http://" + elasticsearch.getHost() + ":" + elasticsearch.getMappedPort(9200));
+        registry.add("spring.elasticsearch.uris", elasticsearch::getHttpHostAddress);
     }
 
     @Autowired
