@@ -39,6 +39,7 @@ dependencies {
 	implementation("org.springframework.modulith:spring-modulith-events-api")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
+	testImplementation("org.springframework.boot:spring-boot-testcontainers")
 	testImplementation("org.springframework.security:spring-security-test")
 	testImplementation("org.springframework.modulith:spring-modulith-starter-test")
 	testImplementation("com.tngtech.archunit:archunit-junit5:1.3.0")
