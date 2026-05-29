@@ -12,21 +12,22 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/v1/graphs")
+@RequestMapping("/api/v1/graph")
 @RequiredArgsConstructor
 public class GraphController {
 
     private final GraphService graphService;
 
-    @GetMapping
+    @GetMapping("/data")
     public ApiResponse<GraphDataResponse> getGraphData(@CurrentUserAuth CurrentUser currentUser) {
         return ApiResponse.success(graphService.getGraphData(currentUser.userId()));
     }
 
-    @GetMapping("/neighbors")
+    @GetMapping
     public ApiResponse<GraphDataResponse> getNeighborGraph(
+            @CurrentUserAuth CurrentUser currentUser,
             @RequestParam Long noteId,
             @RequestParam(defaultValue = "2") int depth) {
-        return ApiResponse.success(graphService.getNeighborGraph(noteId, depth));
+        return ApiResponse.success(graphService.getNeighborGraph(currentUser.userId(), noteId, depth));
     }
 }

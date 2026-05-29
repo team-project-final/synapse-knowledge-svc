@@ -1,5 +1,6 @@
 package com.synapse.knowledge.graph.service;
 
+import com.synapse.knowledge.global.exception.AccessDeniedException;
 import com.synapse.knowledge.graph.dto.GraphDataResponse;
 import com.synapse.knowledge.graph.dto.GraphEdgeResponse;
 import com.synapse.knowledge.graph.dto.GraphNodeResponse;
@@ -25,7 +26,11 @@ public class GraphService {
     private final GraphQueryPort graphQueryPort;
     private final GraphMapper graphMapper;
 
-    public GraphDataResponse getNeighborGraph(Long noteId, int depth) {
+    public GraphDataResponse getNeighborGraph(Long userId, Long noteId, int depth) {
+        List<GraphNoteData> ownerCheck = graphQueryPort.findNotesByIds(List.of(noteId));
+        if (ownerCheck.isEmpty() || !ownerCheck.get(0).userId().equals(userId)) {
+            throw new AccessDeniedException("이 노트에 접근 권한이 없습니다");
+        }
         List<GraphLinkData> links = graphQueryPort.findNeighborLinksByDepth(noteId, depth);
         Set<Long> noteIds = links.stream()
                 .flatMap(l -> java.util.stream.Stream.of(l.sourceNoteId(), l.targetNoteId()))
