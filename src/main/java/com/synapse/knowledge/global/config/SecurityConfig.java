@@ -24,33 +24,32 @@ public class SecurityConfig {
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
-            .csrf(AbstractHttpConfigurer::disable)
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/v1/notes/**").authenticated()
-                .requestMatchers("/api/v1/ai/search/**").authenticated()
-                .requestMatchers("/api/graph/**").authenticated()
-                .requestMatchers("/actuator/health").permitAll()
-                .anyRequest().permitAll()
-            )
-            .oauth2ResourceServer(oauth -> oauth.jwt(Customizer.withDefaults()))
-            .build();
+                .csrf(AbstractHttpConfigurer::disable)
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/v1/notes/**").authenticated()
+                        .requestMatchers("/api/v1/ai/search/**").authenticated()
+                        .requestMatchers("/api/v1/graphs/**").authenticated()
+                        .requestMatchers("/actuator/health").permitAll()
+                        .anyRequest().permitAll())
+                .oauth2ResourceServer(oauth -> oauth.jwt(Customizer.withDefaults()))
+                .build();
     }
 
     @Bean
     JwtDecoder jwtDecoder(@Value("${synapse.jwt.public-key:}") String publicKeyPem) {
         RSAPublicKey publicKey = StringUtils.hasText(publicKeyPem)
-            ? parsePublicKey(publicKeyPem)
-            : generateEphemeralPublicKey();
+                ? parsePublicKey(publicKeyPem)
+                : generateEphemeralPublicKey();
         return NimbusJwtDecoder.withPublicKey(publicKey).build();
     }
 
     private RSAPublicKey parsePublicKey(String publicKeyPem) {
         try {
             String normalized = publicKeyPem
-                .replace("-----BEGIN PUBLIC KEY-----", "")
-                .replace("-----END PUBLIC KEY-----", "")
-                .replaceAll("\\s+", "");
+                    .replace("-----BEGIN PUBLIC KEY-----", "")
+                    .replace("-----END PUBLIC KEY-----", "")
+                    .replaceAll("\\s+", "");
             byte[] decoded = Base64.getDecoder().decode(normalized);
             X509EncodedKeySpec keySpec = new X509EncodedKeySpec(decoded);
             return (RSAPublicKey) KeyFactory.getInstance("RSA").generatePublic(keySpec);

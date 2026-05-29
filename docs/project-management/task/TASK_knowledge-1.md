@@ -200,6 +200,7 @@
   - API 응답 시간 < 500ms (1,000 노드 기준)
   - D3.js force-directed graph JSON 포맷 준수
 - **Duration**: 2일
+- **Duration(final)**: 2일 (2026-05-21 ~ 2026-05-22)
 - **RULE Reference**: wiki 03*아키텍처*정의서 §지식 그래프, wiki 18*기술*스택\_정의서
 - **Assignee**: @knowledge-owner-1
 - **Reviewer**: @team-lead

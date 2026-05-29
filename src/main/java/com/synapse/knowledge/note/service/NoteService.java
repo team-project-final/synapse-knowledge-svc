@@ -91,6 +91,19 @@ public class NoteService {
         publishSearchSyncRequested(note, true);
     }
 
+    public List<NoteResponse> getOutlinks(Long userId, Long noteId) {
+        Note note = findValidNote(noteId);
+        validateOwner(userId, note);
+
+        return noteLinkRepository.findBySourceNoteId(noteId).stream()
+            .filter(link -> link.getTargetNoteId() != null)
+            .map(link -> noteRepository.findById(link.getTargetNoteId()))
+            .filter(Optional::isPresent)
+            .map(Optional::get)
+            .map(NoteResponse::from)
+            .toList();
+    }
+
     public List<NoteResponse> getBacklinks(Long userId, Long noteId) {
         Note note = findValidNote(noteId);
         validateOwner(userId, note);
