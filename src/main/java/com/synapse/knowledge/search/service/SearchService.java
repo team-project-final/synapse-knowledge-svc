@@ -1,5 +1,6 @@
 package com.synapse.knowledge.search.service;
 
+import com.synapse.knowledge.search.SearchIdentity;
 import com.synapse.knowledge.search.SearchModuleApi;
 import com.synapse.knowledge.search.dto.HybridSearchRequest;
 import com.synapse.knowledge.search.dto.HybridSearchResponse;
@@ -27,12 +28,12 @@ public class SearchService implements SearchModuleApi {
     }
 
     @Override
-    public SemanticSearchResponse semanticSearch(Long userId, SemanticSearchRequest request) {
-        return semanticSearchService.search(userId, request);
+    public SemanticSearchResponse semanticSearch(SearchIdentity identity, SemanticSearchRequest request) {
+        return semanticSearchService.search(identity, request);
     }
 
     @Override
-    public HybridSearchResponse hybridSearch(Long userId, HybridSearchRequest request) {
-        return hybridSearchService.search(userId, request);
+    public HybridSearchResponse hybridSearch(SearchIdentity identity, HybridSearchRequest request) {
+        return hybridSearchService.search(identity, request);
     }
 }

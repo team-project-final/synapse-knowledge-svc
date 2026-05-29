@@ -1,5 +1,6 @@
 package com.synapse.knowledge.search.service;
 
+import com.synapse.knowledge.search.SearchIdentity;
 import com.synapse.knowledge.search.client.LearningAiSearchClient;
 import com.synapse.knowledge.search.config.SearchProperties;
 import com.synapse.knowledge.search.dto.HybridSearchRequest;
@@ -13,8 +14,10 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class HybridSearchService {
@@ -24,7 +27,7 @@ public class HybridSearchService {
     private final RrfMergeService rrfMergeService;
     private final SearchProperties searchProperties;
 
-    public HybridSearchResponse search(Long userId, HybridSearchRequest request) {
+    public HybridSearchResponse search(SearchIdentity identity, HybridSearchRequest request) {
         Instant startedAt = Instant.now();
         int candidateLimit = Math.max(
             request.limit(),
@@ -32,18 +35,25 @@ public class HybridSearchService {
         );
 
         CompletableFuture<List<SearchCandidate>> keywordFuture = CompletableFuture.supplyAsync(() ->
-            noteSearchRepository.searchKeywordCandidates(userId, request.query(), candidateLimit, request.tags())
+            noteSearchRepository.searchKeywordCandidates(identity.userId(), request.query(), candidateLimit, request.tags())
         );
-        CompletableFuture<List<SearchCandidate>> semanticFuture = CompletableFuture.supplyAsync(() ->
-            learningAiSearchClient.searchSemantic(userId, request.query(), candidateLimit, request.tags())
-        );
+        CompletableFuture<List<LearningAiSearchClient.LearningAiSemanticHit>> semanticFuture =
+            identity.canUseSemanticSearch()
+                ? CompletableFuture.supplyAsync(() ->
+                    learningAiSearchClient.searchSemantic(identity.semanticActorId(), request.query(), candidateLimit))
+                : CompletableFuture.completedFuture(List.of());
 
         List<SearchCandidate> keywordResults = keywordFuture.join();
         List<SearchCandidate> semanticResults = List.of();
-        boolean semanticFallback = false;
+        boolean semanticFallback = !identity.canUseSemanticSearch();
 
         try {
-            semanticResults = semanticFuture.get(searchProperties.ai().timeout().toMillis(), TimeUnit.MILLISECONDS);
+            List<LearningAiSearchClient.LearningAiSemanticHit> semanticHits =
+                semanticFuture.get(searchProperties.ai().timeout().toMillis(), TimeUnit.MILLISECONDS);
+            semanticResults = toMergeableCandidates(semanticHits);
+            if (!semanticHits.isEmpty() && semanticResults.isEmpty()) {
+                semanticFallback = true;
+            }
         } catch (Exception ex) {
             semanticFallback = true;
         }
@@ -60,5 +70,14 @@ public class HybridSearchService {
             Duration.between(startedAt, Instant.now()).toMillis(),
             semanticFallback
         );
+    }
+
+    private List<SearchCandidate> toMergeableCandidates(List<LearningAiSearchClient.LearningAiSemanticHit> semanticHits) {
+        if (semanticHits.isEmpty()) {
+            return List.of();
+        }
+
+        log.warn("learning-ai semantic hit was returned but note UUID to knowledge noteId mapping is not implemented yet.");
+        return List.of();
     }
 }

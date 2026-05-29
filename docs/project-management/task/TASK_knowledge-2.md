@@ -82,7 +82,7 @@
 | **RULE Reference** | [03-아키텍처](../../wiki/03-아키텍처.md) · [18-기술-스택](../../wiki/18-기술-스택.md) |
 | **Assignee** | @knowledge-owner-2 |
 | **Reviewer** | @team-lead |
-| **Status** | DONE |
+| **Status** | IN_PROGRESS - learning-ai 실제 contract(path/request/response) 정렬 완료, UUID `note_id` ↔ knowledge `Long noteId` 매핑 전략 미확정으로 hybrid는 BM25 fallback 유지 |
 
 ---
 

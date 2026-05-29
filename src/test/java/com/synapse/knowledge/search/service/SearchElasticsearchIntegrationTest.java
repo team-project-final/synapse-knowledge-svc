@@ -8,6 +8,7 @@ import co.elastic.clients.elasticsearch._types.ElasticsearchException;
 import com.synapse.knowledge.note.dto.NoteCreateRequest;
 import com.synapse.knowledge.note.repository.NoteRepository;
 import com.synapse.knowledge.note.service.NoteService;
+import com.synapse.knowledge.search.SearchIdentity;
 import com.synapse.knowledge.search.client.LearningAiSearchClient;
 import com.synapse.knowledge.search.dto.HybridSearchRequest;
 import com.synapse.knowledge.search.dto.HybridSearchResponse;
@@ -18,6 +19,7 @@ import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -152,6 +154,7 @@ class SearchElasticsearchIntegrationTest {
     void hybridSearch_시맨틱결과가함께오면_shouldRrf점수순으로병합된다() {
         // Given
         Long ownerId = 500L;
+        String semanticActorId = UUID.randomUUID().toString();
         Long springNoteId = noteService.create(
             ownerId,
             new NoteCreateRequest("tenant1", "스프링 시큐리티", "spring security jwt resource server", List.of("backend"))
@@ -160,19 +163,22 @@ class SearchElasticsearchIntegrationTest {
             ownerId,
             new NoteCreateRequest("tenant1", "엘라스틱서치", "bm25 search nori analyzer", List.of("search"))
         ).id();
-        given(learningAiSearchClient.searchSemantic(ownerId, "스프링", 30, null)).willReturn(List.of(
-            new SearchCandidate(elasticNoteId, "엘라스틱서치", List.of(), "의미상 관련", null, 0.98f),
-            new SearchCandidate(springNoteId, "스프링 시큐리티", List.of(), "의미상 관련", null, 0.95f)
+        given(learningAiSearchClient.searchSemantic(semanticActorId, "스프링", 30)).willReturn(List.of(
+            new LearningAiSearchClient.LearningAiSemanticHit(UUID.randomUUID(), UUID.randomUUID(), "의미상 관련", 0.98f),
+            new LearningAiSearchClient.LearningAiSemanticHit(UUID.randomUUID(), UUID.randomUUID(), "의미상 관련", 0.95f)
         ));
 
         // When
         waitForResults(ownerId, "스프링", null, 20);
-        HybridSearchResponse response = searchService.hybridSearch(ownerId, new HybridSearchRequest("스프링", 10, null));
+        HybridSearchResponse response = searchService.hybridSearch(
+            new SearchIdentity(ownerId, semanticActorId),
+            new HybridSearchRequest("스프링", 10, null)
+        );
 
         // Then
         assertThat(response.results()).isNotEmpty();
-        assertThat(response.results().get(0).semanticScore()).isNotNull();
-        assertThat(response.semanticFallback()).isFalse();
+        assertThat(response.results().get(0).semanticScore()).isNull();
+        assertThat(response.semanticFallback()).isTrue();
     }
 
     private SearchPageResponse waitForResults(Long userId, String query, List<String> tags, int limit) {

@@ -30,7 +30,7 @@
 
 | Step   | 내용                   | 상태        | 시작일 | 완료일 | 비고 |
 | ------ | ---------------------- | ----------- | ------ | ------ | ---- |
-| Step 6 | 하이브리드 검색        | Done        | 2026-05-26 | 2026-05-26 | `/api/v1/ai/search/{semantic,hybrid}` + RRF 병합 + fallback 구현 |
+| Step 6 | 하이브리드 검색        | In Progress | 2026-05-26 | — | semantic contract 정렬 완료, UUID `note_id` ↔ `Long noteId` 매핑 blocker로 hybrid는 BM25 fallback 유지 |
 | Step 7 | 정확도 측정 파이프라인 | Not Started | —      | —      |      |
 
 **W3 진행률**: 1/2 Steps 완료
@@ -203,9 +203,20 @@
 #### 2026-05-29 (금)
 
 - **완료**:
+  - fix(search): `search.ai.*`, `search.hybrid.*` 설정을 `application.yml`, `application-dev.yml`, `application-prod.yml`, `application-test.yml`에 추가하고 `SearchProperties` validation을 보강
+  - fix(search): learning-ai semantic 프록시를 실제 contract에 맞게 정렬
+    - path: `/ai/search/semantic`
+    - request: `query`, `top_k`, `threshold`
+    - response: `chunk_id`, `note_id`, `content`, `score`
+  - refactor(search): semantic/hybrid 호출에 `SearchIdentity`를 도입해 BM25용 `userId`와 semantic용 actor 식별자를 분리
+  - refactor(search): semantic API 응답을 learning-ai raw semantic 결과 구조에 맞게 조정하고, hybrid는 UUID `note_id` 매핑 미구현 상태에서 BM25 fallback을 명시적으로 유지
+  - test(search): `AiSearchControllerTest`, `SearchServiceTest`, `HybridSearchServiceTest`, `KnowledgeSvcApplicationTests` 재검증 통과
 - **진행 중**:
+  - Step 6 하이브리드 검색의 semantic 결과 실제 RRF 병합은 UUID `note_id` ↔ knowledge `Long noteId` 매핑 전략 확정이 필요
 - **이슈**:
+  - 전체 `./gradlew.bat test`는 기존 `NeighborGraphIntegrationTest`의 Docker 환경 탐지 실패로 1건 실패
 - **다음**:
+  - note 공용 식별자 전략(UUID 외부 식별자 도입 여부 또는 별도 매핑 계층) 확정 후 hybrid semantic merge 재개
 
 ### W4 (2026-06-01 ~ 06-05)
 

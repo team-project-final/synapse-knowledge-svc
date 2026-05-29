@@ -1,10 +1,9 @@
 package com.synapse.knowledge.search.service;
 
+import com.synapse.knowledge.search.SearchIdentity;
 import com.synapse.knowledge.search.client.LearningAiSearchClient;
 import com.synapse.knowledge.search.dto.SemanticSearchRequest;
 import com.synapse.knowledge.search.dto.SemanticSearchResponse;
-import com.synapse.knowledge.search.dto.UnifiedSearchResultResponse;
-import com.synapse.knowledge.search.service.support.SearchCandidate;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -17,17 +16,22 @@ public class SemanticSearchService {
 
     private final LearningAiSearchClient learningAiSearchClient;
 
-    public SemanticSearchResponse search(Long userId, SemanticSearchRequest request) {
-        Instant startedAt = Instant.now();
-        List<SearchCandidate> candidates = learningAiSearchClient.searchSemantic(
-            userId,
-            request.query(),
-            request.limit(),
-            request.tags()
-        );
+    public SemanticSearchResponse search(SearchIdentity identity, SemanticSearchRequest request) {
+        if (!identity.canUseSemanticSearch()) {
+            throw new IllegalStateException("semantic 검색에는 UUID subject 기반 토큰이 필요합니다");
+        }
 
-        List<UnifiedSearchResultResponse> results = candidates.stream()
-            .map(candidate -> candidate.toResponse(candidate.semanticScore() == null ? 0.0f : candidate.semanticScore()))
+        Instant startedAt = Instant.now();
+        List<LearningAiSearchClient.LearningAiSemanticHit> hits =
+            learningAiSearchClient.searchSemantic(identity.semanticActorId(), request.query(), request.limit());
+
+        List<SemanticSearchResponse.SemanticSearchResult> results = hits.stream()
+            .map(hit -> new SemanticSearchResponse.SemanticSearchResult(
+                hit.chunkId(),
+                hit.noteId(),
+                hit.content(),
+                hit.score()
+            ))
             .toList();
 
         return new SemanticSearchResponse(

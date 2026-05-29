@@ -1,10 +1,11 @@
 package com.synapse.knowledge.search.dto.client;
 
-import java.util.List;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public record LearningAiSemanticRequest(
     String query,
-    int limit,
-    List<String> tags
+    @JsonProperty("top_k")
+    int topK,
+    double threshold
 ) {
 }

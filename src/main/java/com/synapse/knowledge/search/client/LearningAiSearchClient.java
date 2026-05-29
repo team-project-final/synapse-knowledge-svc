@@ -2,11 +2,11 @@ package com.synapse.knowledge.search.client;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.synapse.knowledge.search.config.SearchProperties;
 import com.synapse.knowledge.search.dto.client.LearningAiSemanticRequest;
 import com.synapse.knowledge.search.dto.client.LearningAiSemanticResponse;
-import com.synapse.knowledge.search.service.support.SearchCandidate;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
@@ -17,18 +17,19 @@ import org.springframework.web.client.RestClientException;
 @RequiredArgsConstructor
 public class LearningAiSearchClient {
 
-    private static final String SEMANTIC_SEARCH_PATH = "/api/v1/ai/search/semantic";
+    private static final String SEMANTIC_SEARCH_PATH = "/ai/search/semantic";
 
     @Qualifier("learningAiRestClient")
     private final RestClient restClient;
     private final ObjectMapper objectMapper;
+    private final SearchProperties searchProperties;
 
-    public List<SearchCandidate> searchSemantic(Long userId, String query, int limit, List<String> tags) {
+    public List<LearningAiSemanticHit> searchSemantic(String semanticActorId, String query, int topK) {
         try {
             String responseBody = restClient.post()
                 .uri(SEMANTIC_SEARCH_PATH)
-                .header("X-User-Id", String.valueOf(userId))
-                .body(new LearningAiSemanticRequest(query, limit, tags))
+                .header("X-User-Id", semanticActorId)
+                .body(new LearningAiSemanticRequest(query, topK, searchProperties.ai().threshold()))
                 .retrieve()
                 .body(String.class);
 
@@ -44,20 +45,24 @@ public class LearningAiSearchClient {
                 return List.of();
             }
 
-            List<SearchCandidate> candidates = new ArrayList<>();
-            for (LearningAiSemanticResponse.LearningAiSemanticResult result : response.results()) {
-                candidates.add(new SearchCandidate(
+            return response.results().stream()
+                .map(result -> new LearningAiSemanticHit(
+                    result.chunkId(),
                     result.noteId(),
-                    result.title(),
-                    result.highlights() == null ? List.of() : result.highlights(),
-                    result.snippet(),
-                    null,
+                    result.content(),
                     result.score()
-                ));
-            }
-            return candidates;
+                ))
+                .toList();
         } catch (RestClientException | java.io.IOException ex) {
             throw new IllegalStateException("learning-ai 시맨틱 검색 호출에 실패했습니다", ex);
         }
+    }
+
+    public record LearningAiSemanticHit(
+        UUID chunkId,
+        UUID noteId,
+        String content,
+        Float score
+    ) {
     }
 }

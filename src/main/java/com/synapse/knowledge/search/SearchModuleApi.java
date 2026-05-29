@@ -10,7 +10,7 @@ import com.synapse.knowledge.search.dto.SemanticSearchResponse;
 public interface SearchModuleApi {
     SearchPageResponse search(Long userId, SearchRequest request);
 
-    SemanticSearchResponse semanticSearch(Long userId, SemanticSearchRequest request);
+    SemanticSearchResponse semanticSearch(SearchIdentity identity, SemanticSearchRequest request);
 
-    HybridSearchResponse hybridSearch(Long userId, HybridSearchRequest request);
+    HybridSearchResponse hybridSearch(SearchIdentity identity, HybridSearchRequest request);
 }

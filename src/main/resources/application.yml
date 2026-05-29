@@ -24,6 +24,15 @@ synapse:
     public-key: ${JWT_PUBLIC_KEY:}
     issuer: ${JWT_ISSUER:synapse-auth}
 
+search:
+  ai:
+    base-url: ${SEARCH_AI_BASE_URL:http://localhost:8090}
+    timeout: ${SEARCH_AI_TIMEOUT:3s}
+    threshold: ${SEARCH_AI_THRESHOLD:0.7}
+  hybrid:
+    rrf-k: ${SEARCH_HYBRID_RRF_K:60}
+    candidate-multiplier: ${SEARCH_HYBRID_CANDIDATE_MULTIPLIER:3}
+
 logging:
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %-5p [%thread] %logger{36} - %msg%n"

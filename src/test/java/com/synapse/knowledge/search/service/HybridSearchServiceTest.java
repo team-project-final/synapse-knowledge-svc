@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
+import com.synapse.knowledge.search.SearchIdentity;
 import com.synapse.knowledge.search.client.LearningAiSearchClient;
 import com.synapse.knowledge.search.config.SearchProperties;
 import com.synapse.knowledge.search.dto.HybridSearchRequest;
@@ -12,6 +13,7 @@ import com.synapse.knowledge.search.dto.UnifiedSearchResultResponse;
 import com.synapse.knowledge.search.repository.NoteSearchRepository;
 import com.synapse.knowledge.search.service.support.SearchCandidate;
 import java.time.Duration;
+import java.util.UUID;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -33,7 +35,7 @@ class HybridSearchServiceTest {
     private RrfMergeService rrfMergeService;
 
     private final SearchProperties searchProperties = new SearchProperties(
-        new SearchProperties.Ai("http://localhost:8083", Duration.ofSeconds(3)),
+        new SearchProperties.Ai("http://localhost:8090", Duration.ofSeconds(3), 0.7d),
         new SearchProperties.Hybrid(60, 3)
     );
 
@@ -41,6 +43,7 @@ class HybridSearchServiceTest {
     @DisplayName("search_시맨틱조회가실패하면_shouldBM25Fallback으로반환")
     void search_시맨틱조회가실패하면_shouldBM25Fallback으로반환() {
         // Given
+        SearchIdentity identity = new SearchIdentity(100L, UUID.randomUUID().toString());
         HybridSearchRequest request = new HybridSearchRequest("스프링", 10, null);
         List<SearchCandidate> keywordCandidates = List.of(
             new SearchCandidate(1L, "스프링 노트", List.of("<mark>스프링</mark>"), "snippet", 4.2f, null)
@@ -56,12 +59,12 @@ class HybridSearchServiceTest {
         );
 
         given(noteSearchRepository.searchKeywordCandidates(100L, "스프링", 30, null)).willReturn(keywordCandidates);
-        given(learningAiSearchClient.searchSemantic(100L, "스프링", 30, null))
+        given(learningAiSearchClient.searchSemantic(identity.semanticActorId(), "스프링", 30))
             .willThrow(new IllegalStateException("semantic unavailable"));
         given(rrfMergeService.merge(keywordCandidates, List.of(), 10, 60)).willReturn(mergedResults);
 
         // When
-        HybridSearchResponse response = hybridSearchService.search(100L, request);
+        HybridSearchResponse response = hybridSearchService.search(identity, request);
 
         // Then
         assertThat(response.semanticFallback()).isTrue();
