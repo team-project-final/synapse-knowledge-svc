@@ -4,6 +4,7 @@ import com.synapse.knowledge.chunking.entity.NoteChunk;
 import com.synapse.knowledge.chunking.repository.NoteChunkRepository;
 import com.synapse.knowledge.note.dto.NoteCreateRequest;
 import com.synapse.knowledge.note.dto.NoteResponse;
+import com.synapse.knowledge.note.repository.NoteIdentityMapRepository;
 import com.synapse.knowledge.note.repository.NoteRepository;
 import com.synapse.knowledge.note.service.NoteService;
 import org.junit.jupiter.api.AfterEach;
@@ -33,15 +34,20 @@ class ChunkingIntegrationTest {
     @Autowired
     private NoteChunkRepository noteChunkRepository;
 
+    @Autowired
+    private NoteIdentityMapRepository noteIdentityMapRepository;
+
     @BeforeEach
     void setUp() {
         noteChunkRepository.deleteAll();
+        noteIdentityMapRepository.deleteAll();
         noteRepository.deleteAll();
     }
 
     @AfterEach
     void tearDown() {
         noteChunkRepository.deleteAll();
+        noteIdentityMapRepository.deleteAll();
         noteRepository.deleteAll();
     }
 

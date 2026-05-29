@@ -28,6 +28,7 @@ public class NoteSearchIndexingListener {
         noteSearchRepository.upsert(
             new NoteSearchDocument(
                 event.noteId(),
+                event.externalNoteId(),
                 event.tenantId(),
                 event.userId(),
                 event.title(),

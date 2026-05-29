@@ -6,6 +6,7 @@ import static org.mockito.BDDMockito.given;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.ElasticsearchException;
 import com.synapse.knowledge.note.dto.NoteCreateRequest;
+import com.synapse.knowledge.note.repository.NoteIdentityMapRepository;
 import com.synapse.knowledge.note.repository.NoteRepository;
 import com.synapse.knowledge.note.service.NoteService;
 import com.synapse.knowledge.search.SearchIdentity;
@@ -14,7 +15,6 @@ import com.synapse.knowledge.search.dto.HybridSearchRequest;
 import com.synapse.knowledge.search.dto.HybridSearchResponse;
 import com.synapse.knowledge.search.dto.SearchPageResponse;
 import com.synapse.knowledge.search.dto.SearchRequest;
-import com.synapse.knowledge.search.service.support.SearchCandidate;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
@@ -78,6 +78,9 @@ class SearchElasticsearchIntegrationTest {
     private NoteRepository noteRepository;
 
     @Autowired
+    private NoteIdentityMapRepository noteIdentityMapRepository;
+
+    @Autowired
     private SearchService searchService;
 
     @Autowired
@@ -88,12 +91,14 @@ class SearchElasticsearchIntegrationTest {
 
     @BeforeEach
     void setUp() throws IOException {
+        noteIdentityMapRepository.deleteAll();
         noteRepository.deleteAll();
         deleteIndexIfExists();
     }
 
     @AfterEach
     void tearDown() throws IOException {
+        noteIdentityMapRepository.deleteAll();
         noteRepository.deleteAll();
         deleteIndexIfExists();
     }
@@ -163,9 +168,15 @@ class SearchElasticsearchIntegrationTest {
             ownerId,
             new NoteCreateRequest("tenant1", "엘라스틱서치", "bm25 search nori analyzer", List.of("search"))
         ).id();
+        UUID springExternalNoteId = noteIdentityMapRepository.findById(springNoteId)
+            .orElseThrow(() -> new IllegalStateException("missing note identity mapping: " + springNoteId))
+            .getExternalNoteId();
+        UUID elasticExternalNoteId = noteIdentityMapRepository.findById(elasticNoteId)
+            .orElseThrow(() -> new IllegalStateException("missing note identity mapping: " + elasticNoteId))
+            .getExternalNoteId();
         given(learningAiSearchClient.searchSemantic(semanticActorId, "스프링", 30)).willReturn(List.of(
-            new LearningAiSearchClient.LearningAiSemanticHit(UUID.randomUUID(), UUID.randomUUID(), "의미상 관련", 0.98f),
-            new LearningAiSearchClient.LearningAiSemanticHit(UUID.randomUUID(), UUID.randomUUID(), "의미상 관련", 0.95f)
+            new LearningAiSearchClient.LearningAiSemanticHit(UUID.randomUUID(), springExternalNoteId, "의미상 관련", 0.98f),
+            new LearningAiSearchClient.LearningAiSemanticHit(UUID.randomUUID(), elasticExternalNoteId, "의미상 관련", 0.95f)
         ));
 
         // When
@@ -177,8 +188,9 @@ class SearchElasticsearchIntegrationTest {
 
         // Then
         assertThat(response.results()).isNotEmpty();
-        assertThat(response.results().get(0).semanticScore()).isNull();
-        assertThat(response.semanticFallback()).isTrue();
+        assertThat(response.results().get(0).noteId()).isEqualTo(springNoteId);
+        assertThat(response.results().get(0).semanticScore()).isNotNull();
+        assertThat(response.semanticFallback()).isFalse();
     }
 
     private SearchPageResponse waitForResults(Long userId, String query, List<String> tags, int limit) {

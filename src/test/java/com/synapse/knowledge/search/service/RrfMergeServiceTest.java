@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.synapse.knowledge.search.dto.UnifiedSearchResultResponse;
 import com.synapse.knowledge.search.service.support.SearchCandidate;
 import java.util.List;
+import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -16,13 +17,16 @@ class RrfMergeServiceTest {
     @DisplayName("merge_BM25와시맨틱결과가겹치면_shouldRrf점수로재정렬")
     void merge_BM25와시맨틱결과가겹치면_shouldRrf점수로재정렬() {
         // Given
+        UUID noteA = UUID.randomUUID();
+        UUID noteB = UUID.randomUUID();
+        UUID noteC = UUID.randomUUID();
         List<SearchCandidate> keywordResults = List.of(
-            new SearchCandidate(1L, "A", List.of("<mark>A</mark>"), "snippet-a", 10.0f, null),
-            new SearchCandidate(2L, "B", List.of(), "snippet-b", 9.0f, null)
+            new SearchCandidate(1L, noteA, "A", List.of("<mark>A</mark>"), "snippet-a", 10.0f, null),
+            new SearchCandidate(2L, noteB, "B", List.of(), "snippet-b", 9.0f, null)
         );
         List<SearchCandidate> semanticResults = List.of(
-            new SearchCandidate(2L, "B", List.of(), "snippet-b", null, 0.97f),
-            new SearchCandidate(3L, "C", List.of(), "snippet-c", null, 0.95f)
+            new SearchCandidate(2L, noteB, "B", List.of(), "snippet-b", null, 0.97f),
+            new SearchCandidate(3L, noteC, "C", List.of(), "snippet-c", null, 0.95f)
         );
 
         // When
@@ -41,7 +45,7 @@ class RrfMergeServiceTest {
     void merge_시맨틱결과가비면_should키워드결과만반환() {
         // Given
         List<SearchCandidate> keywordResults = List.of(
-            new SearchCandidate(1L, "A", List.of(), "snippet-a", 10.0f, null)
+            new SearchCandidate(1L, UUID.randomUUID(), "A", List.of(), "snippet-a", 10.0f, null)
         );
 
         // When

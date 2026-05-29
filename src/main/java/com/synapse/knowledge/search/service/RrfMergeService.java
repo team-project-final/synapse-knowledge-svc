@@ -5,6 +5,7 @@ import com.synapse.knowledge.search.service.support.SearchCandidate;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -16,7 +17,7 @@ public class RrfMergeService {
         int limit,
         int rrfK
     ) {
-        Map<Long, MutableResult> merged = new LinkedHashMap<>();
+        Map<UUID, MutableResult> merged = new LinkedHashMap<>();
         applyRanks(merged, keywordResults, rrfK, true);
         applyRanks(merged, semanticResults, rrfK, false);
 
@@ -28,18 +29,18 @@ public class RrfMergeService {
     }
 
     private void applyRanks(
-        Map<Long, MutableResult> merged,
+        Map<UUID, MutableResult> merged,
         List<SearchCandidate> results,
         int rrfK,
         boolean keywordSource
     ) {
         for (int index = 0; index < results.size(); index++) {
             SearchCandidate candidate = results.get(index);
-            if (candidate.noteId() == null) {
+            if (candidate.externalNoteId() == null) {
                 continue;
             }
 
-            MutableResult result = merged.computeIfAbsent(candidate.noteId(), ignored -> new MutableResult(candidate));
+            MutableResult result = merged.computeIfAbsent(candidate.externalNoteId(), ignored -> new MutableResult(candidate));
             result.merge(candidate);
             result.rrfScore += (float) (1.0d / (rrfK + index + 1));
             if (keywordSource) {

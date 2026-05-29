@@ -30,7 +30,7 @@
 
 | Step   | 내용                   | 상태        | 시작일 | 완료일 | 비고 |
 | ------ | ---------------------- | ----------- | ------ | ------ | ---- |
-| Step 6 | 하이브리드 검색        | In Progress | 2026-05-26 | — | semantic contract 정렬 완료, UUID `note_id` ↔ `Long noteId` 매핑 blocker로 hybrid는 BM25 fallback 유지 |
+| Step 6 | 하이브리드 검색        | Done | 2026-05-26 | 2026-05-29 | semantic contract 정렬 + `note_identity_map` UUID 매핑으로 hybrid RRF 병합 복구 |
 | Step 7 | 정확도 측정 파이프라인 | Not Started | —      | —      |      |
 
 **W3 진행률**: 1/2 Steps 완료
@@ -209,14 +209,13 @@
     - request: `query`, `top_k`, `threshold`
     - response: `chunk_id`, `note_id`, `content`, `score`
   - refactor(search): semantic/hybrid 호출에 `SearchIdentity`를 도입해 BM25용 `userId`와 semantic용 actor 식별자를 분리
-  - refactor(search): semantic API 응답을 learning-ai raw semantic 결과 구조에 맞게 조정하고, hybrid는 UUID `note_id` 매핑 미구현 상태에서 BM25 fallback을 명시적으로 유지
-  - test(search): `AiSearchControllerTest`, `SearchServiceTest`, `HybridSearchServiceTest`, `KnowledgeSvcApplicationTests` 재검증 통과
-- **진행 중**:
-  - Step 6 하이브리드 검색의 semantic 결과 실제 RRF 병합은 UUID `note_id` ↔ knowledge `Long noteId` 매핑 전략 확정이 필요
+  - feat(search): `note_identity_map` 테이블과 조회 포트를 추가해 learning-ai UUID `note_id`를 knowledge `Long noteId`로 연결하고 hybrid semantic 결과를 실제 RRF 후보로 병합
+  - feat(search): 검색 인덱스 이벤트/ES 문서/BM25 후보 모델에 `externalNoteId`를 반영해 BM25와 semantic 결과를 공통 UUID 키로 병합
+  - test(search): `HybridSearchServiceTest`, `RrfMergeServiceTest`, `SearchServiceTest`, `NoteIntegrationTest`, `ChunkingIntegrationTest`, `KnowledgeSvcApplicationTests` 재검증 통과
 - **이슈**:
   - 전체 `./gradlew.bat test`는 기존 `NeighborGraphIntegrationTest`의 Docker 환경 탐지 실패로 1건 실패
 - **다음**:
-  - note 공용 식별자 전략(UUID 외부 식별자 도입 여부 또는 별도 매핑 계층) 확정 후 hybrid semantic merge 재개
+  - W3 Step 7 검색 정확도 측정 및 리포트 착수
 
 ### W4 (2026-06-01 ~ 06-05)
 

@@ -24,6 +24,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -83,6 +84,7 @@ public class ElasticsearchNoteSearchRepository implements NoteSearchRepository {
                 .id(document.noteId().toString())
                 .document(new NoteSearchDocument(
                     document.noteId(),
+                    document.externalNoteId(),
                     document.tenantId(),
                     document.userId(),
                     document.title(),
@@ -152,6 +154,7 @@ public class ElasticsearchNoteSearchRepository implements NoteSearchRepository {
 
         return new SearchCandidate(
             source == null ? null : source.noteId(),
+            source == null ? null : source.externalNoteId(),
             source == null ? null : source.title(),
             highlights,
             snippet,
@@ -241,6 +244,7 @@ public class ElasticsearchNoteSearchRepository implements NoteSearchRepository {
                 )
                 .mappings(mappings -> mappings
                     .properties("noteId", Property.of(property -> property.long_(field -> field)))
+                    .properties("externalNoteId", Property.of(property -> property.keyword(field -> field)))
                     .properties("tenantId", Property.of(property -> property.keyword(field -> field)))
                     .properties("userId", Property.of(property -> property.long_(field -> field)))
                     .properties("title", Property.of(property -> property.text(field -> field

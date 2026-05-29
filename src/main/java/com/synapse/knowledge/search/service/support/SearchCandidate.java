@@ -2,9 +2,11 @@ package com.synapse.knowledge.search.service.support;
 
 import com.synapse.knowledge.search.dto.UnifiedSearchResultResponse;
 import java.util.List;
+import java.util.UUID;
 
 public record SearchCandidate(
     Long noteId,
+    UUID externalNoteId,
     String title,
     List<String> highlights,
     String snippet,

@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.synapse.knowledge.global.exception.AccessDeniedException;
 import com.synapse.knowledge.note.dto.NoteCreateRequest;
 import com.synapse.knowledge.note.dto.NoteResponse;
+import com.synapse.knowledge.note.repository.NoteIdentityMapRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -22,6 +23,9 @@ class NoteIntegrationTest {
     @Autowired
     private NoteService noteService;
 
+    @Autowired
+    private NoteIdentityMapRepository noteIdentityMapRepository;
+
     @Test
     void createNote_정상생성_shouldReturnSavedNote() {
         Long userId = 100L;
@@ -34,6 +38,11 @@ class NoteIntegrationTest {
         assertThat(response.title()).isEqualTo("Title");
         assertThat(response.contentMd()).contains("tags");
         assertThat(response.contentPlain()).doesNotContain("<b>", "</b>");
+        assertThat(noteIdentityMapRepository.findById(response.id()))
+            .isPresent()
+            .get()
+            .extracting(mapping -> mapping.getExternalNoteId())
+            .isNotNull();
     }
 
     @Test

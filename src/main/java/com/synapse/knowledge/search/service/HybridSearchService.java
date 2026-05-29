@@ -8,9 +8,11 @@ import com.synapse.knowledge.search.dto.HybridSearchResponse;
 import com.synapse.knowledge.search.dto.UnifiedSearchResultResponse;
 import com.synapse.knowledge.search.repository.NoteSearchRepository;
 import com.synapse.knowledge.search.service.support.SearchCandidate;
+import com.synapse.knowledge.shared.NoteIdentityQueryPort;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +28,7 @@ public class HybridSearchService {
     private final LearningAiSearchClient learningAiSearchClient;
     private final RrfMergeService rrfMergeService;
     private final SearchProperties searchProperties;
+    private final NoteIdentityQueryPort noteIdentityQueryPort;
 
     public HybridSearchResponse search(SearchIdentity identity, HybridSearchRequest request) {
         Instant startedAt = Instant.now();
@@ -77,7 +80,22 @@ public class HybridSearchService {
             return List.of();
         }
 
-        log.warn("learning-ai semantic hit was returned but note UUID to knowledge noteId mapping is not implemented yet.");
-        return List.of();
+        return semanticHits.stream()
+            .map(hit -> noteIdentityQueryPort.findByExternalNoteId(hit.noteId())
+                .map(noteIdentity -> new SearchCandidate(
+                    noteIdentity.noteId(),
+                    noteIdentity.externalNoteId(),
+                    noteIdentity.title(),
+                    List.of(),
+                    hit.content(),
+                    null,
+                    hit.score()
+                ))
+                .orElseGet(() -> {
+                    log.warn("semantic hit noteId={} has no knowledge note mapping", hit.noteId());
+                    return null;
+                }))
+            .filter(Objects::nonNull)
+            .toList();
     }
 }

@@ -66,7 +66,7 @@
 - [x] 접근 제어 필터 적용 (사용자 소유 노트만)
 - [x] 단위 테스트 작성 (서비스/병합 로직)
 - [x] 테스트 통과 확인
-- [ ] learning-ai UUID `note_id`와 knowledge `Long noteId`를 연결하는 매핑 전략 확정 및 semantic 결과 실제 RRF 병합 반영
+- [x] learning-ai UUID `note_id`와 knowledge `Long noteId`를 연결하는 `note_identity_map` 전략 구현 및 semantic 결과 실제 RRF 병합 반영
 
 ### 6.9 Controller + Test
 
@@ -84,7 +84,7 @@
 - [x] Swagger/OpenAPI 미구성으로 확인 불가
 - [x] RULE Reference → TASK 반영
 
-**Step 6 Status**: [ ] Not Started / [x] In Progress / [ ] Done
+**Step 6 Status**: [ ] Not Started / [ ] In Progress / [x] Done
 
 ---
 

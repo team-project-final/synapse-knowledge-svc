@@ -5,7 +5,9 @@ import com.synapse.knowledge.global.util.MarkdownSanitizer;
 import com.synapse.knowledge.note.dto.NoteCreateRequest;
 import com.synapse.knowledge.note.dto.NoteResponse;
 import com.synapse.knowledge.note.entity.Note;
+import com.synapse.knowledge.note.entity.NoteIdentityMap;
 import com.synapse.knowledge.note.entity.NoteLink;
+import com.synapse.knowledge.note.repository.NoteIdentityMapRepository;
 import com.synapse.knowledge.note.repository.NoteLinkRepository;
 import com.synapse.knowledge.note.repository.NoteRepository;
 import com.synapse.knowledge.note.service.support.WikiLinkParser;
@@ -15,6 +17,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
@@ -28,6 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class NoteService {
     private final NoteRepository noteRepository;
+    private final NoteIdentityMapRepository noteIdentityMapRepository;
     private final NoteLinkRepository noteLinkRepository;
     private final WikiLinkParser linkParser;
     private final MarkdownSanitizer sanitizer;
@@ -40,10 +44,11 @@ public class NoteService {
 
         Note note = Note.create(request.tenantId(), userId, request.title(), sanitizedMd, plainText, request.tags());
         Note savedNote = noteRepository.save(note);
+        NoteIdentityMap identityMap = getOrCreateIdentityMap(savedNote.getId());
 
         updateWikiLinks(savedNote.getId(), request.tenantId(), sanitizedMd);
         publishChunkingRequested(savedNote, "created");
-        publishSearchSyncRequested(savedNote, false);
+        publishSearchSyncRequested(savedNote, identityMap.getExternalNoteId(), false);
         return NoteResponse.from(savedNote);
     }
 
@@ -67,10 +72,11 @@ public class NoteService {
         String plainText = extractPlainText(sanitizedMd);
 
         note.update(request.title(), sanitizedMd, plainText, request.tags());
+        NoteIdentityMap identityMap = getOrCreateIdentityMap(note.getId());
 
         updateWikiLinks(note.getId(), note.getTenantId(), sanitizedMd);
         publishChunkingRequested(note, "updated");
-        publishSearchSyncRequested(note, false);
+        publishSearchSyncRequested(note, identityMap.getExternalNoteId(), false);
         return NoteResponse.from(note);
     }
 
@@ -78,6 +84,7 @@ public class NoteService {
     public void delete(Long userId, Long noteId) {
         Note note = findValidNote(noteId);
         validateOwner(userId, note);
+        NoteIdentityMap identityMap = getOrCreateIdentityMap(note.getId());
         note.softDelete();
         eventPublisher.publishEvent(
             new NoteChunkingRequested(
@@ -88,7 +95,7 @@ public class NoteService {
                 Instant.now()
             )
         );
-        publishSearchSyncRequested(note, true);
+        publishSearchSyncRequested(note, identityMap.getExternalNoteId(), true);
     }
 
     public List<NoteResponse> getOutlinks(Long userId, Long noteId) {
@@ -157,10 +164,16 @@ public class NoteService {
         );
     }
 
-    private void publishSearchSyncRequested(Note note, boolean deleted) {
+    private NoteIdentityMap getOrCreateIdentityMap(Long noteId) {
+        return noteIdentityMapRepository.findById(noteId)
+            .orElseGet(() -> noteIdentityMapRepository.save(NoteIdentityMap.create(noteId)));
+    }
+
+    private void publishSearchSyncRequested(Note note, UUID externalNoteId, boolean deleted) {
         eventPublisher.publishEvent(
             new NoteSearchSyncRequested(
                 note.getId(),
+                externalNoteId,
                 note.getTenantId(),
                 note.getUserId(),
                 note.getTitle(),
