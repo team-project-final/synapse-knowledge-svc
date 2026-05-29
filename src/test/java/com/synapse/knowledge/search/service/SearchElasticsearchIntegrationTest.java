@@ -1,18 +1,25 @@
 package com.synapse.knowledge.search.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.BDDMockito.given;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.ElasticsearchException;
 import com.synapse.knowledge.note.dto.NoteCreateRequest;
+import com.synapse.knowledge.note.repository.NoteIdentityMapRepository;
 import com.synapse.knowledge.note.repository.NoteRepository;
 import com.synapse.knowledge.note.service.NoteService;
+import com.synapse.knowledge.search.SearchIdentity;
+import com.synapse.knowledge.search.client.LearningAiSearchClient;
+import com.synapse.knowledge.search.dto.HybridSearchRequest;
+import com.synapse.knowledge.search.dto.HybridSearchResponse;
 import com.synapse.knowledge.search.dto.SearchPageResponse;
 import com.synapse.knowledge.search.dto.SearchRequest;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -20,6 +27,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -70,19 +78,27 @@ class SearchElasticsearchIntegrationTest {
     private NoteRepository noteRepository;
 
     @Autowired
+    private NoteIdentityMapRepository noteIdentityMapRepository;
+
+    @Autowired
     private SearchService searchService;
 
     @Autowired
     private ElasticsearchClient elasticsearchClient;
 
+    @MockitoBean
+    private LearningAiSearchClient learningAiSearchClient;
+
     @BeforeEach
     void setUp() throws IOException {
+        noteIdentityMapRepository.deleteAll();
         noteRepository.deleteAll();
         deleteIndexIfExists();
     }
 
     @AfterEach
     void tearDown() throws IOException {
+        noteIdentityMapRepository.deleteAll();
         noteRepository.deleteAll();
         deleteIndexIfExists();
     }
@@ -136,6 +152,45 @@ class SearchElasticsearchIntegrationTest {
         // Then
         assertThat(response.results()).hasSize(1);
         assertThat(response.results().get(0).title()).isEqualTo("스프링 검색");
+    }
+
+    @DisplayName("hybridSearch_시맨틱결과가함께오면_shouldRrf점수순으로병합된다")
+    @Test
+    void hybridSearch_시맨틱결과가함께오면_shouldRrf점수순으로병합된다() {
+        // Given
+        Long ownerId = 500L;
+        String semanticActorId = UUID.randomUUID().toString();
+        Long springNoteId = noteService.create(
+            ownerId,
+            new NoteCreateRequest("tenant1", "스프링 시큐리티", "spring security jwt resource server", List.of("backend"))
+        ).id();
+        Long elasticNoteId = noteService.create(
+            ownerId,
+            new NoteCreateRequest("tenant1", "엘라스틱서치", "bm25 search nori analyzer", List.of("search"))
+        ).id();
+        UUID springExternalNoteId = noteIdentityMapRepository.findById(springNoteId)
+            .orElseThrow(() -> new IllegalStateException("missing note identity mapping: " + springNoteId))
+            .getExternalNoteId();
+        UUID elasticExternalNoteId = noteIdentityMapRepository.findById(elasticNoteId)
+            .orElseThrow(() -> new IllegalStateException("missing note identity mapping: " + elasticNoteId))
+            .getExternalNoteId();
+        given(learningAiSearchClient.searchSemantic(semanticActorId, "스프링", 30)).willReturn(List.of(
+            new LearningAiSearchClient.LearningAiSemanticHit(UUID.randomUUID(), springExternalNoteId, "의미상 관련", 0.98f),
+            new LearningAiSearchClient.LearningAiSemanticHit(UUID.randomUUID(), elasticExternalNoteId, "의미상 관련", 0.95f)
+        ));
+
+        // When
+        waitForResults(ownerId, "스프링", null, 20);
+        HybridSearchResponse response = searchService.hybridSearch(
+            new SearchIdentity(ownerId, semanticActorId),
+            new HybridSearchRequest("스프링", 10, null)
+        );
+
+        // Then
+        assertThat(response.results()).isNotEmpty();
+        assertThat(response.results().get(0).noteId()).isEqualTo(springNoteId);
+        assertThat(response.results().get(0).semanticScore()).isNotNull();
+        assertThat(response.semanticFallback()).isFalse();
     }
 
     private SearchPageResponse waitForResults(Long userId, String query, List<String> tags, int limit) {

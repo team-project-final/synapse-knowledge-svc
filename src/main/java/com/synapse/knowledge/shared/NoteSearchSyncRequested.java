@@ -2,9 +2,11 @@ package com.synapse.knowledge.shared;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 
 public record NoteSearchSyncRequested(
     Long noteId,
+    UUID externalNoteId,
     String tenantId,
     Long userId,
     String title,

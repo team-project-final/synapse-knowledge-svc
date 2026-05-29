@@ -23,19 +23,17 @@
 | ------ | ------------------ | ----------- | ---------- | ---------- | -------------------------------------------------------------------- |
 | Step 4 | chunking 전략 구현 | Done        | 2026-05-19 | 2026-05-19 | Spring event + @Async 기반 비동기 청크 분할, 수정/삭제 정리까지 구현 |
 | Step 5 | BM25 검색 엔진     | Done        | 2026-05-20 | 2026-05-20 | JWT 검증 골격 + BM25 검색 API/비동기 인덱싱 + live ES nori 통합 검증 완료 |
-| Step 6 | 검색 인덱싱        | Not Started | —          | —          |                                                                      |
 
-**W2 진행률**: 2/3 Steps 완료
+**W2 진행률**: 2/2 Steps 완료
 
 ### W3 (2026-05-26 ~ 05-29)
 
 | Step   | 내용                   | 상태        | 시작일 | 완료일 | 비고 |
 | ------ | ---------------------- | ----------- | ------ | ------ | ---- |
-| Step 7 | RRF 랭킹 알고리즘      | Not Started | —      | —      |      |
-| Step 8 | 정확도 측정 파이프라인 | Not Started | —      | —      |      |
-| Step 9 | 검색 필터링            | Not Started | —      | —      |      |
+| Step 6 | 하이브리드 검색        | Done | 2026-05-26 | 2026-05-29 | semantic contract 정렬 + `note_identity_map` UUID 매핑으로 hybrid RRF 병합 복구 |
+| Step 7 | 정확도 측정 파이프라인 | Not Started | —      | —      |      |
 
-**W3 진행률**: 0/3 Steps 완료
+**W3 진행률**: 1/2 Steps 완료
 
 ### W4 (2026-06-01 ~ 06-05)
 
@@ -176,9 +174,17 @@
 #### 2026-05-26 (화)
 
 - **완료**:
+  - docs(workflow): `WORKFLOW_knowledge-2_W3.md`의 Step 6/7 세부 체크 번호를 `1.x`에서 `6.x`/`7.x`로 정렬
+  - feat(search): `GET /api/v1/notes/search` BM25 경로를 유지한 채 `POST /api/v1/ai/search/semantic`, `POST /api/v1/ai/search/hybrid`와 learning-ai semantic 프록시를 추가
+  - feat(search): BM25 후보 조회 + semantic 후보 조회를 병렬 실행하고 RRF(k=60)로 병합하는 `HybridSearchService`와 fallback 경로를 구현
+  - test(search): semantic/hybrid MockMvc, RRF 병합 단위 테스트, fallback 테스트, ES 기반 hybrid 통합 테스트를 추가하고 `./gradlew.bat test` 통과
+  - docs(step6): Step 6 Task/Workflow/HISTORY를 `/api/v1` 규칙, Swagger 미구성 상태, 실제 하이브리드 검색 완료 상태에 맞게 동기화
 - **진행 중**:
+  - 없음
 - **이슈**:
+  - Step 6 Task 초안은 `/api/v1` 접두사 제거를 전제로 했지만, `docs/rules/02-function.md` 기준에 맞춰 `/api/v1` 엔드포인트로 정리함
 - **다음**:
+  - W3 Step 7 검색 정확도 측정 및 리포트 착수
 
 #### 2026-05-27 (수)
 
@@ -197,9 +203,19 @@
 #### 2026-05-29 (금)
 
 - **완료**:
-- **진행 중**:
+  - fix(search): `search.ai.*`, `search.hybrid.*` 설정을 `application.yml`, `application-dev.yml`, `application-prod.yml`, `application-test.yml`에 추가하고 `SearchProperties` validation을 보강
+  - fix(search): learning-ai semantic 프록시를 실제 contract에 맞게 정렬
+    - path: `/ai/search/semantic`
+    - request: `query`, `top_k`, `threshold`
+    - response: `chunk_id`, `note_id`, `content`, `score`
+  - refactor(search): semantic/hybrid 호출에 `SearchIdentity`를 도입해 BM25용 `userId`와 semantic용 actor 식별자를 분리
+  - feat(search): `note_identity_map` 테이블과 조회 포트를 추가해 learning-ai UUID `note_id`를 knowledge `Long noteId`로 연결하고 hybrid semantic 결과를 실제 RRF 후보로 병합
+  - feat(search): 검색 인덱스 이벤트/ES 문서/BM25 후보 모델에 `externalNoteId`를 반영해 BM25와 semantic 결과를 공통 UUID 키로 병합
+  - test(search): `HybridSearchServiceTest`, `RrfMergeServiceTest`, `SearchServiceTest`, `NoteIntegrationTest`, `ChunkingIntegrationTest`, `KnowledgeSvcApplicationTests` 재검증 통과
 - **이슈**:
+  - 전체 `./gradlew.bat test`는 기존 `NeighborGraphIntegrationTest`의 Docker 환경 탐지 실패로 1건 실패
 - **다음**:
+  - W3 Step 7 검색 정확도 측정 및 리포트 착수
 
 ### W4 (2026-06-01 ~ 06-05)
 

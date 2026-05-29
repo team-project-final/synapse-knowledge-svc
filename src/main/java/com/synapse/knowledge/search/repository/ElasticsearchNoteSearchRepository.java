@@ -16,6 +16,7 @@ import com.synapse.knowledge.search.entity.NoteSearchDocument;
 import com.synapse.knowledge.search.dto.SearchPageResponse;
 import com.synapse.knowledge.search.dto.SearchRequest;
 import com.synapse.knowledge.search.dto.SearchResultResponse;
+import com.synapse.knowledge.search.service.support.SearchCandidate;
 import com.synapse.knowledge.search.service.support.SearchCursorCodec;
 import com.synapse.knowledge.search.service.support.SearchCursorCodec.CursorPayload;
 import java.io.IOException;
@@ -23,6 +24,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -39,55 +41,37 @@ public class ElasticsearchNoteSearchRepository implements NoteSearchRepository {
     private final AtomicBoolean indexEnsured = new AtomicBoolean(false);
 
     @Override
-    public SearchPageResponse search(Long userId, SearchRequest request) {
+    public SearchPageResponse searchKeyword(Long userId, SearchRequest request) {
         try {
             ensureIndex();
 
-            SearchResponse<NoteSearchDocument> response = elasticsearchClient.search(search -> {
-                var builder = search
-                    .index(INDEX_NAME)
-                    .size(request.limit() + 1)
-                    .query(query -> query.bool(bool -> {
-                        bool.must(must -> must.multiMatch(multiMatch -> multiMatch
-                            .query(request.query())
-                            .fields("title^3", "content", "tags^2")
-                            .operator(Operator.And)
-                        ));
-                        bool.filter(filter -> filter.term(term -> term.field("userId").value(userId)));
-
-                        if (request.tags() != null && !request.tags().isEmpty()) {
-                            bool.filter(filter -> filter.terms(terms -> terms
-                                .field("tags.keyword")
-                                .terms(values -> values.value(request.tags().stream()
-                                    .map(FieldValue::of)
-                                    .toList()))
-                            ));
-                        }
-
-                        return bool;
-                    }))
-                    .highlight(highlight -> highlight
-                        .preTags("<mark>")
-                        .postTags("</mark>")
-                        .fields(List.of(
-                            NamedValue.of("title", HighlightField.of(field -> field.numberOfFragments(0))),
-                            NamedValue.of("content", HighlightField.of(field -> field.fragmentSize(150).numberOfFragments(3)))
-                        ))
-                    )
-                    .sort(sort -> sort.score(score -> score.order(SortOrder.Desc)))
-                    .sort(sort -> sort.field(field -> field.field("noteId").order(SortOrder.Desc)));
-
-                if (request.cursor() != null && !request.cursor().isBlank()) {
-                    CursorPayload payload = searchCursorCodec.decode(request.cursor());
-                    builder.searchAfter(List.of(FieldValue.of(payload.score()), FieldValue.of(payload.noteId())));
-                }
-
-                return builder;
-            }, NoteSearchDocument.class);
+            SearchResponse<NoteSearchDocument> response = elasticsearchClient.search(buildSearchRequest(
+                userId,
+                request.query(),
+                request.limit() + 1,
+                request.tags(),
+                request.cursor()
+            ), NoteSearchDocument.class);
 
             return toPageResponse(response, request.limit());
         } catch (IOException ex) {
             throw new IllegalStateException("Elasticsearch 검색 요청에 실패했습니다", ex);
+        }
+    }
+
+    @Override
+    public List<SearchCandidate> searchKeywordCandidates(Long userId, String query, int limit, List<String> tags) {
+        try {
+            ensureIndex();
+            SearchResponse<NoteSearchDocument> response = elasticsearchClient.search(
+                buildSearchRequest(userId, query, limit, tags, null),
+                NoteSearchDocument.class
+            );
+            return response.hits().hits().stream()
+                .map(this::toSearchCandidate)
+                .toList();
+        } catch (IOException ex) {
+            throw new IllegalStateException("Elasticsearch 후보 검색 요청에 실패했습니다", ex);
         }
     }
 
@@ -100,6 +84,7 @@ public class ElasticsearchNoteSearchRepository implements NoteSearchRepository {
                 .id(document.noteId().toString())
                 .document(new NoteSearchDocument(
                     document.noteId(),
+                    document.externalNoteId(),
                     document.tenantId(),
                     document.userId(),
                     document.title(),
@@ -131,7 +116,13 @@ public class ElasticsearchNoteSearchRepository implements NoteSearchRepository {
         List<Hit<NoteSearchDocument>> pageHits = hasNext ? hits.subList(0, limit) : hits;
 
         List<SearchResultResponse> results = pageHits.stream()
-            .map(this::toSearchResult)
+            .map(this::toSearchCandidate)
+            .map(candidate -> new SearchResultResponse(
+                candidate.noteId(),
+                candidate.title(),
+                candidate.highlights(),
+                candidate.keywordScore() == null ? 0.0f : candidate.keywordScore()
+            ))
             .toList();
 
         String nextCursor = null;
@@ -146,7 +137,7 @@ public class ElasticsearchNoteSearchRepository implements NoteSearchRepository {
         return new SearchPageResponse(results, totalCount, nextCursor, hasNext);
     }
 
-    private SearchResultResponse toSearchResult(Hit<NoteSearchDocument> hit) {
+    private SearchCandidate toSearchCandidate(Hit<NoteSearchDocument> hit) {
         NoteSearchDocument source = hit.source();
         List<String> highlights = new ArrayList<>();
         Map<String, List<String>> highlightMap = hit.highlight();
@@ -157,12 +148,71 @@ public class ElasticsearchNoteSearchRepository implements NoteSearchRepository {
                 .collect(Collectors.toList());
         }
 
-        return new SearchResultResponse(
+        String snippet = highlights.isEmpty()
+            ? abbreviate(source == null ? null : source.content(), 180)
+            : highlights.get(0);
+
+        return new SearchCandidate(
             source == null ? null : source.noteId(),
+            source == null ? null : source.externalNoteId(),
             source == null ? null : source.title(),
             highlights,
-            hit.score() == null ? 0.0f : hit.score().floatValue()
+            snippet,
+            hit.score() == null ? 0.0f : hit.score().floatValue(),
+            null
         );
+    }
+
+    private java.util.function.Function<co.elastic.clients.elasticsearch.core.SearchRequest.Builder, co.elastic.clients.util.ObjectBuilder<co.elastic.clients.elasticsearch.core.SearchRequest>>
+    buildSearchRequest(Long userId, String query, int size, List<String> tags, String cursor) {
+        return search -> {
+            var builder = search
+                .index(INDEX_NAME)
+                .size(size)
+                .query(searchQuery -> searchQuery.bool(bool -> {
+                    bool.must(must -> must.multiMatch(multiMatch -> multiMatch
+                        .query(query)
+                        .fields("title^3", "content", "tags^2")
+                        .operator(Operator.And)
+                    ));
+                    bool.filter(filter -> filter.term(term -> term.field("userId").value(userId)));
+
+                    if (tags != null && !tags.isEmpty()) {
+                        bool.filter(filter -> filter.terms(terms -> terms
+                            .field("tags.keyword")
+                            .terms(values -> values.value(tags.stream()
+                                .map(FieldValue::of)
+                                .toList()))
+                        ));
+                    }
+
+                    return bool;
+                }))
+                .highlight(highlight -> highlight
+                    .preTags("<mark>")
+                    .postTags("</mark>")
+                    .fields(List.of(
+                        NamedValue.of("title", HighlightField.of(field -> field.numberOfFragments(0))),
+                        NamedValue.of("content", HighlightField.of(field -> field.fragmentSize(150).numberOfFragments(3)))
+                    ))
+                )
+                .sort(sort -> sort.score(score -> score.order(SortOrder.Desc)))
+                .sort(sort -> sort.field(field -> field.field("noteId").order(SortOrder.Desc)));
+
+            if (cursor != null && !cursor.isBlank()) {
+                CursorPayload payload = searchCursorCodec.decode(cursor);
+                builder.searchAfter(List.of(FieldValue.of(payload.score()), FieldValue.of(payload.noteId())));
+            }
+
+            return builder;
+        };
+    }
+
+    private String abbreviate(String content, int maxLength) {
+        if (content == null || content.isBlank()) {
+            return null;
+        }
+        return content.length() <= maxLength ? content : content.substring(0, maxLength) + "...";
     }
 
     private void ensureIndex() throws IOException {
@@ -194,6 +244,7 @@ public class ElasticsearchNoteSearchRepository implements NoteSearchRepository {
                 )
                 .mappings(mappings -> mappings
                     .properties("noteId", Property.of(property -> property.long_(field -> field)))
+                    .properties("externalNoteId", Property.of(property -> property.keyword(field -> field)))
                     .properties("tenantId", Property.of(property -> property.keyword(field -> field)))
                     .properties("userId", Property.of(property -> property.long_(field -> field)))
                     .properties("title", Property.of(property -> property.text(field -> field
