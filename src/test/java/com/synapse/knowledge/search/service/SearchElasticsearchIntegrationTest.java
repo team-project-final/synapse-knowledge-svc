@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,8 +30,8 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.wait.strategy.Wait;
+import org.springframework.test.util.ReflectionTestUtils;
+import org.testcontainers.elasticsearch.ElasticsearchContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
@@ -41,34 +40,25 @@ import org.testcontainers.utility.MountableFile;
 @SpringBootTest
 @ActiveProfiles("test")
 @Testcontainers(disabledWithoutDocker = true)
-@Disabled("""
-    ES/OpenSearch 호환성 과제로 CI에서 일시 제외.
-    클라이언트(co.elastic.clients 9.2.1)는 ES 9.x 서버를 요구하나(8.x는 compatible-with 400),
-    운영은 OpenSearch 2.11(Lucene 9.x)이고 앱 Nori POS 설정이 ES 9.x(Lucene 10) POS.Tag와 불일치(POS.Tag.E).
-    테스트 서버 이미지/클라이언트/운영 OpenSearch/Nori 설정 정합은 별도 과제로 트래킹.""")
 class SearchElasticsearchIntegrationTest {
 
     private static final String INDEX_NAME = "notes-v1";
 
     @Container
-    static final GenericContainer<?> elasticsearch = new GenericContainer<>(
-        DockerImageName.parse("docker.elastic.co/elasticsearch/elasticsearch:8.19.6")
+    static final ElasticsearchContainer elasticsearch = new ElasticsearchContainer(
+        DockerImageName.parse("docker.elastic.co/elasticsearch/elasticsearch:9.2.1")
     )
-        .withExposedPorts(9200)
         .withEnv("discovery.type", "single-node")
         .withEnv("xpack.security.enabled", "false")
         .withEnv("ES_JAVA_OPTS", "-Xms512m -Xmx512m")
-        .withEnv("ingest.geoip.downloader.enabled", "false")
         .withCopyFileToContainer(
             MountableFile.forClasspathResource("elasticsearch/elasticsearch-plugins.yml"),
             "/usr/share/elasticsearch/config/elasticsearch-plugins.yml"
-        )
-        .waitingFor(Wait.forHttp("/").forStatusCode(200))
-        .withStartupTimeout(Duration.ofMinutes(4));
+        );
 
     @DynamicPropertySource
     static void registerElasticProperties(DynamicPropertyRegistry registry) {
-        registry.add("spring.elasticsearch.uris", () -> "http://" + elasticsearch.getHost() + ":" + elasticsearch.getMappedPort(9200));
+        registry.add("spring.elasticsearch.uris", elasticsearch::getHttpHostAddress);
     }
 
     @Autowired
@@ -85,6 +75,9 @@ class SearchElasticsearchIntegrationTest {
 
     @Autowired
     private ElasticsearchClient elasticsearchClient;
+
+    @Autowired
+    private com.synapse.knowledge.search.repository.ElasticsearchNoteSearchRepository elasticsearchNoteSearchRepository;
 
     @MockitoBean
     private LearningAiSearchClient learningAiSearchClient;
@@ -195,21 +188,27 @@ class SearchElasticsearchIntegrationTest {
 
     private SearchPageResponse waitForResults(Long userId, String query, List<String> tags, int limit) {
         Instant deadline = Instant.now().plus(Duration.ofSeconds(20));
+        RuntimeException lastRetryableFailure = null;
 
         while (Instant.now().isBefore(deadline)) {
-            SearchPageResponse response = searchService.search(userId, new SearchRequest(query, null, limit, tags));
-            if (!response.results().isEmpty()) {
-                return response;
+            try {
+                SearchPageResponse response = searchService.search(userId, new SearchRequest(query, null, limit, tags));
+                if (!response.results().isEmpty()) {
+                    return response;
+                }
+            } catch (RuntimeException ex) {
+                if (!isRetryableSearchFailure(ex)) {
+                    throw ex;
+                }
+                lastRetryableFailure = ex;
             }
 
-            try {
-                Thread.sleep(250L);
-            } catch (InterruptedException ex) {
-                Thread.currentThread().interrupt();
-                throw new IllegalStateException("Elasticsearch indexing wait interrupted", ex);
-            }
+            sleepBriefly();
         }
 
+        if (lastRetryableFailure != null) {
+            throw lastRetryableFailure;
+        }
         return searchService.search(userId, new SearchRequest(query, null, limit, tags));
     }
 
@@ -229,6 +228,7 @@ class SearchElasticsearchIntegrationTest {
             .value();
 
         if (!exists) {
+            resetIndexEnsuredFlag();
             return;
         }
 
@@ -236,9 +236,55 @@ class SearchElasticsearchIntegrationTest {
             elasticsearchClient.indices().delete(delete -> delete.index(INDEX_NAME));
         } catch (ElasticsearchException ex) {
             if (ex.status() == 404) {
+                resetIndexEnsuredFlag();
                 return;
             }
             throw ex;
         }
+
+        waitUntilIndexDeleted();
+        resetIndexEnsuredFlag();
+    }
+
+    private boolean isRetryableSearchFailure(RuntimeException ex) {
+        Throwable cause = ex;
+        while (cause != null) {
+            String message = cause.getMessage();
+            if (message != null && (
+                message.contains("index_not_found_exception")
+                    || message.contains("no_shard_available_action_exception")
+                    || message.contains("resource_already_exists_exception")
+            )) {
+                return true;
+            }
+            cause = cause.getCause();
+        }
+        return false;
+    }
+
+    private void sleepBriefly() {
+        try {
+            Thread.sleep(250L);
+        } catch (InterruptedException ex) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Elasticsearch indexing wait interrupted", ex);
+        }
+    }
+
+    private void waitUntilIndexDeleted() throws IOException {
+        Instant deadline = Instant.now().plus(Duration.ofSeconds(10));
+        while (Instant.now().isBefore(deadline)) {
+            boolean exists = elasticsearchClient.indices()
+                .exists(request -> request.index(INDEX_NAME))
+                .value();
+            if (!exists) {
+                return;
+            }
+            sleepBriefly();
+        }
+    }
+
+    private void resetIndexEnsuredFlag() {
+        ReflectionTestUtils.setField(elasticsearchNoteSearchRepository, "indexEnsured", false);
     }
 }

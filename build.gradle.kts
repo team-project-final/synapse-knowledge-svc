@@ -47,6 +47,7 @@ dependencies {
 	testImplementation("org.testcontainers:junit-jupiter:1.20.6")
 	testImplementation("org.testcontainers:testcontainers:1.20.6")
 	testImplementation("org.testcontainers:postgresql:1.20.6")
+	testImplementation("org.testcontainers:elasticsearch:1.20.6")
 }
 
 tasks.withType<Test> {
