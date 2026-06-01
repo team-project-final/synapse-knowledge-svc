@@ -15,6 +15,10 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
   elasticsearch:
     uris: ${ELASTICSEARCH_URIS}
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
+    properties:
+      schema.registry.url: ${SCHEMA_REGISTRY_URL}
 
 synapse:
   jwt:

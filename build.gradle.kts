@@ -1,7 +1,9 @@
 plugins {
 	java
+	idea
 	id("org.springframework.boot") version "4.0.0"
 	id("io.spring.dependency-management") version "1.1.7"
+	id("com.github.davidmc24.gradle.plugin.avro") version "1.9.1"
 }
 
 group = "com.synapse.knowledge"
@@ -13,8 +15,21 @@ java {
 	}
 }
 
+sourceSets {
+	main {
+		java.srcDir(layout.buildDirectory.dir("generated-main-avro-java"))
+	}
+}
+
+idea {
+	module {
+		generatedSourceDirs.add(layout.buildDirectory.dir("generated-main-avro-java").get().asFile)
+	}
+}
+
 repositories {
 	mavenCentral()
+	maven { url = uri("https://packages.confluent.io/maven/") }
 }
 
 dependencies {
@@ -26,8 +41,11 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-security")
 	implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
 	implementation("org.springframework.boot:spring-boot-starter-data-elasticsearch")
+	implementation("org.springframework.kafka:spring-kafka")
 	implementation("com.googlecode.owasp-java-html-sanitizer:owasp-java-html-sanitizer:20240325.1")
 	implementation("org.mapstruct:mapstruct:1.6.3")
+	implementation("org.apache.avro:avro:1.11.3")
+	implementation("io.confluent:kafka-avro-serializer:7.5.0")
 	compileOnly("org.projectlombok:lombok")
 	annotationProcessor("org.projectlombok:lombok")
 	annotationProcessor("org.mapstruct:mapstruct-processor:1.6.3")
@@ -43,6 +61,7 @@ dependencies {
 	testImplementation("org.springframework.boot:spring-boot-testcontainers")
 	testImplementation("org.springframework.security:spring-security-test")
 	testImplementation("org.springframework.modulith:spring-modulith-starter-test")
+	testImplementation("org.springframework.kafka:spring-kafka-test")
 	testImplementation("com.tngtech.archunit:archunit-junit5:1.3.0")
 	testImplementation("org.testcontainers:junit-jupiter:1.20.6")
 	testImplementation("org.testcontainers:testcontainers:1.20.6")
