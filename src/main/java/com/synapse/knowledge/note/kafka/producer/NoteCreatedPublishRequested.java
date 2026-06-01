@@ -8,7 +8,7 @@ import java.util.UUID;
 public record NoteCreatedPublishRequested(
     String eventId,
     UUID externalNoteId,
-    Long userId,
+    String userId,
     String tenantId,
     String title,
     String content,
@@ -17,12 +17,12 @@ public record NoteCreatedPublishRequested(
     String deckId
 ) {
 
-    public static NoteCreatedPublishRequested from(Note note, UUID externalNoteId) {
+    public static NoteCreatedPublishRequested from(Note note, UUID externalNoteId, String eventUserId) {
         Instant now = Instant.now();
         return new NoteCreatedPublishRequested(
             UUID.randomUUID().toString(),
             externalNoteId,
-            note.getUserId(),
+            eventUserId,
             note.getTenantId(),
             note.getTitle(),
             note.getContentPlain(),

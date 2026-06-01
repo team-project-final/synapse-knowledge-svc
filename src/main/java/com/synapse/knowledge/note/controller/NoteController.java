@@ -33,7 +33,7 @@ public class NoteController {
         @CurrentUserAuth CurrentUser currentUser,
         @Valid @RequestBody NoteCreateRequest request
     ) {
-        return ApiResponse.success(noteService.create(currentUser.userId(), request));
+        return ApiResponse.success(noteService.create(currentUser.userId(), currentUser.subject(), request));
     }
 
     @GetMapping
@@ -52,7 +52,7 @@ public class NoteController {
         @PathVariable Long id,
         @Valid @RequestBody NoteCreateRequest request
     ) {
-        return ApiResponse.success(noteService.update(currentUser.userId(), id, request));
+        return ApiResponse.success(noteService.update(currentUser.userId(), currentUser.subject(), id, request));
     }
 
     @DeleteMapping("/{id}")

@@ -8,19 +8,19 @@ import java.util.UUID;
 public record NoteUpdatedPublishRequested(
     String eventId,
     UUID externalNoteId,
-    Long userId,
+    String userId,
     String tenantId,
     String title,
     String updatedAt,
     Long occurredAt
 ) {
 
-    public static NoteUpdatedPublishRequested from(Note note, UUID externalNoteId) {
+    public static NoteUpdatedPublishRequested from(Note note, UUID externalNoteId, String eventUserId) {
         Instant now = Instant.now();
         return new NoteUpdatedPublishRequested(
             UUID.randomUUID().toString(),
             externalNoteId,
-            note.getUserId(),
+            eventUserId,
             note.getTenantId(),
             note.getTitle(),
             resolveTimestamp(note.getUpdatedAt(), now),

@@ -232,14 +232,18 @@
 - feat(kafka): `synapse-shared` Avro 원본 기준 `NoteCreated` / `NoteUpdated` producer 스키마와 `spring-kafka` 발행 설정을 knowledge-svc에 추가
 - feat(note): `note/kafka/producer` 패키지와 `@TransactionalEventListener(AFTER_COMMIT)` 기반 Kafka publisher를 도입하고 노트 생성/수정 성공 후 발행 요청 이벤트를 연결
 - test(kafka): note producer payload 구성/발행 요청 경로를 검증하는 단위 테스트를 추가
+- feat(kafka): note 생성/수정 Kafka 발행 경로를 outbox 기반으로 전환하고 `eventId` 중복 적재 방지 제약, scheduler dispatcher, 발행 실패 재시도 메타데이터를 추가
+- feat(note): controller가 JWT `subject`를 이벤트 계약용 `userId`로 넘기도록 조정하고, note service는 소유권 검사용 `Long userId`와 이벤트용 식별자를 분리
+- test(kafka): outbox enqueue/dispatch 단위 테스트와 producer UUID `userId` 검증을 추가
 - **진행 중**:
 - 없음
 - **이슈**:
 - live semantic 품질 지표는 `learning-ai` 응답 품질에 좌우되므로, 자동 테스트는 empty semantic mock 기준으로 재현성을 확보
 - 전체 `./gradlew.bat test`는 기존 `NeighborGraphIntegrationTest`의 Docker 환경 미감지로 1건 실패
 - `deckId`는 shared 스키마에서 nullable이지만 현재 knowledge-svc 노트 API 입력에는 값이 없어 producer는 `null`로 발행하며, learning-ai 쪽 nullable 처리 정렬이 후속으로 필요할 수 있음
+- JWT `subject`가 UUID 계약이라는 가정으로 event `userId`를 매핑했으므로, auth 서비스 claim 규약이 다르면 consumer/issuer 기준 재정렬이 필요함
 - **다음**:
-- W4 Step 8 하이브리드 검색 E2E 테스트 착수
+- 로컬 Kafka/Schema Registry에서 `note-created-v1`, `note-updated-v1` actual publish 검증 및 shared `kafka-e2e-test.sh`/learning-ai 교차 확인
 
 #### 2026-06-02 (화)
 
