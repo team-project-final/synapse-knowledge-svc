@@ -229,11 +229,15 @@
 - feat(security): `/api/v1/admin/search/**` 관리자 권한 체크와 JWT `roles` -> `ROLE_*` 변환을 추가
 - test(search): 정확도 계산기 단위 테스트, admin controller 보안 테스트, ES 기반 benchmark accuracy 통합 테스트를 추가
 - docs(step7): Task/Workflow/HISTORY를 Step 7 완료 상태와 `/api/v1/admin/search/*` 경로 기준으로 동기화
+- feat(kafka): `synapse-shared` Avro 원본 기준 `NoteCreated` / `NoteUpdated` producer 스키마와 `spring-kafka` 발행 설정을 knowledge-svc에 추가
+- feat(note): `note/kafka/producer` 패키지와 `@TransactionalEventListener(AFTER_COMMIT)` 기반 Kafka publisher를 도입하고 노트 생성/수정 성공 후 발행 요청 이벤트를 연결
+- test(kafka): note producer payload 구성/발행 요청 경로를 검증하는 단위 테스트를 추가
 - **진행 중**:
 - 없음
 - **이슈**:
 - live semantic 품질 지표는 `learning-ai` 응답 품질에 좌우되므로, 자동 테스트는 empty semantic mock 기준으로 재현성을 확보
 - 전체 `./gradlew.bat test`는 기존 `NeighborGraphIntegrationTest`의 Docker 환경 미감지로 1건 실패
+- `deckId`는 shared 스키마에서 nullable이지만 현재 knowledge-svc 노트 API 입력에는 값이 없어 producer는 `null`로 발행하며, learning-ai 쪽 nullable 처리 정렬이 후속으로 필요할 수 있음
 - **다음**:
 - W4 Step 8 하이브리드 검색 E2E 테스트 착수
 
