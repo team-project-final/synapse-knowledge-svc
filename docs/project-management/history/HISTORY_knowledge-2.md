@@ -31,7 +31,7 @@
 | Step   | 내용                   | 상태        | 시작일 | 완료일 | 비고 |
 | ------ | ---------------------- | ----------- | ------ | ------ | ---- |
 | Step 6 | 하이브리드 검색        | Done | 2026-05-26 | 2026-05-29 | semantic contract 정렬 + `note_identity_map` UUID 매핑으로 hybrid RRF 병합 복구 |
-| Step 7 | 정확도 측정 파이프라인 | Not Started | —      | —      |      |
+| Step 7 | 정확도 측정 파이프라인 | Done | 2026-06-01 | 2026-06-01 | benchmark 노트/쿼리 세트 + 관리자 API + Precision@10/Recall@10/MRR/NDCG 리포트 구현 |
 
 **W3 진행률**: 1/2 Steps 완료
 
@@ -224,9 +224,18 @@
 #### 2026-06-01 (월)
 
 - **완료**:
+- feat(search): benchmark 노트/테스트 쿼리 JSON, 정확도 계산기, `SearchAccuracyService`, 관리자 전용 정확도 실행/조회 API를 추가
+- feat(note): search 모듈의 benchmark 시드를 위해 `shared.NoteCommandPort`와 note 어댑터를 추가해 모듈 경계를 유지한 채 노트 upsert 경로를 제공
+- feat(security): `/api/v1/admin/search/**` 관리자 권한 체크와 JWT `roles` -> `ROLE_*` 변환을 추가
+- test(search): 정확도 계산기 단위 테스트, admin controller 보안 테스트, ES 기반 benchmark accuracy 통합 테스트를 추가
+- docs(step7): Task/Workflow/HISTORY를 Step 7 완료 상태와 `/api/v1/admin/search/*` 경로 기준으로 동기화
 - **진행 중**:
+- 없음
 - **이슈**:
+- live semantic 품질 지표는 `learning-ai` 응답 품질에 좌우되므로, 자동 테스트는 empty semantic mock 기준으로 재현성을 확보
+- 전체 `./gradlew.bat test`는 기존 `NeighborGraphIntegrationTest`의 Docker 환경 미감지로 1건 실패
 - **다음**:
+- W4 Step 8 하이브리드 검색 E2E 테스트 착수
 
 #### 2026-06-02 (화)
 
