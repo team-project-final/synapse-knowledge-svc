@@ -1,7 +1,7 @@
 # WORKPLAN: Step 5 — Kafka 기반 ES 자동 동기화
 
 > **작성일**: 2026-05-29  
-> **브랜치**: `feat/step5-kafka-es`  
+> **브랜치**: `feature/kafka-es-sync`  
 > **기준 문서**: TASK_knowledge-1.md Step 5 | WORKFLOW_knowledge-1_W2.md Step 5  
 > **적용 Rules**: 03-technical · 07-platform-spring · 08-kafka-event · 12-working-log
 
@@ -46,8 +46,8 @@ NoteService
 | 08.3 | Avro 스키마 | namespace `com.synapse.event.knowledge`, 모든 필드 default 값, camelCase, tenantId 포함 | 이번 PR: JSON 직렬화. Avro + Schema Registry 등록은 synapse-shared 레포 별도 PR |
 | 08.4 | 호환성 모드 | knowledge 도메인: `BACKWARD_TRANSITIVE` | Schema Registry 등록 시 적용 |
 | 08.5 | 금지 | 필드 이름 변경 금지 / default 없는 필드 추가 금지 / enum 값 제거 금지 | `NoteSearchSyncKafkaEvent` 설계 시 모든 필드에 default 상당 값 설계 |
-| 08.6 | 멱등 Consumer | ES upsert는 `noteId` 기준 자연 멱등. 중복 이벤트 수신 시 로그만 남기고 skip | `NoteSearchKafkaConsumer` |
-| 08.7 | DLQ + 재시도 | 3회 재시도 (1s → 2s → 4s, max 7s), 실패 시 DLQ 전송 | `KafkaConfig.java` |
+| 08.6 | 멱등 Consumer | idempotency key = CloudEvents `id` 필드 (UUID). 처리 완료된 이벤트 ID 최소 7일 보관. 중복 감지 시 로그만 남기고 skip | `NoteSearchKafkaConsumer` + `KafkaIdempotencyStore` |
+| 08.7 | DLQ + 재시도 | 3회 재시도 (1s → 2s → 4s, max 7s), 실패 시 DLQ 전송. **DLQ 모니터링 알림 필수 (Slack)** | `KafkaConfig.java` |
 
 ### RULE 03 — Technical [MUST]
 
@@ -84,13 +84,14 @@ NoteService
 | `src/main/java/com/synapse/knowledge/search/event/NoteSearchSyncKafkaEvent.java` | CloudEvents 1.0 envelope + 페이로드 (Java Record) |
 | `src/main/java/com/synapse/knowledge/search/service/producer/NoteSearchKafkaProducer.java` | Spring Event 수신 → Kafka 발행 |
 | `src/main/java/com/synapse/knowledge/search/service/consumer/NoteSearchKafkaConsumer.java` | Kafka 소비 → ES 인덱싱 (멱등 처리) |
-| `src/main/java/com/synapse/knowledge/search/config/KafkaConfig.java` | Consumer factory + DLQ 설정 |
+| `src/main/java/com/synapse/knowledge/search/service/consumer/KafkaIdempotencyStore.java` | CloudEvents `id` 기반 중복 처리 방지 (Redis, TTL 7일) |
+| `src/main/java/com/synapse/knowledge/search/config/KafkaConfig.java` | Consumer factory + DLQ 설정 + Slack 알림 |
 
 ### 3.2 수정 (소스)
 
 | 파일 경로 | 변경 내용 |
 |-----------|-----------|
-| `build.gradle.kts` | `spring-kafka`, `spring-kafka-test`, `testcontainers:kafka` 의존성 추가 |
+| `build.gradle.kts` | `spring-kafka`, `spring-kafka-test`, `testcontainers:kafka`, `spring-data-redis` 의존성 추가 |
 | `src/main/resources/application.yml` | `spring.kafka.*` 기본 설정 추가 |
 | `src/main/resources/application-dev.yml` | `spring.kafka.bootstrap-servers` 개발 환경 값 추가 |
 | `src/test/resources/application-test.yml` | `@EmbeddedKafka` 연동 설정 추가 |
@@ -119,6 +120,7 @@ public record NoteSearchSyncKafkaEvent(
     String       tenantid,        // 멀티테넌트 식별자 (RULE 08.2 필수)
     String       datacontenttype, // "application/json" 고정
     Long         noteId,
+    UUID         externalNoteId,  // NoteSearchDocument 생성에 필요
     Long         userId,
     String       title,
     String       contentPlain,
@@ -152,31 +154,60 @@ class NoteSearchKafkaProducer {
 
 ```java
 @Component
+@RequiredArgsConstructor
 class NoteSearchKafkaConsumer {
     private final NoteSearchRepository noteSearchRepository;
+    private final KafkaIdempotencyStore idempotencyStore;
 
     @KafkaListener(
         topics = NoteSearchSyncKafkaEvent.TOPIC,
         groupId = "knowledge-search-indexer",
-        containerFactory = "searchSyncKafkaListenerContainerFactory"  // DLQ 연결
+        containerFactory = "searchSyncKafkaListenerContainerFactory"
     )
     void handle(NoteSearchSyncKafkaEvent event) {
-        // ES upsert/delete = noteId 기준 멱등 (RULE 08.6)
-        if (event.deleted()) {
-            noteSearchRepository.deleteByNoteId(event.noteId());
+        // CloudEvents id 기준 중복 감지 — RULE 08.6
+        if (idempotencyStore.isProcessed(event.id())) {
+            log.info("Duplicate event skipped: {}", event.id());
             return;
         }
-        noteSearchRepository.upsert(new NoteSearchDocument(
-            event.noteId(), event.tenantid(), event.userId(),
-            event.title(), event.contentPlain(),
-            event.tags() == null ? List.of() : event.tags(),
-            Instant.now()
-        ));
+
+        if (event.deleted()) {
+            noteSearchRepository.deleteByNoteId(event.noteId());
+        } else {
+            noteSearchRepository.upsert(new NoteSearchDocument(
+                event.noteId(), event.externalNoteId(), event.tenantid(),
+                event.userId(), event.title(), event.contentPlain(),
+                event.tags() == null ? List.of() : event.tags(),
+                Instant.now()
+            ));
+        }
+
+        idempotencyStore.markProcessed(event.id());  // TTL 7일 보관 — RULE 08.6
     }
 }
 ```
 
-### 4.4 KafkaConfig — DLQ (RULE 08.7)
+### 4.4 KafkaIdempotencyStore (RULE 08.6)
+
+```java
+@Component
+@RequiredArgsConstructor
+class KafkaIdempotencyStore {
+    private static final String KEY_PREFIX = "kafka:processed:";
+    private static final Duration TTL = Duration.ofDays(7);
+    private final StringRedisTemplate redisTemplate;
+
+    boolean isProcessed(String eventId) {
+        return Boolean.TRUE.equals(redisTemplate.hasKey(KEY_PREFIX + eventId));
+    }
+
+    void markProcessed(String eventId) {
+        redisTemplate.opsForValue().set(KEY_PREFIX + eventId, "1", TTL);
+    }
+}
+```
+
+### 4.5 KafkaConfig — DLQ + Slack 알림 (RULE 08.7)
 
 ```java
 @Configuration
@@ -190,9 +221,12 @@ class KafkaConfig {
         var backOff = new ExponentialBackOff(1_000L, 2.0);
         backOff.setMaxElapsedTime(7_000L);
 
-        // 실패 시 .dlq 토픽으로 전송 — RULE 08.7
+        // 실패 시 .dlq 토픽 전송 + Slack 알림 — RULE 08.7
         var recoverer = new DeadLetterPublishingRecoverer(dlqTemplate,
-            (record, ex) -> new TopicPartition(record.topic() + ".dlq", -1));
+            (record, ex) -> {
+                slackNotifier.sendDlqAlert(record.topic(), ex.getMessage());
+                return new TopicPartition(record.topic() + ".dlq", -1);
+            });
 
         factory.setCommonErrorHandler(new DefaultErrorHandler(recoverer, backOff));
         return factory;
@@ -200,7 +234,7 @@ class KafkaConfig {
 }
 ```
 
-### 4.5 application.yml 추가 내용
+### 4.6 application.yml 추가 내용
 
 ```yaml
 spring:
@@ -217,6 +251,13 @@ spring:
       properties:
         spring.json.trusted.packages: "com.synapse.knowledge.search.event"
         spring.json.value.default.type: "com.synapse.knowledge.search.event.NoteSearchSyncKafkaEvent"
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+slack:
+  webhook-url: ${SLACK_WEBHOOK_URL:}
+  dlq-channel: "#synapse-dlq-alert"
 ```
 
 ---
@@ -246,28 +287,30 @@ search 모듈 (allowedDependencies = {"shared", "global"})
 
 | 순서 | 작업 | Done When |
 |------|------|-----------|
-| ① | 브랜치 생성: `feat/step5-kafka-es` | 브랜치 체크아웃 완료 |
-| ② | `build.gradle.kts` 의존성 추가 | `./gradlew build` 성공 |
-| ③ | yml 설정 추가 (application.yml / dev / test) | 앱 기동 시 Kafka 설정 로드 확인 |
+| ① | 브랜치 생성: `feature/kafka-es-sync` | 브랜치 체크아웃 완료 |
+| ② | `build.gradle.kts` 의존성 추가 (kafka + redis) | `./gradlew build` 성공 |
+| ③ | yml 설정 추가 (Kafka + Redis + Slack webhook) | 앱 기동 시 설정 로드 확인 |
 | ④ | `NoteSearchSyncKafkaEvent` 작성 | CloudEvents 필드 전부 포함, 컴파일 통과 |
 | ⑤ | `NoteSearchKafkaProducer` 작성 | `@TransactionalEventListener(AFTER_COMMIT)` |
-| ⑥ | `KafkaConfig` 작성 | DLQ + ContainerFactory 빈 등록 |
-| ⑦ | `NoteSearchKafkaConsumer` 작성 | `@KafkaListener` + 멱등 처리 |
-| ⑧ | `NoteSearchIndexingListener` 삭제 | 컴파일 통과, 기존 테스트 회귀 없음 |
-| ⑨ | `NoteSearchKafkaConsumerTest` 작성 + 통과 | `@EmbeddedKafka` 3개 시나리오 통과 |
-| ⑩ | `ModuleStructureTest` 통과 확인 | `./gradlew test` 그린 |
+| ⑥ | `KafkaIdempotencyStore` 작성 | Redis TTL 7일, isProcessed / markProcessed |
+| ⑦ | `KafkaConfig` 작성 | DLQ + ContainerFactory + Slack 알림 빈 등록 |
+| ⑧ | `NoteSearchKafkaConsumer` 작성 | `@KafkaListener` + id 기반 멱등 처리 |
+| ⑨ | `NoteSearchIndexingListener` 삭제 | 컴파일 통과, 기존 테스트 회귀 없음 |
+| ⑩ | `NoteSearchKafkaConsumerTest` 작성 + 통과 | `@EmbeddedKafka` 4개 시나리오 통과 (중복 이벤트 포함) |
+| ⑪ | `ModuleStructureTest` 통과 확인 | `./gradlew test` 그린 |
 
 ---
 
 ## 7. 커밋 계획 (RULE 12.1)
 
 ```
-chore(kafka): add spring-kafka, spring-kafka-test, testcontainers:kafka dependency
-chore(kafka): add Kafka bootstrap-servers config (application.yml / dev / test)
+chore(kafka): add spring-kafka, spring-kafka-test, testcontainers:kafka, spring-data-redis dependency
+chore(kafka): add Kafka, Redis, Slack webhook config (application.yml / dev / test)
 feat(search): add NoteSearchSyncKafkaEvent CloudEvents 1.0 envelope
 feat(search): add NoteSearchKafkaProducer — Spring Event AFTER_COMMIT → Kafka
-feat(search): add NoteSearchKafkaConsumer — Kafka → ES indexing with DLQ retry
-feat(search): add KafkaConfig — searchSyncKafkaListenerContainerFactory with DLQ
+feat(search): add KafkaIdempotencyStore — CloudEvents id 기반 중복 방지 (Redis TTL 7d)
+feat(search): add NoteSearchKafkaConsumer — Kafka → ES indexing with idempotency check
+feat(search): add KafkaConfig — searchSyncKafkaListenerContainerFactory with DLQ + Slack alert
 refactor(search): remove NoteSearchIndexingListener (replaced by Kafka producer)
 test(search): add NoteSearchKafkaConsumerTest with @EmbeddedKafka
 ```
@@ -278,15 +321,16 @@ test(search): add NoteSearchKafkaConsumerTest with @EmbeddedKafka
 
 ```markdown
 ## 변경 사항
-- [chore] spring-kafka 의존성 추가 (build.gradle.kts)
+- [chore] spring-kafka, spring-data-redis 의존성 추가 (build.gradle.kts)
 - [feat] NoteSearchSyncKafkaEvent — CloudEvents 1.0 envelope (specversion, id, tenantid 포함)
 - [feat] NoteSearchKafkaProducer — @TransactionalEventListener(AFTER_COMMIT) → Kafka 발행
-- [feat] NoteSearchKafkaConsumer — @KafkaListener, ES upsert/delete (멱등)
-- [feat] KafkaConfig — DLQ + exponential backoff 3회 재시도
+- [feat] KafkaIdempotencyStore — CloudEvents id 기반 중복 처리 방지 (Redis TTL 7일)
+- [feat] NoteSearchKafkaConsumer — @KafkaListener, id 기반 멱등 처리 후 ES upsert/delete
+- [feat] KafkaConfig — DLQ + exponential backoff 3회 재시도 + Slack 알림
 - [refactor] NoteSearchIndexingListener 제거 (Kafka Producer로 대체)
 
 ## 테스트 결과
-- [ ] NoteSearchKafkaConsumerTest @EmbeddedKafka 3개 시나리오 통과
+- [ ] NoteSearchKafkaConsumerTest @EmbeddedKafka 4개 시나리오 통과 (중복 이벤트 skip 포함)
 - [ ] ModuleStructureTest (Modulith verify) 통과
 - [ ] ./gradlew build 성공
 - [ ] 기존 NoteSearchControllerTest 회귀 없음
@@ -294,6 +338,8 @@ test(search): add NoteSearchKafkaConsumerTest with @EmbeddedKafka
 ## 비고
 - Avro 스키마 / Schema Registry 등록: synapse-shared 레포 별도 PR 예정 (RULE 08.3)
 - SearchElasticsearchIntegrationTest @Disabled 유지 (ES/OpenSearch 호환성 별도 과제)
+- Redis 로컬 개발: docker-compose에 redis:7-alpine 추가 필요
+- Slack webhook URL: 팀 채널 `#synapse-dlq-alert` 사용, 환경변수 `SLACK_WEBHOOK_URL` 설정
 ```
 
 ---
