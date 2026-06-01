@@ -5,6 +5,23 @@ spring:
     active: ${SPRING_PROFILES_ACTIVE:dev}
   elasticsearch:
     uris: ${ELASTICSEARCH_URIS:http://localhost:9200}
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    consumer:
+      group-id: knowledge-search-indexer
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "com.synapse.knowledge.search.event"
+        spring.json.value.default.type: "com.synapse.knowledge.search.event.NoteSearchSyncKafkaEvent"
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
 
 server:
   port: 8082
@@ -32,6 +49,10 @@ search:
   hybrid:
     rrf-k: ${SEARCH_HYBRID_RRF_K:60}
     candidate-multiplier: ${SEARCH_HYBRID_CANDIDATE_MULTIPLIER:3}
+
+slack:
+  webhook-url: ${SLACK_WEBHOOK_URL:}
+  dlq-channel: "#synapse-dlq-alert"
 
 logging:
   pattern:
