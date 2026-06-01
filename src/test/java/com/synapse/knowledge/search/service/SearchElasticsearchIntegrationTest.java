@@ -30,6 +30,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.testcontainers.elasticsearch.ElasticsearchContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -74,6 +75,9 @@ class SearchElasticsearchIntegrationTest {
 
     @Autowired
     private ElasticsearchClient elasticsearchClient;
+
+    @Autowired
+    private com.synapse.knowledge.search.repository.ElasticsearchNoteSearchRepository elasticsearchNoteSearchRepository;
 
     @MockitoBean
     private LearningAiSearchClient learningAiSearchClient;
@@ -184,21 +188,27 @@ class SearchElasticsearchIntegrationTest {
 
     private SearchPageResponse waitForResults(Long userId, String query, List<String> tags, int limit) {
         Instant deadline = Instant.now().plus(Duration.ofSeconds(20));
+        RuntimeException lastRetryableFailure = null;
 
         while (Instant.now().isBefore(deadline)) {
-            SearchPageResponse response = searchService.search(userId, new SearchRequest(query, null, limit, tags));
-            if (!response.results().isEmpty()) {
-                return response;
+            try {
+                SearchPageResponse response = searchService.search(userId, new SearchRequest(query, null, limit, tags));
+                if (!response.results().isEmpty()) {
+                    return response;
+                }
+            } catch (RuntimeException ex) {
+                if (!isRetryableSearchFailure(ex)) {
+                    throw ex;
+                }
+                lastRetryableFailure = ex;
             }
 
-            try {
-                Thread.sleep(250L);
-            } catch (InterruptedException ex) {
-                Thread.currentThread().interrupt();
-                throw new IllegalStateException("Elasticsearch indexing wait interrupted", ex);
-            }
+            sleepBriefly();
         }
 
+        if (lastRetryableFailure != null) {
+            throw lastRetryableFailure;
+        }
         return searchService.search(userId, new SearchRequest(query, null, limit, tags));
     }
 
@@ -218,6 +228,7 @@ class SearchElasticsearchIntegrationTest {
             .value();
 
         if (!exists) {
+            resetIndexEnsuredFlag();
             return;
         }
 
@@ -225,9 +236,55 @@ class SearchElasticsearchIntegrationTest {
             elasticsearchClient.indices().delete(delete -> delete.index(INDEX_NAME));
         } catch (ElasticsearchException ex) {
             if (ex.status() == 404) {
+                resetIndexEnsuredFlag();
                 return;
             }
             throw ex;
         }
+
+        waitUntilIndexDeleted();
+        resetIndexEnsuredFlag();
+    }
+
+    private boolean isRetryableSearchFailure(RuntimeException ex) {
+        Throwable cause = ex;
+        while (cause != null) {
+            String message = cause.getMessage();
+            if (message != null && (
+                message.contains("index_not_found_exception")
+                    || message.contains("no_shard_available_action_exception")
+                    || message.contains("resource_already_exists_exception")
+            )) {
+                return true;
+            }
+            cause = cause.getCause();
+        }
+        return false;
+    }
+
+    private void sleepBriefly() {
+        try {
+            Thread.sleep(250L);
+        } catch (InterruptedException ex) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("Elasticsearch indexing wait interrupted", ex);
+        }
+    }
+
+    private void waitUntilIndexDeleted() throws IOException {
+        Instant deadline = Instant.now().plus(Duration.ofSeconds(10));
+        while (Instant.now().isBefore(deadline)) {
+            boolean exists = elasticsearchClient.indices()
+                .exists(request -> request.index(INDEX_NAME))
+                .value();
+            if (!exists) {
+                return;
+            }
+            sleepBriefly();
+        }
+    }
+
+    private void resetIndexEnsuredFlag() {
+        ReflectionTestUtils.setField(elasticsearchNoteSearchRepository, "indexEnsured", false);
     }
 }

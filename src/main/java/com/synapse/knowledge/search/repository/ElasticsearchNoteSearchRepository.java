@@ -1,6 +1,7 @@
 package com.synapse.knowledge.search.repository;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.ElasticsearchException;
 import co.elastic.clients.elasticsearch._types.analysis.NoriDecompoundMode;
 import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.SortOrder;
@@ -24,8 +25,6 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -38,7 +37,8 @@ public class ElasticsearchNoteSearchRepository implements NoteSearchRepository {
 
     private final ElasticsearchClient elasticsearchClient;
     private final SearchCursorCodec searchCursorCodec;
-    private final AtomicBoolean indexEnsured = new AtomicBoolean(false);
+    private final Object indexInitializationMonitor = new Object();
+    private volatile boolean indexEnsured;
 
     @Override
     public SearchPageResponse searchKeyword(Long userId, SearchRequest request) {
@@ -101,7 +101,7 @@ public class ElasticsearchNoteSearchRepository implements NoteSearchRepository {
     @Override
     public void deleteByNoteId(Long noteId) {
         try {
-            if (!indexEnsured.get()) {
+            if (!indexEnsured) {
                 return;
             }
             elasticsearchClient.delete(DeleteRequest.of(delete -> delete.index(INDEX_NAME).id(noteId.toString())));
@@ -216,51 +216,67 @@ public class ElasticsearchNoteSearchRepository implements NoteSearchRepository {
     }
 
     private void ensureIndex() throws IOException {
-        if (indexEnsured.get()) {
+        if (indexEnsured) {
             return;
         }
 
-        boolean exists = elasticsearchClient.indices().exists(existsRequest -> existsRequest.index(INDEX_NAME)).value();
-        if (!exists) {
-            elasticsearchClient.indices().create(create -> create
-                .index(INDEX_NAME)
-                .settings(settings -> settings
-                    .analysis(analysis -> analysis
-                        .tokenizer("korean_nori_tokenizer", tokenizer -> tokenizer
-                            .definition(definition -> definition.noriTokenizer(nori -> nori.decompoundMode(NoriDecompoundMode.Mixed)))
-                        )
-                        .filter("korean_nori_pos_filter", filter -> filter
-                            .definition(definition -> definition.noriPartOfSpeech(pos -> pos
-                                .stoptags("EP", "EF", "EC", "ETN", "ETM", "IC", "JKS", "JKC", "JKG", "JKO", "JKB", "JKV", "JKQ", "JX", "JC", "MAG", "MAJ", "MM", "SP", "SSC", "SSO", "SC", "SE", "XPN", "XSA", "XSN", "XSV", "UNA", "NA", "VSV")
-                            ))
-                        )
-                        .analyzer("korean_nori", analyzer -> analyzer
-                            .custom(custom -> custom
-                                .tokenizer("korean_nori_tokenizer")
-                                .filter("lowercase", "korean_nori_pos_filter")
+        synchronized (indexInitializationMonitor) {
+            if (indexEnsured) {
+                return;
+            }
+
+            boolean exists = elasticsearchClient.indices().exists(existsRequest -> existsRequest.index(INDEX_NAME)).value();
+            if (!exists) {
+                try {
+                    elasticsearchClient.indices().create(create -> create
+                        .index(INDEX_NAME)
+                        .settings(settings -> settings
+                            .analysis(analysis -> analysis
+                                .tokenizer("korean_nori_tokenizer", tokenizer -> tokenizer
+                                    .definition(definition -> definition.noriTokenizer(nori -> nori.decompoundMode(NoriDecompoundMode.Mixed)))
+                                )
+                                .filter("korean_nori_pos_filter", filter -> filter
+                                    .definition(definition -> definition.noriPartOfSpeech(pos -> pos
+                                        .stoptags("EP", "EF", "EC", "ETN", "ETM", "IC", "JKS", "JKC", "JKG", "JKO", "JKB", "JKV", "JKQ", "JX", "JC", "MAG", "MAJ", "MM", "SP", "SSC", "SSO", "SC", "SE", "XPN", "XSA", "XSN", "XSV", "UNA", "NA", "VSV")
+                                    ))
+                                )
+                                .analyzer("korean_nori", analyzer -> analyzer
+                                    .custom(custom -> custom
+                                        .tokenizer("korean_nori_tokenizer")
+                                        .filter("lowercase", "korean_nori_pos_filter")
+                                    )
+                                )
                             )
                         )
-                    )
-                )
-                .mappings(mappings -> mappings
-                    .properties("noteId", Property.of(property -> property.long_(field -> field)))
-                    .properties("externalNoteId", Property.of(property -> property.keyword(field -> field)))
-                    .properties("tenantId", Property.of(property -> property.keyword(field -> field)))
-                    .properties("userId", Property.of(property -> property.long_(field -> field)))
-                    .properties("title", Property.of(property -> property.text(field -> field
-                        .analyzer("korean_nori")
-                        .fields("keyword", sub -> sub.keyword(keyword -> keyword))
-                    )))
-                    .properties("content", Property.of(property -> property.text(field -> field.analyzer("korean_nori"))))
-                    .properties("tags", Property.of(property -> property.text(field -> field
-                        .analyzer("korean_nori")
-                        .fields("keyword", sub -> sub.keyword(keyword -> keyword))
-                    )))
-                    .properties("updatedAt", Property.of(property -> property.date(field -> field)))
-                )
-            );
-        }
+                        .mappings(mappings -> mappings
+                            .properties("noteId", Property.of(property -> property.long_(field -> field)))
+                            .properties("externalNoteId", Property.of(property -> property.keyword(field -> field)))
+                            .properties("tenantId", Property.of(property -> property.keyword(field -> field)))
+                            .properties("userId", Property.of(property -> property.long_(field -> field)))
+                            .properties("title", Property.of(property -> property.text(field -> field
+                                .analyzer("korean_nori")
+                                .fields("keyword", sub -> sub.keyword(keyword -> keyword))
+                            )))
+                            .properties("content", Property.of(property -> property.text(field -> field.analyzer("korean_nori"))))
+                            .properties("tags", Property.of(property -> property.text(field -> field
+                                .analyzer("korean_nori")
+                                .fields("keyword", sub -> sub.keyword(keyword -> keyword))
+                            )))
+                            .properties("updatedAt", Property.of(property -> property.date(field -> field)))
+                        )
+                    );
+                } catch (ElasticsearchException ex) {
+                    if (!isResourceAlreadyExists(ex)) {
+                        throw ex;
+                    }
+                }
+            }
 
-        indexEnsured.set(true);
+            indexEnsured = true;
+        }
+    }
+
+    private boolean isResourceAlreadyExists(ElasticsearchException ex) {
+        return ex.error() != null && "resource_already_exists_exception".equals(ex.error().type());
     }
 }
