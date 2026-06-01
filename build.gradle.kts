@@ -44,15 +44,21 @@ dependencies {
 	testImplementation("org.springframework.security:spring-security-test")
 	testImplementation("org.springframework.modulith:spring-modulith-starter-test")
 	testImplementation("com.tngtech.archunit:archunit-junit5:1.3.0")
-	testImplementation("org.testcontainers:junit-jupiter:1.20.6")
-	testImplementation("org.testcontainers:testcontainers:1.20.6")
-	testImplementation("org.testcontainers:postgresql:1.20.6")
-	testImplementation("org.testcontainers:elasticsearch:1.20.6")
+	testImplementation("org.testcontainers:junit-jupiter:1.21.3")
+	testImplementation("org.testcontainers:testcontainers:1.21.3")
+	testImplementation("org.testcontainers:postgresql:1.21.3")
+	testImplementation("org.testcontainers:elasticsearch:1.21.3")
+	implementation("org.springframework.kafka:spring-kafka")
+	implementation("org.springframework.boot:spring-boot-starter-data-redis")
+	testImplementation("org.springframework.kafka:spring-kafka-test")
+	testImplementation("org.testcontainers:kafka:1.21.3")
 }
+
 
 tasks.withType<Test> {
 	useJUnitPlatform()
 	systemProperty("spring.profiles.active", "test")
+	System.getenv("DOCKER_HOST")?.let { environment("DOCKER_HOST", it) }
 	testLogging {
 		exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
 		events("failed")
