@@ -134,17 +134,17 @@
 |------|------|
 | **Step Name** | 검색 정확도 측정 및 리포트 |
 | **Step Goal** | knowledge-owner-2가 테스트 쿼리 세트로 검색 정확도를 측정하고 리포트를 산출한다. |
-| **Done When** | 테스트 쿼리 세트 20건 + 검색 모드별 MRR/Precision@10 측정 + 리포트 문서 산출 |
-| **Scope** | **In**: 테스트 쿼리 세트 작성, 정확도 메트릭 계산, 리포트 생성 / **Out**: 검색 알고리즘 자체 변경, 프로덕션 배포 |
+| **Done When** | 테스트 쿼리 세트 50건 이상 + 검색 모드별 Precision@10/Recall@10/MRR/NDCG 측정 + 관리자 전용 정확도 실행/조회 API + 리포트 문서 산출 |
+| **Scope** | **In**: 테스트 쿼리 세트 작성, benchmark 노트 시드, 정확도 메트릭 계산, 관리자 전용 측정 API, 리포트 생성 / **Out**: 검색 알고리즘 자체 변경, 프로덕션 배포, UI 구현 |
 | **Input** | Step 6 완료된 하이브리드 검색, 검색 품질 평가 방법론, 테스트 데이터셋 |
-| **Instructions** | 1. 테스트 쿼리 세트 작성 (20건 이상, 기대 결과 포함)<br>2. 자동화된 검색 정확도 측정 스크립트 작성<br>3. MRR (Mean Reciprocal Rank) 계산<br>4. Precision@10 계산<br>5. BM25 단독 / 시맨틱 단독 / 하이브리드 모드별 비교<br>6. 검색 정확도 리포트 문서 작성<br>7. 정확도 기준 미달 시 개선 포인트 도출 |
-| **Output Format** | 테스트 쿼리 세트 + 정확도 메트릭 결과표 + 검색 정확도 리포트 문서 |
-| **Constraints** | - 테스트 쿼리 최소 20건<br>- MRR 목표: 0.7 이상<br>- Precision@10 목표: 0.6 이상<br>- 3개 검색 모드 모두 측정<br>- 측정 결과 재현 가능해야 함 |
+| **Instructions** | 1. 테스트 쿼리 세트 작성 (50건 이상, 기대 결과와 relevance score 포함)<br>2. benchmark 노트 시드 경로 작성 (리포지토리 내부 JSON 기준)<br>3. 자동화된 검색 정확도 측정 서비스 구현<br>4. Precision@10, Recall@10, MRR, NDCG 계산기 구현<br>5. BM25 단독 / 시맨틱 단독 / 하이브리드 모드별 비교 리포트 생성<br>6. 관리자 전용 실행 API `POST /api/v1/admin/search/accuracy-test` 구현<br>7. 관리자 전용 조회 API `GET /api/v1/admin/search/accuracy-report` 구현<br>8. 검색 정확도 리포트 문서 작성<br>9. 정확도 기준 미달 시 개선 포인트 도출 |
+| **Output Format** | benchmark 노트/테스트 쿼리 JSON + 정확도 메트릭 결과표 + 관리자 API 응답 예시 + 검색 정확도 리포트 문서 |
+| **Constraints** | - 테스트 쿼리 최소 50건<br>- MRR 목표: 0.7 이상<br>- Precision@10 목표: 0.6 이상<br>- 3개 검색 모드 모두 측정<br>- 관리자/개발자 전용 접근 제어 필수<br>- 테스트 데이터는 리포지토리 내부에 두고 프로덕션 데이터와 격리<br>- 측정 결과 재현 가능해야 함 |
 | **Duration** | 1.5일 |
 | **RULE Reference** | [03-아키텍처](../../wiki/03-아키텍처.md) · [09-버전-관리-정책](../../wiki/09-버전-관리-정책.md) |
 | **Assignee** | @knowledge-owner-2 |
 | **Reviewer** | @team-lead |
-| **Status** | TODO |
+| **Status** | DONE |
 
 ---
 
