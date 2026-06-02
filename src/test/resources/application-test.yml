@@ -14,6 +14,11 @@ spring:
     bootstrap-servers: ${spring.embedded.kafka.brokers:localhost:9092}
     properties:
       schema.registry.url: mock://test-scope
+    producer:
+      properties:
+        max.block.ms: 5000
+        request.timeout.ms: 5000
+        delivery.timeout.ms: 10000
 
 synapse:
   jwt:
