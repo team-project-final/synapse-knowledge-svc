@@ -17,6 +17,18 @@ spring:
       properties:
         enable.idempotence: true
         retry.backoff.ms: 1000
+    consumer:
+      group-id: knowledge-search-indexer
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "com.synapse.knowledge.search.event"
+        spring.json.value.default.type: "com.synapse.knowledge.search.event.NoteSearchSyncKafkaEvent"
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
 
 server:
   port: 8082
@@ -51,6 +63,10 @@ search:
     semantic-actor-id: ${SEARCH_ACCURACY_SEMANTIC_ACTOR_ID:11111111-1111-1111-1111-111111111111}
     top-k: ${SEARCH_ACCURACY_TOP_K:10}
     indexing-wait-timeout: ${SEARCH_ACCURACY_INDEXING_WAIT_TIMEOUT:20s}
+
+slack:
+  webhook-url: ${SLACK_WEBHOOK_URL:}
+  dlq-channel: "#synapse-dlq-alert"
 
 logging:
   pattern:
