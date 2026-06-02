@@ -1,3 +1,5 @@
+import java.time.Duration
+
 plugins {
 	java
 	idea
@@ -78,6 +80,8 @@ tasks.withType<Test> {
 	useJUnitPlatform()
 	systemProperty("spring.profiles.active", "test")
 	System.getenv("DOCKER_HOST")?.let { environment("DOCKER_HOST", it) }
+	systemProperty("junit.jupiter.execution.timeout.default", "120s")
+	timeout.set(Duration.ofMinutes(15))
 	testLogging {
 		exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
 		events("failed")

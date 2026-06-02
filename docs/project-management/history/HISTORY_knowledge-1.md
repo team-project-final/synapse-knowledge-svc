@@ -216,6 +216,20 @@
 
 ---
 
+### W4 (2026-06-01 ~ 06-05)
+
+#### 2026-06-02 (화)
+
+- **한 일**:
+  - `build` 잡이 인프라 없이 통합 테스트를 실행해 장시간 대기하던 CI 이슈 원인 분석
+  - `.github/workflows/ci-java.yml`에 `build` 잡용 compose 기동/정리 스텝 추가
+  - `docker-compose.ci.yml`에 Kafka 브로커 추가, `application-test.yml`과 `build.gradle.kts`에 테스트 timeout/빠른 실패 설정 반영
+- **이슈**:
+  - 기존 `docker-compose.ci.yml`에는 PostgreSQL/Elasticsearch만 있어 Kafka producer 초기화 경로를 충족하지 못했음
+- **내일 계획**:
+  - CI 재실행 결과 확인
+  - 실패 시 Kafka healthcheck 또는 테스트 프로파일 추가 보정
+
 ### W5 (2026-06-08 ~ 06-12)
 
 #### 2026-06-09 (월)

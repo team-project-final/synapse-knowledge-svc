@@ -16,6 +16,11 @@ spring:
       auto-startup: false
     properties:
       schema.registry.url: mock://test-scope
+      producer:
+        properties:
+          max.block.ms: 5000
+          request.timeout.ms: 5000
+          delivery.timeout.ms: 10000
   data:
     redis:
       host: localhost
