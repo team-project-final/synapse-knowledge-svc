@@ -252,12 +252,16 @@
 - feat(kafka): outbox `claimed_by`, `claim_expires_at` 컬럼과 claim service를 추가하고 만료된 `IN_PROGRESS` 이벤트 재claim 경로를 반영
 - fix(security): `CurrentUserArgumentResolver`가 숫자형 `userId` claim만 소유권 검증에 사용하고, UUID `subject`는 이벤트용 식별자로만 유지하도록 JWT 해석 경로를 정리
 - test(kafka): outbox claim/dispatch 상태 전이 테스트와 `CurrentUserArgumentResolverTest`를 추가하고 변경분 관련 Gradle 테스트 통과
+- verify(kafka): 로컬 PostgreSQL + Kafka + Schema Registry + `knowledge-svc` 실제 기동 후 `POST /api/v1/notes`, `PATCH /api/v1/notes/{id}` 호출로 `knowledge.note.note-created-v1`, `knowledge.note.note-updated-v1` Avro 메시지 수신과 `note_event_outbox`의 created/updated `PUBLISHED` 상태를 직접 확인
+- verify(schema): Ubuntu WSL2에 `jq`를 설치하고 `synapse-shared`의 `kafka-e2e-test.sh --avro`를 런타임 CRLF 정규화로 실행해 `PASS 8 / FAIL 0 / RESULT: PASSED` 확인
+- docs(history): Kafka 실발행 검증 결과와 shared Avro 스크립트 통과 결과를 Notion 테스트 기록 페이지 및 HISTORY에 반영
 - **진행 중**:
 - 없음
 - **이슈**:
+- Windows PowerShell 환경에서는 `kafka-e2e-test.sh`가 CRLF 줄바꿈과 `jq` 부재 때문에 바로 실행되지 않았고, WSL2 + `jq` 설치 + 런타임 줄바꿈 정규화가 필요했음
 - 전체 `./gradlew.bat test`는 이번에도 수행하지 않았고, 기존 `NeighborGraphIntegrationTest`의 Docker 환경 문제는 여전히 별도 이슈로 남아 있음
 - **다음**:
-- 로컬 Kafka/Schema Registry actual publish 확인과 shared/learning-ai 교차 검증 가능 여부 재확인
+- learning-ai 실제 소비 교차 확인 범위와 `deckId`/조회 API/인증 계약 정렬 필요 여부를 후속으로 협의
 
 #### 2026-06-03 (수)
 
