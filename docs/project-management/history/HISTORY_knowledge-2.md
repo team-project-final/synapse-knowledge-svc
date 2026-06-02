@@ -248,9 +248,16 @@
 #### 2026-06-02 (화)
 
 - **완료**:
+- fix(kafka): note event outbox dispatcher를 `PENDING -> IN_PROGRESS -> PUBLISHED` claim lease 흐름으로 보강해 멀티 인스턴스 중복 발행 위험을 줄임
+- feat(kafka): outbox `claimed_by`, `claim_expires_at` 컬럼과 claim service를 추가하고 만료된 `IN_PROGRESS` 이벤트 재claim 경로를 반영
+- fix(security): `CurrentUserArgumentResolver`가 숫자형 `userId` claim만 소유권 검증에 사용하고, UUID `subject`는 이벤트용 식별자로만 유지하도록 JWT 해석 경로를 정리
+- test(kafka): outbox claim/dispatch 상태 전이 테스트와 `CurrentUserArgumentResolverTest`를 추가하고 변경분 관련 Gradle 테스트 통과
 - **진행 중**:
+- 없음
 - **이슈**:
+- 전체 `./gradlew.bat test`는 이번에도 수행하지 않았고, 기존 `NeighborGraphIntegrationTest`의 Docker 환경 문제는 여전히 별도 이슈로 남아 있음
 - **다음**:
+- 로컬 Kafka/Schema Registry actual publish 확인과 shared/learning-ai 교차 검증 가능 여부 재확인
 
 #### 2026-06-03 (수)
 

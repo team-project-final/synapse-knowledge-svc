@@ -2,7 +2,6 @@ package com.synapse.knowledge.note.kafka.outbox;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
@@ -27,6 +26,9 @@ class NoteEventOutboxDispatcherTest {
 
     @Mock
     private NoteEventOutboxRepository noteEventOutboxRepository;
+
+    @Mock
+    private NoteEventOutboxClaimService noteEventOutboxClaimService;
 
     @Mock
     private NoteEventPublisher noteEventPublisher;
@@ -54,13 +56,15 @@ class NoteEventOutboxDispatcherTest {
             NoteEventOutboxService.EVENT_TYPE_CREATED,
             objectMapper.writeValueAsString(payload)
         );
+        outbox.markInProgress("worker-1", java.time.LocalDateTime.now().plusSeconds(30));
         NoteEventOutboxDispatcher noteEventOutboxDispatcher = new NoteEventOutboxDispatcher(
             noteEventOutboxRepository,
+            noteEventOutboxClaimService,
             noteEventPublisher,
             objectMapper
         );
         ReflectionTestUtils.setField(noteEventOutboxDispatcher, "batchSize", 50);
-        given(noteEventOutboxRepository.findByStatusOrderByIdAsc(eq(NoteEventOutboxStatus.PENDING), any()))
+        given(noteEventOutboxClaimService.claimNextBatch(50))
             .willReturn(List.of(outbox));
         given(noteEventPublisher.publishCreated(any(NoteCreatedPublishRequested.class)))
             .willReturn(CompletableFuture.completedFuture(null));
@@ -71,6 +75,8 @@ class NoteEventOutboxDispatcherTest {
         verify(noteEventOutboxRepository).save(outboxCaptor.capture());
         assertThat(outboxCaptor.getValue().getStatus()).isEqualTo(NoteEventOutboxStatus.PUBLISHED);
         assertThat(outboxCaptor.getValue().getPublishedAt()).isNotNull();
+        assertThat(outboxCaptor.getValue().getClaimedBy()).isNull();
+        assertThat(outboxCaptor.getValue().getClaimExpiresAt()).isNull();
     }
 
     @Test
@@ -94,13 +100,15 @@ class NoteEventOutboxDispatcherTest {
             NoteEventOutboxService.EVENT_TYPE_CREATED,
             objectMapper.writeValueAsString(payload)
         );
+        outbox.markInProgress("worker-2", java.time.LocalDateTime.now().plusSeconds(30));
         NoteEventOutboxDispatcher noteEventOutboxDispatcher = new NoteEventOutboxDispatcher(
             noteEventOutboxRepository,
+            noteEventOutboxClaimService,
             noteEventPublisher,
             objectMapper
         );
         ReflectionTestUtils.setField(noteEventOutboxDispatcher, "batchSize", 50);
-        given(noteEventOutboxRepository.findByStatusOrderByIdAsc(eq(NoteEventOutboxStatus.PENDING), any()))
+        given(noteEventOutboxClaimService.claimNextBatch(50))
             .willReturn(List.of(outbox));
         CompletableFuture<SendResult<String, SpecificRecord>> failedFuture = new CompletableFuture<>();
         failedFuture.completeExceptionally(new IllegalStateException("broker down"));
@@ -114,5 +122,7 @@ class NoteEventOutboxDispatcherTest {
         assertThat(outboxCaptor.getValue().getStatus()).isEqualTo(NoteEventOutboxStatus.PENDING);
         assertThat(outboxCaptor.getValue().getAttemptCount()).isEqualTo(1);
         assertThat(outboxCaptor.getValue().getLastError()).contains("broker down");
+        assertThat(outboxCaptor.getValue().getClaimedBy()).isNull();
+        assertThat(outboxCaptor.getValue().getClaimExpiresAt()).isNull();
     }
 }

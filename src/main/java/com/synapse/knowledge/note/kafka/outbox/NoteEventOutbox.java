@@ -50,6 +50,12 @@ public class NoteEventOutbox {
     @Column(name = "published_at")
     private LocalDateTime publishedAt;
 
+    @Column(name = "claimed_by", length = 100)
+    private String claimedBy;
+
+    @Column(name = "claim_expires_at")
+    private LocalDateTime claimExpiresAt;
+
     @Column(name = "last_error", columnDefinition = "TEXT")
     private String lastError;
 
@@ -82,11 +88,20 @@ public class NoteEventOutbox {
         this.publishedAt = LocalDateTime.now();
         this.lastError = null;
         this.attemptCount += 1;
+        clearClaim();
+    }
+
+    public void markInProgress(String workerId, LocalDateTime leaseUntil) {
+        this.status = NoteEventOutboxStatus.IN_PROGRESS;
+        this.claimedBy = workerId;
+        this.claimExpiresAt = leaseUntil;
     }
 
     public void recordFailure(String message) {
+        this.status = NoteEventOutboxStatus.PENDING;
         this.lastError = truncate(message);
         this.attemptCount += 1;
+        clearClaim();
     }
 
     @PrePersist
@@ -106,5 +121,10 @@ public class NoteEventOutbox {
             return message;
         }
         return message.substring(0, 1000);
+    }
+
+    private void clearClaim() {
+        this.claimedBy = null;
+        this.claimExpiresAt = null;
     }
 }
