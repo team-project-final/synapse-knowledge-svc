@@ -214,12 +214,12 @@
 - **Step Name**: Kafka→ES 자동 동기화
 - **Step Goal**: 노트 생성/수정 시 Kafka를 통해 Elasticsearch에 자동 동기화되어 검색에 반영된다.
 - **Done When**:
-  - [ ] 노트 생성 시 note.created Kafka 이벤트 발행
-  - [ ] 노트 수정 시 note.updated Kafka 이벤트 발행
-  - [ ] Kafka Consumer가 이벤트를 소비하여 ES에 인덱싱
-  - [ ] `GET /notes/search?q={keyword}` → ES 기반 검색 결과 반환
-  - [ ] 한글 형태소 분석 (nori) 동작
-  - [ ] 통합 테스트 통과
+  - [x] 노트 생성 시 note.created Kafka 이벤트 발행
+  - [x] 노트 수정 시 note.updated Kafka 이벤트 발행
+  - [x] Kafka Consumer가 이벤트를 소비하여 ES에 인덱싱
+  - [x] `GET /notes/search?q={keyword}` → ES 기반 검색 결과 반환
+  - [x] 한글 형태소 분석 (nori) 동작
+  - [x] 통합 테스트 통과
 - **Scope**:
   - In Scope:
     - Kafka Producer 구현 (note.created, note.updated 이벤트)
@@ -251,7 +251,7 @@
 - **Assignee**: @knowledge-owner-1
 - **Reviewer**: @team-lead
 
-**Status**: [ ] Not Started / [ ] In Progress / [ ] Done
+**Status**: [ ] Not Started / [ ] In Progress / [x] Done
 
 ---
 

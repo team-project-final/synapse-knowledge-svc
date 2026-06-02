@@ -28,8 +28,8 @@ class NoteEventPublisherTest {
     private NoteEventPublisher noteEventPublisher;
 
     @Test
-    @DisplayName("handle_노트생성이벤트를받으면_shouldNoteCreated토픽으로발행")
-    void handle_노트생성이벤트를받으면_shouldNoteCreated토픽으로발행() {
+    @DisplayName("노트 생성 이벤트를 받으면 NoteCreated 토픽으로 발행한다")
+    void handle_noteCreatedEvent_shouldPublishToNoteCreatedTopic() {
         NoteCreatedPublishRequested event = new NoteCreatedPublishRequested(
             "event-1",
             UUID.randomUUID(),
@@ -60,8 +60,8 @@ class NoteEventPublisherTest {
     }
 
     @Test
-    @DisplayName("handle_노트수정이벤트를받으면_shouldNoteUpdated토픽으로발행")
-    void handle_노트수정이벤트를받으면_shouldNoteUpdated토픽으로발행() {
+    @DisplayName("노트 수정 이벤트를 받으면 NoteUpdated 토픽으로 발행한다")
+    void handle_noteUpdatedEvent_shouldPublishToNoteUpdatedTopic() {
         NoteUpdatedPublishRequested event = new NoteUpdatedPublishRequested(
             "event-2",
             UUID.randomUUID(),

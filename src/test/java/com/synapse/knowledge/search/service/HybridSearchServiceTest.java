@@ -44,8 +44,8 @@ class HybridSearchServiceTest {
     );
 
     @Test
-    @DisplayName("search_시맨틱조회가실패하면_shouldBM25Fallback으로반환")
-    void search_시맨틱조회가실패하면_shouldBM25Fallback으로반환() {
+    @DisplayName("시맨틱 조회가 실패하면 BM25 Fallback으로 반환한다")
+    void search_semanticQueryFails_shouldReturnBM25Fallback() {
         // Given
         SearchIdentity identity = new SearchIdentity(100L, UUID.randomUUID().toString());
         HybridSearchRequest request = new HybridSearchRequest("스프링", 10, null);
@@ -81,8 +81,8 @@ class HybridSearchServiceTest {
     }
 
     @Test
-    @DisplayName("search_시맨틱UUID매핑이가능하면_should병합후fallbackFalse")
-    void search_시맨틱UUID매핑이가능하면_should병합후fallbackFalse() {
+    @DisplayName("시맨틱 UUID 매핑이 가능하면 병합 후 fallback false를 반환한다")
+    void search_semanticUuidMappable_shouldMergeResultsWithFallbackFalse() {
         SearchIdentity identity = new SearchIdentity(100L, UUID.randomUUID().toString());
         HybridSearchRequest request = new HybridSearchRequest("스프링", 10, null);
         UUID keywordExternalNoteId = UUID.randomUUID();
