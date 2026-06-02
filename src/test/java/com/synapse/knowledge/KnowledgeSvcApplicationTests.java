@@ -1,13 +1,22 @@
 package com.synapse.knowledge;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
+import com.synapse.knowledge.note.kafka.producer.NoteEventPublisher;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.ApplicationContext;
 
 @SpringBootTest
 class KnowledgeSvcApplicationTests {
 
-	@Test
-	void contextLoads() {
-	}
+    @Autowired
+    private ApplicationContext applicationContext;
+
+    @Test
+    void contextLoads() {
+        assertThat(applicationContext.getBeansOfType(NoteEventPublisher.class)).isEmpty();
+    }
 
 }

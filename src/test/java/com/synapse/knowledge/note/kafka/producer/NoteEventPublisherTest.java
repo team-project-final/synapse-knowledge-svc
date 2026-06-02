@@ -33,7 +33,7 @@ class NoteEventPublisherTest {
         NoteCreatedPublishRequested event = new NoteCreatedPublishRequested(
             "event-1",
             UUID.randomUUID(),
-            101L,
+            "11111111-1111-1111-1111-111111111111",
             "tenant-a",
             "새 노트",
             "평문 내용",
@@ -44,7 +44,7 @@ class NoteEventPublisherTest {
         given(kafkaTemplate.send(eq(NoteKafkaTopics.NOTE_CREATED), eq("tenant-a"), org.mockito.ArgumentMatchers.any(SpecificRecord.class)))
             .willReturn(CompletableFuture.completedFuture(null));
 
-        noteEventPublisher.handle(event);
+        noteEventPublisher.publishCreated(event);
 
         ArgumentCaptor<SpecificRecord> payloadCaptor = ArgumentCaptor.forClass(SpecificRecord.class);
         verify(kafkaTemplate).send(eq(NoteKafkaTopics.NOTE_CREATED), eq("tenant-a"), payloadCaptor.capture());
@@ -52,7 +52,7 @@ class NoteEventPublisherTest {
         NoteCreated payload = (NoteCreated) payloadCaptor.getValue();
         assertThat(payload.getEventId()).isEqualTo("event-1");
         assertThat(payload.getNoteId()).isEqualTo(event.externalNoteId().toString());
-        assertThat(payload.getUserId()).isEqualTo("101");
+        assertThat(payload.getUserId()).isEqualTo("11111111-1111-1111-1111-111111111111");
         assertThat(payload.getTenantId()).isEqualTo("tenant-a");
         assertThat(payload.getTitle()).isEqualTo("새 노트");
         assertThat(payload.getContent()).isEqualTo("평문 내용");
@@ -65,7 +65,7 @@ class NoteEventPublisherTest {
         NoteUpdatedPublishRequested event = new NoteUpdatedPublishRequested(
             "event-2",
             UUID.randomUUID(),
-            202L,
+            "22222222-2222-2222-2222-222222222222",
             "tenant-b",
             "수정 노트",
             "2026-06-01T11:30:00",
@@ -74,7 +74,7 @@ class NoteEventPublisherTest {
         given(kafkaTemplate.send(eq(NoteKafkaTopics.NOTE_UPDATED), eq("tenant-b"), org.mockito.ArgumentMatchers.any(SpecificRecord.class)))
             .willReturn(CompletableFuture.completedFuture(null));
 
-        noteEventPublisher.handle(event);
+        noteEventPublisher.publishUpdated(event);
 
         ArgumentCaptor<SpecificRecord> payloadCaptor = ArgumentCaptor.forClass(SpecificRecord.class);
         verify(kafkaTemplate).send(eq(NoteKafkaTopics.NOTE_UPDATED), eq("tenant-b"), payloadCaptor.capture());
@@ -82,7 +82,7 @@ class NoteEventPublisherTest {
         NoteUpdated payload = (NoteUpdated) payloadCaptor.getValue();
         assertThat(payload.getEventId()).isEqualTo("event-2");
         assertThat(payload.getNoteId()).isEqualTo(event.externalNoteId().toString());
-        assertThat(payload.getUserId()).isEqualTo("202");
+        assertThat(payload.getUserId()).isEqualTo("22222222-2222-2222-2222-222222222222");
         assertThat(payload.getTenantId()).isEqualTo("tenant-b");
         assertThat(payload.getTitle()).isEqualTo("수정 노트");
         assertThat(payload.getUpdatedAt()).isEqualTo("2026-06-01T11:30:00");

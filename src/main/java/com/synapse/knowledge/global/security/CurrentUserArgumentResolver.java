@@ -40,25 +40,12 @@ public class CurrentUserArgumentResolver implements HandlerMethodArgumentResolve
             throw new AuthenticationRequiredException("유효한 JWT principal이 필요합니다");
         }
 
-        Long userId = extractUserIdClaim(jwt);
-        if (userId == null) {
-            userId = parseNumericSubject(jwt.getSubject(), webRequest.getNativeRequest(HttpServletRequest.class));
-        }
+        Long userId = extractRequiredUserIdClaim(jwt, webRequest.getNativeRequest(HttpServletRequest.class));
 
         return new CurrentUser(userId, jwt.getSubject());
     }
 
-    private Long parseNumericSubject(String subject, HttpServletRequest request) {
-        try {
-            return Long.parseLong(subject);
-        } catch (NumberFormatException ex) {
-            String requestUri = request == null ? "unknown" : request.getRequestURI();
-            log.warn("JWT subject is not numeric. subject={}, uri={}", subject, requestUri);
-            throw new AuthenticationRequiredException("토큰에서 userId를 확인할 수 없습니다");
-        }
-    }
-
-    private Long extractUserIdClaim(Jwt jwt) {
+    private Long extractRequiredUserIdClaim(Jwt jwt, HttpServletRequest request) {
         Object userIdClaim = jwt.getClaim("userId");
         if (userIdClaim instanceof Number number) {
             return number.longValue();
@@ -67,9 +54,11 @@ public class CurrentUserArgumentResolver implements HandlerMethodArgumentResolve
             try {
                 return Long.parseLong(text);
             } catch (NumberFormatException ignored) {
-                return null;
+                // handled below with a consistent error
             }
         }
-        return null;
+        String requestUri = request == null ? "unknown" : request.getRequestURI();
+        log.warn("JWT userId claim is missing or not numeric. subject={}, uri={}", jwt.getSubject(), requestUri);
+        throw new AuthenticationRequiredException("토큰에서 userId를 확인할 수 없습니다");
     }
 }

@@ -7,8 +7,7 @@ import com.synapse.knowledge.note.dto.NoteResponse;
 import com.synapse.knowledge.note.entity.Note;
 import com.synapse.knowledge.note.entity.NoteIdentityMap;
 import com.synapse.knowledge.note.entity.NoteLink;
-import com.synapse.knowledge.note.kafka.producer.NoteCreatedPublishRequested;
-import com.synapse.knowledge.note.kafka.producer.NoteUpdatedPublishRequested;
+import com.synapse.knowledge.note.kafka.outbox.NoteEventOutboxService;
 import com.synapse.knowledge.note.repository.NoteIdentityMapRepository;
 import com.synapse.knowledge.note.repository.NoteLinkRepository;
 import com.synapse.knowledge.note.repository.NoteRepository;
@@ -37,10 +36,16 @@ public class NoteService {
     private final NoteLinkRepository noteLinkRepository;
     private final WikiLinkParser linkParser;
     private final MarkdownSanitizer sanitizer;
+    private final NoteEventOutboxService noteEventOutboxService;
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional(propagation = Propagation.REQUIRED)
     public NoteResponse create(Long userId, NoteCreateRequest request) {
+        return create(userId, String.valueOf(userId), request);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRED)
+    public NoteResponse create(Long userId, String eventUserId, NoteCreateRequest request) {
         String sanitizedMd = sanitizer.sanitize(request.contentMd());
         String plainText = extractPlainText(sanitizedMd);
 
@@ -49,7 +54,7 @@ public class NoteService {
         NoteIdentityMap identityMap = getOrCreateIdentityMap(savedNote.getId());
 
         updateWikiLinks(savedNote.getId(), request.tenantId(), sanitizedMd);
-        eventPublisher.publishEvent(NoteCreatedPublishRequested.from(savedNote, identityMap.getExternalNoteId()));
+        noteEventOutboxService.enqueueCreated(savedNote, identityMap.getExternalNoteId(), resolveEventUserId(eventUserId, userId));
         publishChunkingRequested(savedNote, "created");
         publishSearchSyncRequested(savedNote, identityMap.getExternalNoteId(), false);
         return NoteResponse.from(savedNote);
@@ -68,6 +73,11 @@ public class NoteService {
 
     @Transactional(propagation = Propagation.REQUIRED)
     public NoteResponse update(Long userId, Long noteId, NoteCreateRequest request) {
+        return update(userId, String.valueOf(userId), noteId, request);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRED)
+    public NoteResponse update(Long userId, String eventUserId, Long noteId, NoteCreateRequest request) {
         Note note = findValidNote(noteId);
         validateOwner(userId, note);
 
@@ -78,7 +88,7 @@ public class NoteService {
         NoteIdentityMap identityMap = getOrCreateIdentityMap(note.getId());
 
         updateWikiLinks(note.getId(), note.getTenantId(), sanitizedMd);
-        eventPublisher.publishEvent(NoteUpdatedPublishRequested.from(note, identityMap.getExternalNoteId()));
+        noteEventOutboxService.enqueueUpdated(note, identityMap.getExternalNoteId(), resolveEventUserId(eventUserId, userId));
         publishChunkingRequested(note, "updated");
         publishSearchSyncRequested(note, identityMap.getExternalNoteId(), false);
         return NoteResponse.from(note);
@@ -171,6 +181,13 @@ public class NoteService {
     private NoteIdentityMap getOrCreateIdentityMap(Long noteId) {
         return noteIdentityMapRepository.findById(noteId)
             .orElseGet(() -> noteIdentityMapRepository.save(NoteIdentityMap.create(noteId)));
+    }
+
+    private String resolveEventUserId(String eventUserId, Long userId) {
+        if (eventUserId != null && !eventUserId.isBlank()) {
+            return eventUserId;
+        }
+        return String.valueOf(userId);
     }
 
     private void publishSearchSyncRequested(Note note, UUID externalNoteId, boolean deleted) {
