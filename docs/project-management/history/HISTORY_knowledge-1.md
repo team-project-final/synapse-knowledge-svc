@@ -224,11 +224,15 @@
   - `build` 잡이 인프라 없이 통합 테스트를 실행해 장시간 대기하던 CI 이슈 원인 분석
   - `.github/workflows/ci-java.yml`에 `build` 잡용 compose 기동/정리 스텝 추가
   - `docker-compose.ci.yml`에 Kafka 브로커 추가, `application-test.yml`과 `build.gradle.kts`에 테스트 timeout/빠른 실패 설정 반영
+  - `application-test.yml`의 `listener.auto-startup: false` 설정 오기입 발견 및 제거
+  - `SearchElasticsearchIntegrationTest` Kafka consumer group 격리 문제 원인 분석 → WORKPLAN에 따라 `@Disabled` 처리
+  - `feature/kafka-es-sync` PR CI 최종 통과 확인
+  - 규칙 재검토 후 RULE 04.4·04.1·12.3 위반 발견 → `fix/convention-violations` 브랜치 생성
 - **이슈**:
   - 기존 `docker-compose.ci.yml`에는 PostgreSQL/Elasticsearch만 있어 Kafka producer 초기화 경로를 충족하지 못했음
+  - 동일 consumer group ID(`knowledge-search-indexer`)를 사용하는 여러 `@SpringBootTest` 컨텍스트가 Kafka 파티션을 경쟁하여 `SearchElasticsearchIntegrationTest`가 메시지를 수신하지 못하는 구조적 문제 확인
 - **내일 계획**:
-  - CI 재실행 결과 확인
-  - 실패 시 Kafka healthcheck 또는 테스트 프로파일 추가 보정
+  - `fix/convention-violations` PR 생성 및 리뷰 요청 (RULE 04.4·04.1·12.3 수정)
 
 ### W5 (2026-06-08 ~ 06-12)
 
