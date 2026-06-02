@@ -7,6 +7,8 @@ import com.synapse.knowledge.note.dto.NoteResponse;
 import com.synapse.knowledge.note.entity.Note;
 import com.synapse.knowledge.note.entity.NoteIdentityMap;
 import com.synapse.knowledge.note.entity.NoteLink;
+import com.synapse.knowledge.note.kafka.producer.NoteCreatedPublishRequested;
+import com.synapse.knowledge.note.kafka.producer.NoteUpdatedPublishRequested;
 import com.synapse.knowledge.note.repository.NoteIdentityMapRepository;
 import com.synapse.knowledge.note.repository.NoteLinkRepository;
 import com.synapse.knowledge.note.repository.NoteRepository;
@@ -47,6 +49,7 @@ public class NoteService {
         NoteIdentityMap identityMap = getOrCreateIdentityMap(savedNote.getId());
 
         updateWikiLinks(savedNote.getId(), request.tenantId(), sanitizedMd);
+        eventPublisher.publishEvent(NoteCreatedPublishRequested.from(savedNote, identityMap.getExternalNoteId()));
         publishChunkingRequested(savedNote, "created");
         publishSearchSyncRequested(savedNote, identityMap.getExternalNoteId(), false);
         return NoteResponse.from(savedNote);
@@ -75,6 +78,7 @@ public class NoteService {
         NoteIdentityMap identityMap = getOrCreateIdentityMap(note.getId());
 
         updateWikiLinks(note.getId(), note.getTenantId(), sanitizedMd);
+        eventPublisher.publishEvent(NoteUpdatedPublishRequested.from(note, identityMap.getExternalNoteId()));
         publishChunkingRequested(note, "updated");
         publishSearchSyncRequested(note, identityMap.getExternalNoteId(), false);
         return NoteResponse.from(note);

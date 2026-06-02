@@ -92,75 +92,75 @@
 
 ### 7.1 TASK 시작
 
-- [ ] Step Goal / Done When / Scope / Input 확인
-- [ ] PRD_W3 해당 요구사항 확인 (검색 정확도 측정)
-- [ ] Duration 산정 확인
+- [x] Step Goal / Done When / Scope / Input 확인
+- [x] PRD_W3 해당 요구사항 확인 (검색 정확도 측정)
+- [x] Duration 산정 확인
 
 ### 7.2 요구사항 분석
 
-- [ ] 테스트 쿼리 세트 규모 정의 (최소 50개 쿼리)
-- [ ] 정확도 지표 정의 (Precision@K, Recall@K, MRR, NDCG)
-- [ ] 기대 결과 (ground truth) 라벨링 방법론 정의
-- [ ] Instructions 초안 → TASK 문서 반영
+- [x] 테스트 쿼리 세트 규모 정의 (최소 50개 쿼리)
+- [x] 정확도 지표 정의 (Precision@K, Recall@K, MRR, NDCG)
+- [x] 기대 결과 (ground truth) 라벨링 방법론 정의
+- [x] Instructions 초안 → TASK 문서 반영
 
 ### 7.3 Security 1차 검토
 
-- [ ] 테스트 데이터 민감정보 미포함 확인
-- [ ] 측정 API 관리자/개발자 전용 접근 제어
-- [ ] 테스트 쿼리 세트 저장 위치 (리포지토리 내부)
-- [ ] 결과 → TASK Constraints 반영
+- [x] 테스트 데이터 민감정보 미포함 확인
+- [x] 측정 API 관리자/개발자 전용 접근 제어
+- [x] 테스트 쿼리 세트 저장 위치 (리포지토리 내부)
+- [x] 결과 → TASK Constraints 반영
 
 ### 7.4 측정 프레임워크 설계
 
-- [ ] 테스트 쿼리 세트 포맷 정의 (JSON: query, expectedNoteIds[], relevanceScores[])
-- [ ] 측정 파이프라인 설계 (쿼리 실행 → 결과 수집 → 지표 계산 → 리포트 생성)
-- [ ] 비교 모드 설계 (시맨틱 only vs BM25 only vs 하이브리드 RRF)
-- [ ] Duration(final) 갱신
+- [x] 테스트 쿼리 세트 포맷 정의 (JSON: query, expectedNoteIds[], relevanceScores[])
+- [x] 측정 파이프라인 설계 (쿼리 실행 → 결과 수집 → 지표 계산 → 리포트 생성)
+- [x] 비교 모드 설계 (시맨틱 only vs BM25 only vs 하이브리드 RRF)
+- [x] Duration(final) 갱신
 
 ### 7.5 Security 2차 검토
 
-- [ ] 측정 결과 외부 유출 방지 (내부 리포트만)
-- [ ] 테스트 데이터 격리 (프로덕션 데이터 미사용)
-- [ ] 측정 실행 리소스 제한 (동시 실행 제한)
-- [ ] 결과 → TASK Constraints 반영
+- [x] 측정 결과 외부 유출 방지 (내부 리포트만)
+- [x] 테스트 데이터 격리 (프로덕션 데이터 미사용)
+- [x] 측정 실행 리소스 제한 (동시 실행 제한)
+- [x] 결과 → TASK Constraints 반영
 
 ### 7.6 DTO / Entity 설계 (API First)
 
-- [ ] SearchTestQuery DTO 정의 (query, expectedNoteIds, relevanceScores)
-- [ ] SearchAccuracyReport DTO 정의 (precision, recall, mrr, ndcg, details[])
-- [ ] SearchComparisonReport DTO 정의 (semantic, bm25, hybrid 각 지표)
-- [ ] Output Format → TASK 반영
+- [x] SearchTestQuery DTO 정의 (query, expectedNoteIds, relevanceScores)
+- [x] SearchAccuracyReport DTO 정의 (precision, recall, mrr, ndcg, details[])
+- [x] SearchComparisonReport DTO 정의 (semantic, bm25, hybrid 각 지표)
+- [x] Output Format → TASK 반영
 
 ### 7.7 테스트 쿼리 세트 구축
 
-- [ ] 한국어 + 영어 테스트 쿼리 50건 작성
-- [ ] 각 쿼리별 기대 결과 (ground truth) 라벨링
-- [ ] relevance score 부여 (0: 무관, 1: 관련, 2: 매우 관련)
-- [ ] 테스트 데이터 시드 스크립트 작성
+- [x] 한국어 + 영어 테스트 쿼리 50건 작성
+- [x] 각 쿼리별 기대 결과 (ground truth) 라벨링
+- [x] relevance score 부여 (0: 무관, 1: 관련, 2: 매우 관련)
+- [x] 테스트 데이터 시드 스크립트 작성
 
 ### 7.8 Service + Test
 
-- [ ] SearchAccuracyService 구현 (테스트 쿼리 실행 → 지표 계산)
-- [ ] PrecisionRecallCalculator 구현 (Precision@K, Recall@K 계산)
-- [ ] MRRCalculator 구현 (Mean Reciprocal Rank 계산)
-- [ ] NDCGCalculator 구현 (Normalized Discounted Cumulative Gain 계산)
-- [ ] 비교 리포트 생성 (시맨틱 vs BM25 vs RRF)
-- [ ] 단위 테스트 작성 (지표 계산 검증)
-- [ ] 테스트 통과 확인
+- [x] SearchAccuracyService 구현 (테스트 쿼리 실행 → 지표 계산)
+- [x] PrecisionRecallCalculator 구현 (Precision@K, Recall@K 계산)
+- [x] MRRCalculator 구현 (Mean Reciprocal Rank 계산)
+- [x] NDCGCalculator 구현 (Normalized Discounted Cumulative Gain 계산)
+- [x] 비교 리포트 생성 (시맨틱 vs BM25 vs RRF)
+- [x] 단위 테스트 작성 (지표 계산 검증)
+- [x] 테스트 통과 확인
 
 ### 7.9 Controller + Test
 
-- [ ] POST /admin/search/accuracy-test 엔드포인트 구현 (측정 실행)
-- [ ] GET /admin/search/accuracy-report 엔드포인트 구현 (결과 조회)
-- [ ] 슬라이스 테스트 (@WebMvcTest)
-- [ ] 403 Forbidden 테스트 (비관리자 접근)
-- [ ] 테스트 통과 확인
+- [x] POST /api/v1/admin/search/accuracy-test 엔드포인트 구현 (측정 실행)
+- [x] GET /api/v1/admin/search/accuracy-report 엔드포인트 구현 (결과 조회)
+- [x] MockMvc 기반 controller 테스트 (SpringBootTest)
+- [x] 403 Forbidden 테스트 (비관리자 접근)
+- [x] 테스트 통과 확인
 
 ### 7.10 결과 정리
 
-- [ ] 정확도 리포트 생성 (Precision@10, MRR, NDCG 기준)
-- [ ] 시맨틱 vs BM25 vs 하이브리드 비교 분석
-- [ ] 개선 포인트 도출 (임베딩 모델 교체, 필드 가중치 튜닝 등)
-- [ ] RULE Reference → TASK 반영
+- [x] 정확도 리포트 생성 (Precision@10, MRR, NDCG 기준)
+- [x] 시맨틱 vs BM25 vs 하이브리드 비교 분석
+- [x] 개선 포인트 도출 (임베딩 모델 교체, 필드 가중치 튜닝 등)
+- [x] RULE Reference → TASK 반영
 
-**Step 7 Status**: [ ] Not Started / [ ] In Progress / [ ] Done
+**Step 7 Status**: [ ] Not Started / [ ] In Progress / [x] Done

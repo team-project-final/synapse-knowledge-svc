@@ -1,0 +1,122 @@
+[
+  {
+    "benchmarkId": "kr-spring-security",
+    "title": "스프링 시큐리티 JWT 가이드",
+    "contentMd": "Spring Security resource server, JWT claim, RS256, role mapping, access token validation을 정리한 노트다. 스프링 시큐리티 JWT 설정과 권한 매핑, 토큰 검증 흐름을 다룬다.",
+    "tags": ["spring", "security", "jwt"]
+  },
+  {
+    "benchmarkId": "kr-elasticsearch-nori",
+    "title": "엘라스틱서치 nori 형태소 분석",
+    "contentMd": "Elasticsearch BM25 검색에서 nori analyzer와 korean tokenizer, highlight, search_after를 함께 사용하는 방법을 설명한다. 한국어 복합명사 검색과 형태소 분해가 핵심이다.",
+    "tags": ["elasticsearch", "nori", "search"]
+  },
+  {
+    "benchmarkId": "kr-jpa-transaction",
+    "title": "JPA readOnly 트랜잭션 전략",
+    "contentMd": "Spring JPA 서비스 계층에서 @Transactional readOnly true를 적용하고 flush 비용을 줄이는 전략을 정리한다. 읽기 전용 트랜잭션과 propagation 설정을 다룬다.",
+    "tags": ["jpa", "transaction", "spring"]
+  },
+  {
+    "benchmarkId": "kr-kafka-avro",
+    "title": "Kafka Avro 스키마 레지스트리 운영",
+    "contentMd": "Kafka producer와 Schema Registry를 이용해 Avro schema compatibility를 검증하는 방법을 설명한다. backward transitive 호환성과 subject naming 전략을 포함한다.",
+    "tags": ["kafka", "avro", "schema-registry"]
+  },
+  {
+    "benchmarkId": "kr-kubernetes-argocd",
+    "title": "Docker Kubernetes ArgoCD 배포 메모",
+    "contentMd": "Docker image tag, Kubernetes deployment, Kustomize, ArgoCD sync 전략을 다룬다. 컨테이너 배포와 GitOps 운영 메모다.",
+    "tags": ["docker", "kubernetes", "argocd"]
+  },
+  {
+    "benchmarkId": "kr-owasp-idor",
+    "title": "OWASP IDOR 접근 제어 체크",
+    "contentMd": "OWASP broken access control과 IDOR 방지를 위해 note owner 검증, 401과 403 구분, resource access rule을 정리했다.",
+    "tags": ["owasp", "security", "idor"]
+  },
+  {
+    "benchmarkId": "kr-jwt-rs256",
+    "title": "JWT RS256 키 로테이션",
+    "contentMd": "JWT kid header, RS256 signing, public key rotation, grace period, refresh token revocation을 설명한다. 키 로테이션과 토큰 운영 전략이 핵심이다.",
+    "tags": ["jwt", "rs256", "security"]
+  },
+  {
+    "benchmarkId": "kr-spring-modulith",
+    "title": "Spring Modulith 모듈 경계 설계",
+    "contentMd": "Spring Modulith package-info, ApplicationModules verify, allowedDependencies, internal package isolation을 사용하는 방법을 정리한다.",
+    "tags": ["spring", "modulith", "architecture"]
+  },
+  {
+    "benchmarkId": "kr-data-sovereignty",
+    "title": "개인정보 마스킹과 데이터 주권",
+    "contentMd": "PII masking, retention policy, data sovereignty, privacy by design, logging redaction을 설명하는 문서다.",
+    "tags": ["privacy", "masking", "compliance"]
+  },
+  {
+    "benchmarkId": "kr-observability",
+    "title": "로깅 메트릭 트레이싱 관측성",
+    "contentMd": "logging, metrics, tracing, OpenTelemetry, traceId correlation, observability dashboard를 정리했다.",
+    "tags": ["observability", "logging", "metrics"]
+  },
+  {
+    "benchmarkId": "en-python-asyncio",
+    "title": "Python asyncio concurrency notes",
+    "contentMd": "This note explains Python asyncio, event loop scheduling, await, task groups, and cooperative concurrency patterns for I O bound workloads.",
+    "tags": ["python", "asyncio", "concurrency"]
+  },
+  {
+    "benchmarkId": "en-react-transition",
+    "title": "React startTransition and deferred rendering",
+    "contentMd": "React startTransition, useDeferredValue, concurrent rendering, input responsiveness, and UI scheduling tradeoffs are covered in this note.",
+    "tags": ["react", "frontend", "performance"]
+  },
+  {
+    "benchmarkId": "en-pgvector",
+    "title": "PostgreSQL pgvector semantic search",
+    "contentMd": "Semantic search with pgvector, cosine similarity, embeddings, nearest neighbor retrieval, and vector indexing on PostgreSQL are described here.",
+    "tags": ["postgresql", "pgvector", "semantic-search"]
+  },
+  {
+    "benchmarkId": "en-testcontainers",
+    "title": "Testcontainers Elasticsearch integration",
+    "contentMd": "This note covers Testcontainers for Elasticsearch, container lifecycle, integration test reliability, Docker image tuning, and indexing wait strategies.",
+    "tags": ["testcontainers", "elasticsearch", "testing"]
+  },
+  {
+    "benchmarkId": "en-clean-architecture",
+    "title": "Clean architecture DIP and ports",
+    "contentMd": "Dependency inversion principle, ports and adapters, interface boundaries, clean architecture layers, and anti corruption patterns are explained.",
+    "tags": ["architecture", "dip", "ports"]
+  },
+  {
+    "benchmarkId": "en-gradle-ci",
+    "title": "Gradle CI pipeline on GitHub Actions",
+    "contentMd": "Gradle build caching, GitHub Actions workflow, --no-daemon usage, test stages, and CI performance diagnostics are summarized in this document.",
+    "tags": ["gradle", "ci", "github-actions"]
+  },
+  {
+    "benchmarkId": "en-rate-limiting",
+    "title": "API gateway rate limiting patterns",
+    "contentMd": "Token bucket, leaky bucket, API gateway throttling, burst control, and abuse protection patterns for HTTP APIs are compared.",
+    "tags": ["api", "rate-limiting", "gateway"]
+  },
+  {
+    "benchmarkId": "en-redis-blacklist",
+    "title": "Redis token blacklist strategy",
+    "contentMd": "JWT logout handling with Redis blacklist, refresh token revocation, TTL based key expiry, and session tracking are discussed in this note.",
+    "tags": ["redis", "jwt", "security"]
+  },
+  {
+    "benchmarkId": "en-semantic-rrf",
+    "title": "Hybrid search with semantic ranking and RRF",
+    "contentMd": "Hybrid retrieval combines BM25 and semantic ranking with reciprocal rank fusion RRF, candidate merging, timeout fallback, and search quality evaluation.",
+    "tags": ["search", "rrf", "semantic"]
+  },
+  {
+    "benchmarkId": "en-open-telemetry",
+    "title": "OpenTelemetry tracing quick guide",
+    "contentMd": "OpenTelemetry spans, traces, metrics correlation, exporter configuration, and distributed tracing instrumentation are explained here.",
+    "tags": ["opentelemetry", "tracing", "observability"]
+  }
+]

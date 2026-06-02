@@ -1,6 +1,8 @@
 package com.synapse.knowledge.search.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
@@ -72,6 +74,9 @@ class SearchElasticsearchIntegrationTest {
 
     @Autowired
     private SearchService searchService;
+
+    @Autowired
+    private SearchAccuracyService searchAccuracyService;
 
     @Autowired
     private ElasticsearchClient elasticsearchClient;
@@ -184,6 +189,20 @@ class SearchElasticsearchIntegrationTest {
         assertThat(response.results().get(0).noteId()).isEqualTo(springNoteId);
         assertThat(response.results().get(0).semanticScore()).isNotNull();
         assertThat(response.semanticFallback()).isFalse();
+    }
+
+    @DisplayName("accuracyReport_benchmark세트를실행하면_should세모드리포트를생성한다")
+    @Test
+    void accuracyReport_benchmark세트를실행하면_should세모드리포트를생성한다() {
+        given(learningAiSearchClient.searchSemantic(anyString(), anyString(), anyInt())).willReturn(List.of());
+
+        var report = searchAccuracyService.runAccuracyTest();
+
+        assertThat(report.datasetVersion()).isEqualTo("test-v1");
+        assertThat(report.bm25().queryCount()).isGreaterThanOrEqualTo(50);
+        assertThat(report.semantic().queryCount()).isGreaterThanOrEqualTo(50);
+        assertThat(report.hybrid().queryCount()).isGreaterThanOrEqualTo(50);
+        assertThat(report.improvements()).isNotEmpty();
     }
 
     private SearchPageResponse waitForResults(Long userId, String query, List<String> tags, int limit) {

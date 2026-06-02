@@ -7,9 +7,16 @@ spring:
     uris: ${ELASTICSEARCH_URIS:http://localhost:9200}
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    properties:
+      schema.registry.url: ${SCHEMA_REGISTRY_URL:http://localhost:8086}
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      value-serializer: io.confluent.kafka.serializers.KafkaAvroSerializer
+      acks: all
+      retries: 3
+      properties:
+        enable.idempotence: true
+        retry.backoff.ms: 1000
     consumer:
       group-id: knowledge-search-indexer
       auto-offset-reset: earliest
@@ -49,6 +56,13 @@ search:
   hybrid:
     rrf-k: ${SEARCH_HYBRID_RRF_K:60}
     candidate-multiplier: ${SEARCH_HYBRID_CANDIDATE_MULTIPLIER:3}
+  accuracy:
+    dataset-version: ${SEARCH_ACCURACY_DATASET_VERSION:v1}
+    benchmark-user-id: ${SEARCH_ACCURACY_BENCHMARK_USER_ID:910000}
+    benchmark-tenant-id: ${SEARCH_ACCURACY_BENCHMARK_TENANT_ID:benchmark-search}
+    semantic-actor-id: ${SEARCH_ACCURACY_SEMANTIC_ACTOR_ID:11111111-1111-1111-1111-111111111111}
+    top-k: ${SEARCH_ACCURACY_TOP_K:10}
+    indexing-wait-timeout: ${SEARCH_ACCURACY_INDEXING_WAIT_TIMEOUT:20s}
 
 slack:
   webhook-url: ${SLACK_WEBHOOK_URL:}

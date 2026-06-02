@@ -11,7 +11,7 @@ import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
@@ -23,16 +23,15 @@ import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.kafka.support.serializer.JsonSerializer;
 import org.springframework.util.backoff.ExponentialBackOff;
 
-@Configuration
+@Configuration("searchSyncKafkaConfig")
 @RequiredArgsConstructor
 @SuppressWarnings("deprecation")
 class KafkaConfig {
 
     private final SlackNotifier slackNotifier;
 
-    @Bean
-    @Primary
-    KafkaTemplate<Object, Object> kafkaTemplate(
+    @Bean("searchSyncKafkaTemplate")
+    KafkaTemplate<Object, Object> searchSyncKafkaTemplate(
             @Value("${spring.kafka.bootstrap-servers}") String bootstrapServers) {
         Map<String, Object> props = new HashMap<>();
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
@@ -60,7 +59,7 @@ class KafkaConfig {
     ConcurrentKafkaListenerContainerFactory<String, NoteSearchSyncKafkaEvent>
         searchSyncKafkaListenerContainerFactory(
             ConsumerFactory<String, NoteSearchSyncKafkaEvent> searchSyncConsumerFactory,
-            KafkaTemplate<Object, Object> kafkaTemplate) {
+            @Qualifier("searchSyncKafkaTemplate") KafkaTemplate<Object, Object> kafkaTemplate) {
 
         var backOff = new ExponentialBackOff(1_000L, 2.0);
         backOff.setMaxElapsedTime(7_000L);

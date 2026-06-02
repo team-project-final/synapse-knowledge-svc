@@ -39,7 +39,8 @@ class HybridSearchServiceTest {
 
     private final SearchProperties searchProperties = new SearchProperties(
         new SearchProperties.Ai("http://localhost:8090", Duration.ofSeconds(3), 0.7d),
-        new SearchProperties.Hybrid(60, 3)
+        new SearchProperties.Hybrid(60, 3),
+        new SearchProperties.Accuracy("test-v1", 910000L, "benchmark-search", "11111111-1111-1111-1111-111111111111", 10, Duration.ofSeconds(5))
     );
 
     @Test

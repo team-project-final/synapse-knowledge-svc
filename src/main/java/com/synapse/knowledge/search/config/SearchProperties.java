@@ -14,7 +14,8 @@ import org.springframework.validation.annotation.Validated;
 @ConfigurationProperties(prefix = "search")
 public record SearchProperties(
     @NotNull @Valid Ai ai,
-    @NotNull @Valid Hybrid hybrid
+    @NotNull @Valid Hybrid hybrid,
+    @NotNull @Valid Accuracy accuracy
 ) {
     public record Ai(
         @NotBlank String baseUrl,
@@ -26,6 +27,16 @@ public record SearchProperties(
     public record Hybrid(
         @Positive int rrfK,
         @Positive int candidateMultiplier
+    ) {
+    }
+
+    public record Accuracy(
+        @NotBlank String datasetVersion,
+        @Positive long benchmarkUserId,
+        @NotBlank String benchmarkTenantId,
+        @NotBlank String semanticActorId,
+        @Positive int topK,
+        @NotNull Duration indexingWaitTimeout
     ) {
     }
 }

@@ -11,9 +11,11 @@ spring:
     hibernate:
       ddl-auto: update
   kafka:
-    bootstrap-servers: localhost:9092
+    bootstrap-servers: ${spring.embedded.kafka.brokers:localhost:9092}
     listener:
       auto-startup: false
+    properties:
+      schema.registry.url: mock://test-scope
   data:
     redis:
       host: localhost
@@ -32,3 +34,10 @@ search:
   hybrid:
     rrf-k: 60
     candidate-multiplier: 3
+  accuracy:
+    dataset-version: test-v1
+    benchmark-user-id: 910000
+    benchmark-tenant-id: benchmark-search
+    semantic-actor-id: 11111111-1111-1111-1111-111111111111
+    top-k: 10
+    indexing-wait-timeout: 20s
