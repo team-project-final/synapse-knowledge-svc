@@ -25,7 +25,7 @@ import org.springframework.util.backoff.ExponentialBackOff;
 
 @Configuration("searchSyncKafkaConfig")
 @RequiredArgsConstructor
-@SuppressWarnings("deprecation")
+@SuppressWarnings({"deprecation", "removal"})
 class KafkaConfig {
 
     private final SlackNotifier slackNotifier;
