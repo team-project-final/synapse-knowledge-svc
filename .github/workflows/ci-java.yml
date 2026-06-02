@@ -26,11 +26,18 @@ jobs:
       - name: Grant execute permission
         run: chmod +x gradlew
 
+      - name: Start services
+        run: docker compose -f docker-compose.ci.yml up -d --wait
+
       - name: Build
         run: ./gradlew clean build --no-daemon
 
       - name: Modulith verify
         run: ./gradlew test --tests '*ModuleStructureTest' --no-daemon
+
+      - name: Stop services
+        if: always()
+        run: docker compose -f docker-compose.ci.yml down -v
 
   dev-smoke:
     runs-on: ubuntu-latest

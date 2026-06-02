@@ -78,6 +78,10 @@ tasks.withType<Test> {
 	useJUnitPlatform()
 	systemProperty("spring.profiles.active", "test")
 	System.getenv("DOCKER_HOST")?.let { environment("DOCKER_HOST", it) }
+	// 인프라(ES/Redis/Kafka) 연결 대기로 테스트가 무한정 멈추는 것을 방지하는 안전장치.
+	// 멈춘 테스트가 30분+ 매달리지 않고 빠르게 실패하도록 한다.
+	timeout.set(java.time.Duration.ofMinutes(15))
+	systemProperty("junit.jupiter.execution.timeout.default", "120s")
 	testLogging {
 		exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
 		events("failed")
