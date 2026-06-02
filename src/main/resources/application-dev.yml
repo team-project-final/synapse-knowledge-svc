@@ -1,0 +1,48 @@
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/synapse}
+    username: ${DB_USERNAME:synapse}
+    password: ${DB_PASSWORD:synapse_local_pw}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  elasticsearch:
+    uris: ${ELASTICSEARCH_URIS:http://localhost:9200}
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    properties:
+      schema.registry.url: ${SCHEMA_REGISTRY_URL:http://localhost:8086}
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+synapse:
+  jwt:
+    public-key: ${JWT_PUBLIC_KEY:MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAspYublqbb7MHpuJ6d0SUkDTl63/92T74N+dg3Mibzrqz5U8KGZtz8v6sdzbMTaDPmxlDkBLkFaszU3Ym9PvSFoym55dIRzTZKpjLPMFyURgfd6nXfBPoAlzIb00cGYje6eQE1U1OAWoje7XffjZtTsbN3VtEOa6eNbRW2uv95IXkJDtcG/koeLiNb42BF28rhpAYmGE24iQxfARRqh7IZ3E6giWmuXIDsEaWJCKt/UlUbmKpUSAfnwriWxE78lALXHQSmFWl2WZ9ruXzUBWpQZJPEGO4RxX2898HxA7Jv5V7VqmGvEqB3ZYXs2wyaeXpFjfv/iWPC/+83PMyRi6VtQIDAQAB}
+    issuer: synapse-auth
+
+search:
+  ai:
+    base-url: ${SEARCH_AI_BASE_URL:http://localhost:8090}
+    timeout: ${SEARCH_AI_TIMEOUT:3s}
+    threshold: ${SEARCH_AI_THRESHOLD:0.7}
+  hybrid:
+    rrf-k: ${SEARCH_HYBRID_RRF_K:60}
+    candidate-multiplier: ${SEARCH_HYBRID_CANDIDATE_MULTIPLIER:3}
+  accuracy:
+    dataset-version: ${SEARCH_ACCURACY_DATASET_VERSION:v1}
+    benchmark-user-id: ${SEARCH_ACCURACY_BENCHMARK_USER_ID:910000}
+    benchmark-tenant-id: ${SEARCH_ACCURACY_BENCHMARK_TENANT_ID:benchmark-search}
+    semantic-actor-id: ${SEARCH_ACCURACY_SEMANTIC_ACTOR_ID:11111111-1111-1111-1111-111111111111}
+    top-k: ${SEARCH_ACCURACY_TOP_K:10}
+    indexing-wait-timeout: ${SEARCH_ACCURACY_INDEXING_WAIT_TIMEOUT:20s}
+
+logging:
+  level:
+    com.synapse.knowledge: DEBUG

@@ -1,5 +1,4 @@
 @org.springframework.modulith.ApplicationModule(
-    displayName = "Note",
-    allowedDependencies = {"shared"}
+    allowedDependencies = {"shared", "global"}
 )
 package com.synapse.knowledge.note;

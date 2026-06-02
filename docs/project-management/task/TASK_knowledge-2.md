@@ -2,8 +2,8 @@
 
 > **담당 서비스**: knowledge-svc
 > **GitHub Repository**: [synapse-knowledge-svc](https://github.com/team-project-final/synapse-knowledge-svc)
-> **주차**: W1 (2026-05-12 ~ 2026-05-16)
-> **관련 문서**: [SCOPE](../scope/SCOPE_knowledge.md) | [PRD_W1](../prd/PRD_W1.md) | [WORKFLOW](../workflow/WORKFLOW_knowledge_W1.md) | [HISTORY](../history/HISTORY_knowledge.md)
+> **주차**: W1 (2026-05-12 ~ 2026-05-15, 4 영업일)
+> **관련 문서**: [SCOPE](../scope/SCOPE_knowledge-2.md) | [PRD_W1](../prd/PRD_W1.md) | [WORKFLOW](../workflow/WORKFLOW_knowledge-2_W1.md) | [HISTORY](../history/HISTORY_knowledge-2.md)
 
 ---
 
@@ -18,11 +18,11 @@
 | **Input** | Spring Modulith 공식 문서, knowledge-svc 기존 패키지 구조, PRD_W1 모듈 분리 요구사항 |
 | **Instructions** | 1. `build.gradle.kts`에 Spring Modulith 의존성 추가<br>2. `note`, `graph`, `chunking` 패키지 생성 및 `package-info.java` 작성<br>3. 각 모듈에 `@ApplicationModule(allowedDependencies=...)` 어노테이션 설정<br>4. 모듈 간 public API용 인터페이스 정의 (internal 패키지 분리)<br>5. `ApplicationModules.verify()` 통합 테스트 작성<br>6. 의존 위반 시 빌드 실패하는지 수동 검증<br>7. 모듈 구조 다이어그램 문서화 |
 | **Output Format** | 모듈별 패키지 구조 + verify() 테스트 코드 + 빌드 로그 캡처 |
-| **Constraints** | - Spring Modulith 2.x 사용<br>- 모듈 간 순환 의존 금지<br>- internal 패키지 외부 접근 시 컴파일 에러 보장<br>- 각 모듈은 독립 테스트 가능해야 함 |
+| **Constraints** | - Spring Modulith 2.0.x 사용<br>- 모듈 간 순환 의존 금지<br>- internal 패키지 외부 접근 시 컴파일 에러 보장<br>- 각 모듈은 독립 테스트 가능해야 함 |
 | **Duration** | 1일 |
 | **RULE Reference** | [03-아키텍처](../../wiki/03-아키텍처.md) · [18-기술-스택](../../wiki/18-기술-스택.md) |
 | **Assignee** | @knowledge-owner-2 |
-| **Reviewer** | @tech-lead |
+| **Reviewer** | @team-lead |
 
 ---
 
@@ -41,7 +41,7 @@
 | **Duration** | 1.5일 |
 | **RULE Reference** | [03-아키텍처](../../wiki/03-아키텍처.md) · [09-버전-관리-정책](../../wiki/09-버전-관리-정책.md) |
 | **Assignee** | @knowledge-owner-2 |
-| **Reviewer** | @tech-lead |
+| **Reviewer** | @team-lead |
 
 ---
 
@@ -50,39 +50,39 @@
 | 필드 | 내용 |
 |------|------|
 | **Step Name** | Avro 스키마 등록 및 호환성 검증 |
-| **Step Goal** | knowledge-owner-2가 Avro 스키마를 Schema Registry에 등록하고 BACKWARD 호환성 검증이 동작한다. |
-| **Done When** | note-created-v1.avsc 등록 + 비호환 스키마 거부 확인 |
-| **Scope** | **In**: Avro 스키마 정의, Schema Registry 연동, 호환성 모드 설정 / **Out**: Kafka Producer/Consumer 구현, 이벤트 핸들러 |
-| **Input** | note-created 이벤트 명세 (PRD_W1), Confluent Schema Registry 문서, Avro 스키마 규격 |
-| **Instructions** | 1. `note-created-v1.avsc` 스키마 파일 작성 (noteId, title, content, createdAt 필드)<br>2. Schema Registry Docker 컨테이너 구성 (docker-compose)<br>3. Gradle Avro 플러그인 설정 및 코드 생성 확인<br>4. Schema Registry에 스키마 등록 스크립트 작성<br>5. BACKWARD 호환성 모드 설정<br>6. 비호환 변경(필드 삭제) 시 등록 거부 테스트<br>7. 호환 변경(optional 필드 추가) 시 등록 성공 테스트 |
-| **Output Format** | Avro 스키마 파일 + docker-compose 설정 + 등록/거부 API 응답 로그 |
-| **Constraints** | - Schema Registry 호환성 모드: BACKWARD<br>- 스키마 subject 네이밍: `{topic}-value`<br>- 필수 필드 삭제 불가, optional 필드만 추가 허용<br>- 스키마 ID는 자동 증분 관리 |
+| **Step Goal** | knowledge-owner-2가 `synapse-shared`의 knowledge note Avro 스키마를 Schema Registry에 등록하고 `knowledge.note.note-created-v1-value` subject에 대해 `BACKWARD_TRANSITIVE` 호환성 검증 경로를 제공한다. |
+| **Done When** | `synapse-shared/src/main/avro/knowledge/note-created-v1.avsc` 추가 + compatible 샘플 통과 경로 확보 + default 없는 required 필드 추가 샘플 거부 확인 |
+| **Scope** | **In**: `synapse-shared` Avro 스키마 정의, Schema Registry 연동 스크립트, 호환성 모드 설정, `knowledge-svc` Step3 문서 동기화 / **Out**: Kafka Producer/Consumer 구현, 이벤트 핸들러, CloudEvents envelope 전면 리팩토링 |
+| **Input** | note-created 이벤트 명세 (PRD_W1), Confluent Schema Registry 문서, Avro 스키마 규격, `docs/rules/08-kafka-event.md` |
+| **Instructions** | 1. `synapse-shared/src/main/avro/knowledge/note-created-v1.avsc` 스키마 파일 작성 (`noteId`, `tenantId`, `title`, `content`, `createdAt` 필드)<br>2. `docker-compose.schema-registry.yml`로 로컬 Schema Registry 구동 경로 구성<br>3. Gradle Avro 플러그인 기반 코드 생성 및 `testSchemasTask` 검증 task 추가<br>4. Schema Registry subject `knowledge.note.note-created-v1-value` 등록 스크립트 작성<br>5. subject 호환성 모드 `BACKWARD_TRANSITIVE` 설정<br>6. 비호환 변경(default 없는 required 필드 추가) 시 등록 거부 테스트<br>7. 호환 변경(optional 필드 추가) 시 등록 성공 테스트<br>8. 구현 결과에 맞춰 `TASK/WORKFLOW/HISTORY` 문서 동기화 |
+| **Output Format** | Avro 스키마 파일 + sample 스키마 2종 + docker-compose 설정 + 등록/호환성 검사 스크립트 + 문서 동기화 결과 |
+| **Constraints** | - Schema Registry 호환성 모드: `BACKWARD_TRANSITIVE`<br>- 스키마 subject 네이밍: `knowledge.note.note-created-v1-value`<br>- 모든 신규 필드는 default 포함 또는 optional union 사용<br>- 비호환 검증은 default 없는 required 필드 추가로 재현<br>- 스키마 ID는 Registry 자동 증분 관리 |
 | **Duration** | 1.5일 |
 | **RULE Reference** | [03-아키텍처](../../wiki/03-아키텍처.md) · [18-기술-스택](../../wiki/18-기술-스택.md) · [14-배포-가이드](../../wiki/14-배포-가이드.md) |
 | **Assignee** | @knowledge-owner-2 |
-| **Reviewer** | @tech-lead |
+| **Reviewer** | @team-lead |
 
 ---
 
-# W2 (2026-05-19 ~ 2026-05-23)
+# W2 (2026-05-18 ~ 2026-05-22, 5 영업일)
 
 ## Step 4: 임베딩용 청크 분할
 
 | 필드 | 내용 |
 |------|------|
 | **Step Name** | 임베딩용 청크 분할 |
-| **Step Goal** | knowledge-owner-2가 노트를 비동기로 임베딩용 청크로 분할하여 chunks 테이블에 저장한다. |
-| **Done When** | 노트 저장 시 비동기 청크 분할 완료 + chunks 테이블 저장 확인 + 단위/통합 테스트 통과 |
-| **Scope** | **In**: chunks 테이블, 비동기 분할 로직 / **Out**: 벡터 생성(ai-owner 담당) |
+| **Step Goal** | knowledge-owner-2가 노트를 비동기 이벤트 기반으로 임베딩용 청크로 분할하여 `note_chunks` 테이블에 저장하고, 수정/삭제 시 관련 청크 상태를 정합하게 유지한다. |
+| **Done When** | 노트 저장/수정 시 비동기 청크 분할 완료 + 노트 삭제 시 관련 청크 정리 확인 + `note_chunks` 테이블 저장 확인 + 단위/통합 테스트 통과 |
+| **Scope** | **In**: `note_chunks` 테이블, Spring Application Event + `@Async` 기반 비동기 분할 로직, 수정 시 재생성, 삭제 시 청크 정리 / **Out**: 벡터 생성(ai-owner 담당), Kafka transport 구현 |
 | **Input** | Step 3 완료된 Avro 스키마, 노트 엔티티, 청크 분할 전략 문서, PRD_W2 요구사항 |
-| **Instructions** | 1. `chunks` 테이블 스키마 설계 (id, noteId, content, chunkIndex, createdAt)<br>2. Flyway 마이그레이션 스크립트 작성<br>3. 비동기 청크 분할 서비스 구현 (@Async 또는 이벤트 기반)<br>4. 청크 크기 전략 정의 (최대 512 토큰, 오버랩 50 토큰)<br>5. 노트 저장 이벤트 수신 시 자동 청크 분할 트리거<br>6. 단위 테스트: 다양한 길이의 노트에 대한 청크 분할 검증<br>7. 통합 테스트: 노트 저장 → 청크 테이블 저장 E2E 확인 |
-| **Output Format** | chunks 테이블 DDL + 청크 분할 서비스 코드 + 테스트 결과 |
-| **Constraints** | - 청크 최대 크기: 512 토큰<br>- 오버랩: 50 토큰<br>- 비동기 처리 (노트 저장 응답 지연 금지)<br>- 빈 노트는 청크 생성하지 않음<br>- PostgreSQL 사용 |
+| **Instructions** | 1. `note_chunks` 테이블 스키마 설계 (`id`, `note_id`, `chunk_index`, `chunk_text`, `token_count`, `embedding`, `created_at`)<br>   - `embedding vector(1536)`: pgvector 임베딩 컬럼 (learning-ai-owner가 채움)<br>2. Flyway 마이그레이션 스크립트 작성 (`CREATE EXTENSION IF NOT EXISTS vector` 포함)<br>3. `NoteService` 저장/수정/삭제 흐름에서 chunking 요청 이벤트 발행<br>4. Spring Application Event + `@TransactionalEventListener(AFTER_COMMIT)` + `@Async` 기반 비동기 청크 분할 서비스 구현<br>5. 청크 크기 전략 정의 (최대 512 토큰, 오버랩 50 토큰, 공백 기준 token counter 1차 적용)<br>6. 노트 저장/수정 시 기존 청크 삭제 후 재생성, 노트 삭제 시 관련 청크 정리<br>7. 단위 테스트: 빈 노트, 매우 긴 노트, 한국어 포함, overlap 검증<br>8. 통합 테스트: 노트 저장/수정/삭제 → `note_chunks` 테이블 상태 검증 |
+| **Output Format** | `note_chunks` 테이블 DDL + chunking 이벤트/서비스 코드 + 단위/통합 테스트 결과 |
+| **Constraints** | - 청크 최대 크기: 512 토큰<br>- 오버랩: 50 토큰<br>- 비동기 처리 (노트 저장 응답 지연 금지)<br>- 빈 노트는 청크 생성하지 않음<br>- 현재 단계의 transport는 Spring Application Event + `@Async`, Kafka는 추후 전환<br>- PostgreSQL 사용 (pgvector 확장 필요), 테스트 환경(H2)은 문자열 컬럼으로 대체 매핑 |
 | **Duration** | 1.5일 |
 | **RULE Reference** | [03-아키텍처](../../wiki/03-아키텍처.md) · [18-기술-스택](../../wiki/18-기술-스택.md) |
 | **Assignee** | @knowledge-owner-2 |
-| **Reviewer** | @tech-lead |
-| **Status** | TODO |
+| **Reviewer** | @team-lead |
+| **Status** | DONE - learning-ai 실제 contract(path/request/response) 정렬, `note_identity_map` 기반 UUID `note_id` ↔ knowledge `Long noteId` 매핑 구현, hybrid RRF 병합 복구 완료 |
 
 ---
 
@@ -92,17 +92,17 @@
 |------|------|
 | **Step Name** | BM25 기반 Elasticsearch 검색 |
 | **Step Goal** | 사용자가 키워드로 노트를 BM25 기반 Elasticsearch 검색할 수 있다. |
-| **Done When** | 키워드 검색 API + BM25 스코어링 + 페이지네이션 + 테스트 통과 |
-| **Scope** | **In**: Elasticsearch 인덱스 설정, BM25 검색 API, 노트 인덱싱 / **Out**: 시맨틱 검색, 하이브리드 검색, 검색 튜닝 |
+| **Done When** | 키워드 검색 API + BM25 스코어링 + 페이지네이션 + JWT 기반 사용자 필터 + live Elasticsearch+nori 통합 테스트 통과 |
+| **Scope** | **In**: Elasticsearch 인덱스 설정, BM25 검색 API, 노트 인덱싱, JWT 검증 기반 사용자 컨텍스트 소비, 노트 태그 저장/검색 반영 / **Out**: 시맨틱 검색, 하이브리드 검색, 검색 튜닝, 로그인/토큰 발급 |
 | **Input** | Step 4 완료된 청크 데이터, Elasticsearch 공식 문서, PRD_W2 검색 요구사항 |
-| **Instructions** | 1. Elasticsearch Docker 컨테이너 구성 (docker-compose)<br>2. 노트 인덱스 매핑 정의 (title, content, tags 필드)<br>3. 노트 생성/수정 시 Elasticsearch 인덱싱 연동<br>4. BM25 기반 키워드 검색 API 구현 (GET `/api/v1/notes/search`)<br>5. 검색 결과 하이라이팅 적용<br>6. 페이지네이션 및 정렬 옵션 구현<br>7. 통합 테스트: 키워드 검색 정확도 검증 |
-| **Output Format** | Elasticsearch 인덱스 매핑 + 검색 API 응답 예시 + 테스트 결과 |
-| **Constraints** | - Elasticsearch 8.x 사용<br>- BM25 기본 파라미터 (k1=1.2, b=0.75)<br>- 검색 결과 최대 100건 페이지네이션<br>- 한국어 형태소 분석기 (nori) 적용<br>- 인덱싱은 비동기 처리 |
+| **Instructions** | 1. Elasticsearch 인덱스 매핑 정의 (title, content, tags 필드 + nori analyzer)<br>2. 노트 생성/수정/삭제 시 Elasticsearch 비동기 인덱싱 연동<br>3. BM25 기반 키워드 검색 API 구현 (`GET /api/v1/notes/search?q=...`)<br>4. JWT Resource Server 검증 골격과 현재 사용자 userId 추출 경로 구현<br>5. 검색 결과 하이라이팅 적용 (`&lt;mark&gt;` 태그)<br>6. `search_after` 기반 cursor 페이지네이션 구현<br>7. 단위 테스트 + MockMvc 인증/인가 테스트 + 남은 ES 통합 검증 TODO 문서화 |
+| **Output Format** | Elasticsearch 인덱스 매핑 코드 + 검색 API 응답 예시 + 테스트 결과 + Workflow/HISTORY 동기화 + live ES 검증 경로 |
+| **Constraints** | - Elasticsearch 8.x 사용<br>- BM25 기본 파라미터 (k1=1.2, b=0.75)<br>- 검색 결과 최대 100건 페이지네이션<br>- 한국어 형태소 분석기 (nori) 적용<br>- 인덱싱은 비동기 처리<br>- JWT는 검증/사용자 식별만 구현하고 발급 기능은 포함하지 않음 |
 | **Duration** | 1.5일 |
 | **RULE Reference** | [03-아키텍처](../../wiki/03-아키텍처.md) · [18-기술-스택](../../wiki/18-기술-스택.md) · [14-배포-가이드](../../wiki/14-배포-가이드.md) |
 | **Assignee** | @knowledge-owner-2 |
-| **Reviewer** | @tech-lead |
-| **Status** | TODO |
+| **Reviewer** | @team-lead |
+| **Status** | DONE |
 
 ---
 
@@ -114,17 +114,17 @@
 |------|------|
 | **Step Name** | 하이브리드 검색 (BM25 + 시맨틱 RRF) |
 | **Step Goal** | 사용자가 하이브리드 검색(BM25+시맨틱 RRF)으로 노트를 검색할 수 있다. |
-| **Done When** | 하이브리드 검색 API + RRF 점수 병합 + BM25/시맨틱 단독 대비 정확도 향상 확인 |
+| **Done When** | 하이브리드 검색 API + RRF 점수 병합 + 시맨틱 타임아웃 fallback + 통합 테스트 통과 |
 | **Scope** | **In**: RRF 점수 병합 로직, 시맨틱 검색 연동, 하이브리드 검색 API / **Out**: 검색 UI, 자동완성, 필터링 고도화 |
 | **Input** | Step 5 완료된 BM25 검색, learning-ai 시맨틱 검색 API, RRF 알고리즘 문서 |
-| **Instructions** | 1. learning-ai 서비스의 시맨틱 검색 API 연동 (HTTP 클라이언트)<br>2. RRF(Reciprocal Rank Fusion) 점수 병합 로직 구현<br>3. 하이브리드 검색 API 구현 (GET `/api/v1/notes/search?mode=hybrid`)<br>4. BM25 단독 / 시맨틱 단독 / 하이브리드 모드 전환 지원<br>5. RRF 파라미터(k=60) 설정 및 조정 가능하도록 구현<br>6. 검색 결과 정렬: RRF 점수 내림차순<br>7. 통합 테스트: 하이브리드 검색 결과 품질 검증 |
+| **Instructions** | 1. learning-ai 서비스의 시맨틱 검색 API 연동 (HTTP 클라이언트)<br>2. RRF(Reciprocal Rank Fusion) 점수 병합 로직 구현<br>3. 하이브리드 검색 API 구현 → `POST /api/v1/ai/search/hybrid`<br>4. 검색 모드별 별도 엔드포인트: keyword → `GET /api/v1/notes/search?q=...`, semantic → `POST /api/v1/ai/search/semantic`, hybrid → `POST /api/v1/ai/search/hybrid`<br>5. RRF 파라미터(k=60) 설정 및 조정 가능하도록 구현<br>6. 시맨틱 검색 3초 초과 시 BM25 결과만 반환하는 fallback 구현<br>7. 통합 테스트: 하이브리드 검색 결과 품질 검증 |
 | **Output Format** | 하이브리드 검색 API 응답 + RRF 병합 로직 코드 + 검색 모드별 비교 결과 |
-| **Constraints** | - RRF 기본 k=60<br>- BM25와 시맨틱 검색 병렬 실행 (응답 시간 최소화)<br>- 타임아웃: 시맨틱 검색 3초 초과 시 BM25 결과만 반환<br>- 검색 모드: keyword, semantic, hybrid 3종 지원 |
+| **Constraints** | - RRF 기본 k=60<br>- BM25와 시맨틱 검색 병렬 실행 (응답 시간 최소화)<br>- 타임아웃: 시맨틱 검색 3초 초과 시 BM25 결과만 반환<br>- 검색 모드별 별도 엔드포인트 사용 (단일 엔드포인트에 mode 파라미터 방식 사용 금지): keyword=`GET /api/v1/notes/search?q=...`, semantic=`POST /api/v1/ai/search/semantic`, hybrid=`POST /api/v1/ai/search/hybrid` |
 | **Duration** | 1.5일 |
 | **RULE Reference** | [03-아키텍처](../../wiki/03-아키텍처.md) · [18-기술-스택](../../wiki/18-기술-스택.md) |
 | **Assignee** | @knowledge-owner-2 |
-| **Reviewer** | @tech-lead |
-| **Status** | TODO |
+| **Reviewer** | @team-lead |
+| **Status** | DONE |
 
 ---
 
@@ -134,17 +134,17 @@
 |------|------|
 | **Step Name** | 검색 정확도 측정 및 리포트 |
 | **Step Goal** | knowledge-owner-2가 테스트 쿼리 세트로 검색 정확도를 측정하고 리포트를 산출한다. |
-| **Done When** | 테스트 쿼리 세트 20건 + 검색 모드별 MRR/Precision@10 측정 + 리포트 문서 산출 |
-| **Scope** | **In**: 테스트 쿼리 세트 작성, 정확도 메트릭 계산, 리포트 생성 / **Out**: 검색 알고리즘 자체 변경, 프로덕션 배포 |
+| **Done When** | 테스트 쿼리 세트 50건 이상 + 검색 모드별 Precision@10/Recall@10/MRR/NDCG 측정 + 관리자 전용 정확도 실행/조회 API + 리포트 문서 산출 |
+| **Scope** | **In**: 테스트 쿼리 세트 작성, benchmark 노트 시드, 정확도 메트릭 계산, 관리자 전용 측정 API, 리포트 생성 / **Out**: 검색 알고리즘 자체 변경, 프로덕션 배포, UI 구현 |
 | **Input** | Step 6 완료된 하이브리드 검색, 검색 품질 평가 방법론, 테스트 데이터셋 |
-| **Instructions** | 1. 테스트 쿼리 세트 작성 (20건 이상, 기대 결과 포함)<br>2. 자동화된 검색 정확도 측정 스크립트 작성<br>3. MRR (Mean Reciprocal Rank) 계산<br>4. Precision@10 계산<br>5. BM25 단독 / 시맨틱 단독 / 하이브리드 모드별 비교<br>6. 검색 정확도 리포트 문서 작성<br>7. 정확도 기준 미달 시 개선 포인트 도출 |
-| **Output Format** | 테스트 쿼리 세트 + 정확도 메트릭 결과표 + 검색 정확도 리포트 문서 |
-| **Constraints** | - 테스트 쿼리 최소 20건<br>- MRR 목표: 0.7 이상<br>- Precision@10 목표: 0.6 이상<br>- 3개 검색 모드 모두 측정<br>- 측정 결과 재현 가능해야 함 |
+| **Instructions** | 1. 테스트 쿼리 세트 작성 (50건 이상, 기대 결과와 relevance score 포함)<br>2. benchmark 노트 시드 경로 작성 (리포지토리 내부 JSON 기준)<br>3. 자동화된 검색 정확도 측정 서비스 구현<br>4. Precision@10, Recall@10, MRR, NDCG 계산기 구현<br>5. BM25 단독 / 시맨틱 단독 / 하이브리드 모드별 비교 리포트 생성<br>6. 관리자 전용 실행 API `POST /api/v1/admin/search/accuracy-test` 구현<br>7. 관리자 전용 조회 API `GET /api/v1/admin/search/accuracy-report` 구현<br>8. 검색 정확도 리포트 문서 작성<br>9. 정확도 기준 미달 시 개선 포인트 도출 |
+| **Output Format** | benchmark 노트/테스트 쿼리 JSON + 정확도 메트릭 결과표 + 관리자 API 응답 예시 + 검색 정확도 리포트 문서 |
+| **Constraints** | - 테스트 쿼리 최소 50건<br>- MRR 목표: 0.7 이상<br>- Precision@10 목표: 0.6 이상<br>- 3개 검색 모드 모두 측정<br>- 관리자/개발자 전용 접근 제어 필수<br>- 테스트 데이터는 리포지토리 내부에 두고 프로덕션 데이터와 격리<br>- 측정 결과 재현 가능해야 함 |
 | **Duration** | 1.5일 |
 | **RULE Reference** | [03-아키텍처](../../wiki/03-아키텍처.md) · [09-버전-관리-정책](../../wiki/09-버전-관리-정책.md) |
 | **Assignee** | @knowledge-owner-2 |
-| **Reviewer** | @tech-lead |
-| **Status** | TODO |
+| **Reviewer** | @team-lead |
+| **Status** | DONE |
 
 ---
 
@@ -165,7 +165,7 @@
 | **Duration** | 1.5일 |
 | **RULE Reference** | [03-아키텍처](../../wiki/03-아키텍처.md) · [09-버전-관리-정책](../../wiki/09-버전-관리-정책.md) · [14-배포-가이드](../../wiki/14-배포-가이드.md) |
 | **Assignee** | @knowledge-owner-2 |
-| **Reviewer** | @tech-lead |
+| **Reviewer** | @team-lead |
 | **Status** | TODO |
 
 ---
@@ -185,5 +185,5 @@
 | **Duration** | 1.5일 |
 | **RULE Reference** | [03-아키텍처](../../wiki/03-아키텍처.md) · [09-버전-관리-정책](../../wiki/09-버전-관리-정책.md) |
 | **Assignee** | @knowledge-owner-2 |
-| **Reviewer** | @tech-lead |
+| **Reviewer** | @team-lead |
 | **Status** | TODO |

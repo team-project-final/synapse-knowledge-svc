@@ -1,5 +1,5 @@
 @org.springframework.modulith.ApplicationModule(
-    displayName = "Chunking",
-    allowedDependencies = {"shared"}
+    displayName = "Chunking Module",
+    allowedDependencies = {"shared", "global"}
 )
 package com.synapse.knowledge.chunking;

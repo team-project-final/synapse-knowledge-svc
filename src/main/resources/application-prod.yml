@@ -1,0 +1,46 @@
+spring:
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 20
+  jpa:
+    show-sql: false
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  elasticsearch:
+    uris: ${ELASTICSEARCH_URIS}
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
+    properties:
+      schema.registry.url: ${SCHEMA_REGISTRY_URL}
+
+synapse:
+  jwt:
+    public-key: ${JWT_PUBLIC_KEY}
+    issuer: ${JWT_ISSUER:synapse-auth}
+
+search:
+  ai:
+    base-url: ${SEARCH_AI_BASE_URL}
+    timeout: ${SEARCH_AI_TIMEOUT:3s}
+    threshold: ${SEARCH_AI_THRESHOLD:0.7}
+  hybrid:
+    rrf-k: ${SEARCH_HYBRID_RRF_K:60}
+    candidate-multiplier: ${SEARCH_HYBRID_CANDIDATE_MULTIPLIER:3}
+  accuracy:
+    dataset-version: ${SEARCH_ACCURACY_DATASET_VERSION:v1}
+    benchmark-user-id: ${SEARCH_ACCURACY_BENCHMARK_USER_ID:910000}
+    benchmark-tenant-id: ${SEARCH_ACCURACY_BENCHMARK_TENANT_ID:benchmark-search}
+    semantic-actor-id: ${SEARCH_ACCURACY_SEMANTIC_ACTOR_ID:11111111-1111-1111-1111-111111111111}
+    top-k: ${SEARCH_ACCURACY_TOP_K:10}
+    indexing-wait-timeout: ${SEARCH_ACCURACY_INDEXING_WAIT_TIMEOUT:20s}
+
+logging:
+  level:
+    root: INFO

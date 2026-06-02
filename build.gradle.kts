@@ -1,10 +1,14 @@
+import java.time.Duration
+
 plugins {
 	java
+	idea
 	id("org.springframework.boot") version "4.0.0"
 	id("io.spring.dependency-management") version "1.1.7"
+	id("com.github.davidmc24.gradle.plugin.avro") version "1.9.1"
 }
 
-group = "com.synapse"
+group = "com.synapse.knowledge"
 version = "0.0.1-SNAPSHOT"
 
 java {
@@ -13,29 +17,81 @@ java {
 	}
 }
 
+sourceSets {
+	main {
+		java.srcDir(layout.buildDirectory.dir("generated-main-avro-java"))
+	}
+}
+
+idea {
+	module {
+		generatedSourceDirs.add(layout.buildDirectory.dir("generated-main-avro-java").get().asFile)
+	}
+}
+
 repositories {
 	mavenCentral()
+	maven { url = uri("https://packages.confluent.io/maven/") }
 }
 
 dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-actuator")
 	implementation("org.springframework.boot:spring-boot-starter-validation")
-	implementation("org.springframework.boot:spring-boot-starter-webmvc")
-	testImplementation("org.springframework.boot:spring-boot-starter-actuator-test")
-	testImplementation("org.springframework.boot:spring-boot-starter-validation-test")
+	implementation("org.springframework.boot:spring-boot-starter-web")
+	implementation("org.springframework.boot:spring-boot-starter-restclient")
+	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+	implementation("org.springframework.boot:spring-boot-starter-security")
+	implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
+	implementation("org.springframework.boot:spring-boot-starter-data-elasticsearch")
+	implementation("org.springframework.kafka:spring-kafka")
+	implementation("com.googlecode.owasp-java-html-sanitizer:owasp-java-html-sanitizer:20240325.1")
+	implementation("org.mapstruct:mapstruct:1.6.3")
+	implementation("org.apache.avro:avro:1.11.3")
+	implementation("io.confluent:kafka-avro-serializer:7.5.0")
+	compileOnly("org.projectlombok:lombok")
+	annotationProcessor("org.projectlombok:lombok")
+	annotationProcessor("org.mapstruct:mapstruct-processor:1.6.3")
+	implementation("org.springframework.boot:spring-boot-starter-flyway")
+	implementation("org.flywaydb:flyway-database-postgresql")
+	runtimeOnly("org.postgresql:postgresql")
+	testRuntimeOnly("com.h2database:h2")
+	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.6")
+	implementation("org.springframework.modulith:spring-modulith-starter-core")
+	implementation("org.springframework.modulith:spring-modulith-events-api")
+	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
-	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-    // Spring Modulith
-    implementation("org.springframework.modulith:spring-modulith-starter-core")
-    testImplementation("org.springframework.modulith:spring-modulith-starter-test")
+	testImplementation("org.springframework.boot:spring-boot-testcontainers")
+	testImplementation("org.springframework.security:spring-security-test")
+	testImplementation("org.springframework.modulith:spring-modulith-starter-test")
+	testImplementation("org.springframework.kafka:spring-kafka-test")
+	testImplementation("com.tngtech.archunit:archunit-junit5:1.3.0")
+	testImplementation("org.testcontainers:junit-jupiter:1.21.3")
+	testImplementation("org.testcontainers:testcontainers:1.21.3")
+	testImplementation("org.testcontainers:postgresql:1.21.3")
+	testImplementation("org.testcontainers:elasticsearch:1.21.3")
+	implementation("org.springframework.kafka:spring-kafka")
+	implementation("org.springframework.boot:spring-boot-starter-data-redis")
+	testImplementation("org.springframework.kafka:spring-kafka-test")
+	testImplementation("org.testcontainers:kafka:1.21.3")
 }
+
 
 tasks.withType<Test> {
 	useJUnitPlatform()
+	systemProperty("spring.profiles.active", "test")
+	System.getenv("DOCKER_HOST")?.let { environment("DOCKER_HOST", it) }
+	systemProperty("junit.jupiter.execution.timeout.default", "120s")
+	timeout.set(Duration.ofMinutes(15))
+	testLogging {
+		exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+		events("failed")
+		showStackTraces = true
+		showCauses = true
+	}
 }
 
 dependencyManagement {
-    imports {
-        mavenBom("org.springframework.modulith:spring-modulith-bom:1.3.0")
-    }
+	imports {
+		mavenBom("org.springframework.modulith:spring-modulith-bom:2.0.6")
+	}
 }
