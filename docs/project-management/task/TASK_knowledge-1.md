@@ -264,12 +264,12 @@
 - **Step Name**: 노트 버전 이력/복원
 - **Step Goal**: 사용자가 노트 수정 이력을 조회하고 이전 버전으로 복원할 수 있다.
 - **Done When**:
-  - [ ] 노트 수정 시 note_versions 테이블에 이전 버전 자동 저장
-  - [ ] `GET /notes/{id}/versions` → 수정 이력 목록 조회
-  - [ ] `GET /notes/{id}/versions/{versionId}` → 특정 버전 상세 조회
-  - [ ] `POST /notes/{id}/versions/{versionId}/restore` → 이전 버전으로 복원 (Wiki에 추가 예정)
-  - [ ] note_versions 테이블 Flyway 마이그레이션 완료
-  - [ ] 통합 테스트 통과
+  - [x] 노트 수정 시 note_versions 테이블에 이전 버전 자동 저장
+  - [x] `GET /notes/{id}/versions` → 수정 이력 목록 조회
+  - [x] `GET /notes/{id}/versions/{versionId}` → 특정 버전 상세 조회
+  - [x] `POST /notes/{id}/versions/{versionId}/restore` → 이전 버전으로 복원 (Wiki에 추가 예정)
+  - [x] note_versions 테이블 Flyway 마이그레이션 완료
+  - [x] 통합 테스트 통과
 - **Scope**:
   - In Scope:
     - note_versions 테이블 설계 + Flyway 마이그레이션
@@ -304,7 +304,7 @@
 - **Assignee**: @knowledge-owner-1
 - **Reviewer**: @team-lead
 
-**Status**: [ ] Not Started / [ ] In Progress / [ ] Done
+**Status**: [ ] Not Started / [ ] In Progress / [x] Done
 
 ---
 
@@ -315,10 +315,10 @@
 - **Done When**:
   - [ ] `POST /notes/{id}/tags` → 노트에 태그 추가 (Wiki에 추가 예정)
   - [ ] `DELETE /notes/{id}/tags/{tagId}` → 노트에서 태그 제거 (Wiki에 추가 예정)
-  - [ ] `GET /notes?tag={tagName}` → 태그 기반 노트 필터링
-  - [ ] `GET /tags/autocomplete?q={prefix}` → 태그 자동완성 (prefix 매칭, Wiki에 추가 예정)
-  - [ ] tags / note_tags 테이블 Flyway 마이그레이션 완료
-  - [ ] 통합 테스트 통과
+  - [x] `GET /notes?tag={tagName}` → 태그 기반 노트 필터링
+  - [x] `GET /tags/autocomplete?q={prefix}` → 태그 자동완성 (prefix 매칭, Wiki에 추가 예정)
+  - [x] tags / note_tags 테이블 Flyway 마이그레이션 완료
+  - [x] 통합 테스트 통과
 - **Scope**:
   - In Scope:
     - tags 테이블 + note_tags 조인 테이블 설계 + Flyway 마이그레이션
@@ -354,7 +354,7 @@
 - **Assignee**: @knowledge-owner-1
 - **Reviewer**: @team-lead
 
-**Status**: [ ] Not Started / [ ] In Progress / [ ] Done
+**Status**: [ ] Not Started / [ ] In Progress / [x] Done
 
 ---
 
