@@ -4,6 +4,7 @@ import com.synapse.knowledge.search.event.NoteSearchSyncKafkaEvent;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.TopicPartition;
@@ -30,6 +31,9 @@ class KafkaConfig {
 
     private final SlackNotifier slackNotifier;
 
+    @Value("${spring.kafka.security.protocol:PLAINTEXT}")
+    private String securityProtocol;
+
     @Bean("searchSyncKafkaTemplate")
     KafkaTemplate<Object, Object> searchSyncKafkaTemplate(
             @Value("${spring.kafka.bootstrap-servers}") String bootstrapServers) {
@@ -37,6 +41,7 @@ class KafkaConfig {
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
+        applySecurityProtocol(props);
         return new KafkaTemplate<>(new DefaultKafkaProducerFactory<>(props));
     }
 
@@ -52,6 +57,7 @@ class KafkaConfig {
         props.put(JsonDeserializer.TRUSTED_PACKAGES, "*");
         props.put(JsonDeserializer.VALUE_DEFAULT_TYPE, NoteSearchSyncKafkaEvent.class.getName());
         props.put(JsonDeserializer.USE_TYPE_INFO_HEADERS, false);
+        applySecurityProtocol(props);
         return new DefaultKafkaConsumerFactory<>(props);
     }
 
@@ -74,6 +80,12 @@ class KafkaConfig {
         factory.setConsumerFactory(searchSyncConsumerFactory);
         factory.setCommonErrorHandler(new DefaultErrorHandler(recoverer, backOff));
         return factory;
+    }
+
+    private void applySecurityProtocol(Map<String, Object> props) {
+        if (!"PLAINTEXT".equalsIgnoreCase(securityProtocol)) {
+            props.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, securityProtocol);
+        }
     }
 }
 
