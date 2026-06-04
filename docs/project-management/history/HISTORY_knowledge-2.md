@@ -273,9 +273,15 @@
 #### 2026-06-04 (목)
 
 - **완료**:
+- fix(kafka): `spring.kafka.security.protocol` 설정을 `global` producer와 `search` producer/consumer factory props에 조건부 반영해 MSK TLS-only(9094) 연결 경로를 추가
+- test(kafka): `KafkaConfig` 단위 테스트 5건을 추가해 SSL 주입 시 `security.protocol=SSL`, 기본값 PLAINTEXT 시 미주입 동작을 검증
+- config(kafka): `application.yml`에 `spring.kafka.security.protocol` 환경변수 바인딩을 명시
 - **진행 중**:
+- 없음
 - **이슈**:
+- 없음
 - **다음**:
+- 최신 main 기준 브랜치에서 PR 생성 및 후속 배포 검증 경로 정리
 
 #### 2026-06-05 (금)
 
