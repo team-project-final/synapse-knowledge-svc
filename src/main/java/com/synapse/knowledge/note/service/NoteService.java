@@ -4,6 +4,7 @@ import com.synapse.knowledge.global.exception.AccessDeniedException;
 import com.synapse.knowledge.global.util.MarkdownSanitizer;
 import com.synapse.knowledge.note.dto.NoteCreateRequest;
 import com.synapse.knowledge.note.dto.NoteResponse;
+import com.synapse.knowledge.note.dto.NoteVersionDetailResponse;
 import com.synapse.knowledge.note.entity.Note;
 import com.synapse.knowledge.note.entity.NoteIdentityMap;
 import com.synapse.knowledge.note.entity.NoteLink;
@@ -38,6 +39,7 @@ public class NoteService {
     private final MarkdownSanitizer sanitizer;
     private final NoteEventOutboxService noteEventOutboxService;
     private final ApplicationEventPublisher eventPublisher;
+    private final NoteVersionService noteVersionService;
 
     @Transactional(propagation = Propagation.REQUIRED)
     public NoteResponse create(Long userId, NoteCreateRequest request) {
@@ -65,6 +67,19 @@ public class NoteService {
             .map(NoteResponse::from);
     }
 
+    public Page<NoteResponse> findAllByTag(Long userId, String tag, Pageable pageable) {
+        return noteRepository.findByUserIdAndTagAndDeletedAtIsNull(userId, tag, pageable)
+            .map(NoteResponse::from);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRED)
+    public NoteResponse restoreVersion(Long userId, Long noteId, Integer versionNo) {
+        NoteVersionDetailResponse target = noteVersionService.getVersion(userId, noteId, versionNo);
+        Note note = findValidNote(noteId);
+        return update(userId, noteId,
+            new NoteCreateRequest(note.getTenantId(), target.title(), target.contentMd(), note.getTags()));
+    }
+
     public NoteResponse getById(Long userId, Long noteId) {
         Note note = findValidNote(noteId);
         validateOwner(userId, note);
@@ -80,6 +95,8 @@ public class NoteService {
     public NoteResponse update(Long userId, String eventUserId, Long noteId, NoteCreateRequest request) {
         Note note = findValidNote(noteId);
         validateOwner(userId, note);
+
+        noteVersionService.saveVersion(note);
 
         String sanitizedMd = sanitizer.sanitize(request.contentMd());
         String plainText = extractPlainText(sanitizedMd);

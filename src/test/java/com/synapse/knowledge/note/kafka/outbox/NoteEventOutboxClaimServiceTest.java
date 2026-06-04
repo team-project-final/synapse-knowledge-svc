@@ -22,8 +22,8 @@ class NoteEventOutboxClaimServiceTest {
     private NoteEventOutboxRepository noteEventOutboxRepository;
 
     @Test
-    @DisplayName("claimNextBatch_대기중아웃박스가있으면_shouldInProgress와Lease를설정한다")
-    void claimNextBatch_대기중아웃박스가있으면_shouldInProgress와Lease를설정한다() {
+    @DisplayName("대기 중 아웃박스가 있으면 InProgress와 Lease를 설정한다")
+    void claimNextBatch_pendingOutboxExists_shouldSetInProgressAndLease() {
         NoteEventOutbox outbox = NoteEventOutbox.pending(
             "event-1",
             "knowledge.note.note-created-v1",

@@ -14,8 +14,8 @@ class RrfMergeServiceTest {
     private final RrfMergeService rrfMergeService = new RrfMergeService();
 
     @Test
-    @DisplayName("merge_BM25와시맨틱결과가겹치면_shouldRrf점수로재정렬")
-    void merge_BM25와시맨틱결과가겹치면_shouldRrf점수로재정렬() {
+    @DisplayName("BM25와 시맨틱 결과가 겹치면 RRF 점수로 재정렬한다")
+    void merge_bm25AndSemanticResultsOverlap_shouldReorderByRrfScore() {
         // Given
         UUID noteA = UUID.randomUUID();
         UUID noteB = UUID.randomUUID();
@@ -41,8 +41,8 @@ class RrfMergeServiceTest {
     }
 
     @Test
-    @DisplayName("merge_시맨틱결과가비면_should키워드결과만반환")
-    void merge_시맨틱결과가비면_should키워드결과만반환() {
+    @DisplayName("시맨틱 결과가 비어있으면 키워드 결과만 반환한다")
+    void merge_semanticResultsEmpty_shouldReturnOnlyKeywordResults() {
         // Given
         List<SearchCandidate> keywordResults = List.of(
             new SearchCandidate(1L, UUID.randomUUID(), "A", List.of(), "snippet-a", 10.0f, null)

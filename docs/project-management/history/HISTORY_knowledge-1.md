@@ -227,12 +227,17 @@
   - `application-test.yml`의 `listener.auto-startup: false` 설정 오기입 발견 및 제거
   - `SearchElasticsearchIntegrationTest` Kafka consumer group 격리 문제 원인 분석 → WORKPLAN에 따라 `@Disabled` 처리
   - `feature/kafka-es-sync` PR CI 최종 통과 확인
-  - 규칙 재검토 후 RULE 04.4·04.1·12.3 위반 발견 → `fix/convention-violations` 브랜치 생성
+  - RULE 04.1·04.4·12.3 컨벤션 위반 수정 → `fix/convention-violations` PR #42 생성
+  - W3 Step 6 구현: `note_versions` 테이블(V8 Flyway), `NoteVersion` 엔티티/리포지토리, `NoteVersionService`, `NoteVersionController` (버전 목록/상세/복원 3 엔드포인트), `NoteService.update()` 버전 스냅샷 훅, 단위+통합 테스트
+  - W3 Step 7 구현: `TagService`(자동완성 userId 필터링·인기태그 Redis 캐싱), `TagController`, `NoteController` `?tag=` 필터 확장, `RedisConfig`, 단위+통합 테스트
+  - 코드 리뷰 버그 수정 8건: autocomplete 타인 태그 노출 보안 패치, restore() 이벤트 위임(NoteService.restoreVersion), LIMIT→setMaxResults, prune try-catch, TagController 인증 정리, keys() NPE, EntityManager 생성자 주입, Note.sanitizeTags 소문자 정규화
+  - `feat/step6-step7-note-version-tag-api` 브랜치 생성 (dev 기준)
 - **이슈**:
   - 기존 `docker-compose.ci.yml`에는 PostgreSQL/Elasticsearch만 있어 Kafka producer 초기화 경로를 충족하지 못했음
   - 동일 consumer group ID(`knowledge-search-indexer`)를 사용하는 여러 `@SpringBootTest` 컨텍스트가 Kafka 파티션을 경쟁하여 `SearchElasticsearchIntegrationTest`가 메시지를 수신하지 못하는 구조적 문제 확인
 - **내일 계획**:
-  - `fix/convention-violations` PR 생성 및 리뷰 요청 (RULE 04.4·04.1·12.3 수정)
+  - PR #42 머지 확인 후 `feat/step6-step7-note-version-tag-api` rebase → W3 PR 생성 (dev 타겟)
+  - TASK Step 6·7 Done When 체크박스 업데이트
 
 ### W5 (2026-06-08 ~ 06-12)
 

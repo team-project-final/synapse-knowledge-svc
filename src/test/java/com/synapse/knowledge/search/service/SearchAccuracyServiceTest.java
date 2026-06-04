@@ -54,8 +54,8 @@ class SearchAccuracyServiceTest {
     );
 
     @Test
-    @DisplayName("buildReport_세모드결과를계산하면_should비교리포트를반환")
-    void buildReport_세모드결과를계산하면_should비교리포트를반환() {
+    @DisplayName("세 모드 결과를 계산하면 비교 리포트를 반환한다")
+    void buildReport_threeModesCalculated_shouldReturnComparisonReport() {
         SearchAccuracyService service = new SearchAccuracyService(
             benchmarkSeeder,
             noteSearchRepository,
