@@ -39,8 +39,8 @@ class SearchServiceTest {
     private SearchService searchService;
 
     @Test
-    @DisplayName("search_정상요청_shouldRepository결과를반환")
-    void search_정상요청_shouldRepository결과를반환() {
+    @DisplayName("정상 요청 시 Repository 결과를 반환한다")
+    void search_validRequest_shouldReturnRepositoryResults() {
         // Given
         Long userId = 100L;
         SearchRequest request = new SearchRequest("스프링", null, 20, List.of("backend"));
@@ -61,8 +61,8 @@ class SearchServiceTest {
     }
 
     @Test
-    @DisplayName("semanticSearch_정상요청_shouldSemanticService결과를반환")
-    void semanticSearch_정상요청_shouldSemanticService결과를반환() {
+    @DisplayName("정상 요청 시 SemanticService 결과를 반환한다")
+    void semanticSearch_validRequest_shouldReturnSemanticServiceResults() {
         // Given
         SearchIdentity identity = new SearchIdentity(100L, UUID.randomUUID().toString());
         SemanticSearchRequest request = new SemanticSearchRequest("벡터 검색", 10, List.of("ai"));
@@ -87,8 +87,8 @@ class SearchServiceTest {
     }
 
     @Test
-    @DisplayName("hybridSearch_정상요청_shouldHybridService결과를반환")
-    void hybridSearch_정상요청_shouldHybridService결과를반환() {
+    @DisplayName("정상 요청 시 HybridService 결과를 반환한다")
+    void hybridSearch_validRequest_shouldReturnHybridServiceResults() {
         // Given
         SearchIdentity identity = new SearchIdentity(100L, UUID.randomUUID().toString());
         HybridSearchRequest request = new HybridSearchRequest("하이브리드 검색", 10, List.of("backend"));

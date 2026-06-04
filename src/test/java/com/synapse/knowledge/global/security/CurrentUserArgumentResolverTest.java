@@ -24,8 +24,8 @@ class CurrentUserArgumentResolverTest {
     }
 
     @Test
-    @DisplayName("resolveArgument_userIdClaim이숫자이고sub가UUID이면_should현재사용자를반환한다")
-    void resolveArgument_userIdClaim이숫자이고sub가UUID이면_should현재사용자를반환한다() throws Exception {
+    @DisplayName("userId Claim이 숫자이고 sub가 UUID이면 현재 사용자를 반환한다")
+    void resolveArgument_userIdClaimIsNumberAndSubIsUuid_shouldReturnCurrentUser() throws Exception {
         Jwt jwt = Jwt.withTokenValue("token")
             .header("alg", "none")
             .subject("11111111-1111-1111-1111-111111111111")
@@ -45,8 +45,8 @@ class CurrentUserArgumentResolverTest {
     }
 
     @Test
-    @DisplayName("resolveArgument_userIdClaim이없으면_should인증예외를던진다")
-    void resolveArgument_userIdClaim이없으면_should인증예외를던진다() {
+    @DisplayName("userId Claim이 없으면 인증 예외를 던진다")
+    void resolveArgument_noUserIdClaim_shouldThrowAuthenticationException() {
         Jwt jwt = Jwt.withTokenValue("token")
             .header("alg", "none")
             .subject("22222222-2222-2222-2222-222222222222")

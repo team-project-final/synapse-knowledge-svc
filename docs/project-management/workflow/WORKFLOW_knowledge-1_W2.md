@@ -101,65 +101,65 @@
 
 ### 5.2 요구사항 분석
 
-- [ ] 노트 변경 이벤트 종류 정의 (created, updated, deleted)
-- [ ] Kafka consumer 그룹 및 토픽 (note.updated) 확인
-- [ ] Elasticsearch 인덱스 매핑 요건 분석 (title, content, tags, userId)
+- [x] 노트 변경 이벤트 종류 정의 (created, updated, deleted)
+- [x] Kafka consumer 그룹 및 토픽 (note.updated) 확인
+- [x] Elasticsearch 인덱스 매핑 요건 분석 (title, content, tags, userId)
 - [ ] 동기화 지연 허용 범위 (eventual consistency) 정의
 - [ ] Instructions 초안 → TASK 문서 반영
 
 ### 5.3 Security 1차 검토
 
-- [ ] Kafka 메시지 위변조 방지 확인
+- [x] Kafka 메시지 위변조 방지 확인
 - [ ] ES 인덱스 접근 제어 (내부 네트워크만)
-- [ ] 사용자 데이터 격리 (userId 필드 기반 검색 필터)
+- [x] 사용자 데이터 격리 (userId 필드 기반 검색 필터)
 - [ ] 결과 → TASK Constraints 반영
 
 ### 5.4 인프라 설계
 
-- [ ] Kafka consumer 설정 (group-id, auto-offset-reset, concurrency)
-- [ ] ES 인덱스 매핑 설계 (notes 인덱스 — text/keyword 필드 타입)
-- [ ] nori 분석기 설정 (한국어 형태소 분석)
+- [x] Kafka consumer 설정 (group-id, auto-offset-reset, concurrency)
+- [x] ES 인덱스 매핑 설계 (notes 인덱스 — text/keyword 필드 타입)
+- [x] nori 분석기 설정 (한국어 형태소 분석)
 - [ ] Duration(final) 갱신
 
 ### 5.5 Security 2차 검토
 
-- [ ] ES 인덱스 데이터 삭제 동기화 확인 (노트 삭제 → ES 문서 삭제)
-- [ ] 인덱스 갱신 실패 시 재처리 전략 (DLQ 또는 재시도)
+- [x] ES 인덱스 데이터 삭제 동기화 확인 (노트 삭제 → ES 문서 삭제)
+- [x] 인덱스 갱신 실패 시 재처리 전략 (DLQ 또는 재시도)
 - [ ] 결과 → TASK Constraints 반영
 
 ### 5.6 DTO / Entity 설계 (API First)
 
-- [ ] NoteIndexDocument 정의 (noteId, userId, title, content, tags, updatedAt)
-- [ ] NoteEvent Avro/DTO 정의 (eventType, noteId, userId, title, content, tags)
+- [x] NoteIndexDocument 정의 (noteId, userId, title, content, tags, updatedAt)
+- [x] NoteEvent Avro/DTO 정의 (eventType, noteId, userId, title, content, tags)
 - [ ] Output Format → TASK 반영
 
 ### 5.7 Repository 구현
 
-- [ ] NoteSearchRepository 인터페이스 작성 (Spring Data Elasticsearch)
-- [ ] ES 인덱스 매핑 JSON 작성 (nori analyzer, 필드별 타입)
-- [ ] 인덱스 초기화 스크립트 작성
+- [x] NoteSearchRepository 인터페이스 작성 (Spring Data Elasticsearch)
+- [x] ES 인덱스 매핑 JSON 작성 (nori analyzer, 필드별 타입)
+- [x] 인덱스 초기화 스크립트 작성
 
 ### 5.8 Service + Test
 
-- [ ] NoteIndexService 구현 (index, update, delete)
-- [ ] Kafka Consumer 구현 (note.updated 토픽 소비 → ES 인덱싱)
-- [ ] 이벤트별 분기 처리 (created→index, updated→update, deleted→delete)
-- [ ] 재시도 로직 구현 (RetryTemplate 또는 @Retryable)
-- [ ] 단위 테스트 작성 (Mockito)
-- [ ] Kafka Consumer 테스트 (@EmbeddedKafka)
-- [ ] 테스트 통과 확인
+- [x] NoteIndexService 구현 (index, update, delete)
+- [x] Kafka Consumer 구현 (note.updated 토픽 소비 → ES 인덱싱)
+- [x] 이벤트별 분기 처리 (created→index, updated→update, deleted→delete)
+- [x] 재시도 로직 구현 (RetryTemplate 또는 @Retryable)
+- [x] 단위 테스트 작성 (Mockito)
+- [x] Kafka Consumer 테스트 (@EmbeddedKafka)
+- [x] 테스트 통과 확인
 
 ### 5.9 Controller + Test
 
-- [ ] ES 동기화는 Controller 없음 (Kafka Consumer 기반)
-- [ ] 인덱스 상태 확인용 Actuator/Admin 엔드포인트 (선택)
-- [ ] 통합 테스트 (노트 이벤트 → Kafka → ES 인덱스 확인)
-- [ ] 테스트 통과 확인
+- [x] ES 동기화는 Controller 없음 (Kafka Consumer 기반)
+- [x] 인덱스 상태 확인용 Actuator/Admin 엔드포인트 (선택)
+- [x] 통합 테스트 (노트 이벤트 → Kafka → ES 인덱스 확인)
+- [x] 테스트 통과 확인
 
 ### 5.10 View + Test (해당 시)
 
-- [ ] Flutter 화면 연동: 해당 없음
+- [x] Flutter 화면 연동: 해당 없음
 - [ ] ES 인덱스 데이터 Kibana/curl 확인
 - [ ] RULE Reference → TASK 반영
 
-**Step 5 Status**: [ ] Not Started / [ ] In Progress / [ ] Done
+**Step 5 Status**: [ ] Not Started / [ ] In Progress / [x] Done

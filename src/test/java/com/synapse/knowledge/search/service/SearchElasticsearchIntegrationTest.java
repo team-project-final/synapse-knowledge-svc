@@ -103,9 +103,9 @@ class SearchElasticsearchIntegrationTest {
         deleteIndexIfExists();
     }
 
-    @DisplayName("search_한국어복합명사노트를저장하면_shouldNori분해검색과하이라이트가동작")
+    @DisplayName("한국어 복합명사 노트를 저장하면 Nori 분해 검색과 하이라이트가 동작한다")
     @Test
-    void search_한국어복합명사노트를저장하면_shouldNori분해검색과하이라이트가동작() throws IOException {
+    void search_koreanCompoundNounNote_shouldWorkWithNoriAnalysisAndHighlight() throws IOException {
         // Given
         Long ownerId = 100L;
         noteService.create(
@@ -138,9 +138,9 @@ class SearchElasticsearchIntegrationTest {
         assertThat(response.totalCount()).isEqualTo(1L);
     }
 
-    @DisplayName("search_태그필터를함께주면_should조건에맞는노트만반환")
+    @DisplayName("태그 필터를 함께 주면 조건에 맞는 노트만 반환한다")
     @Test
-    void search_태그필터를함께주면_should조건에맞는노트만반환() {
+    void search_withTagFilter_shouldReturnOnlyMatchingNotes() {
         // Given
         Long ownerId = 300L;
         noteService.create(ownerId, new NoteCreateRequest("tenant1", "스프링 검색", "spring boot elasticsearch", List.of("backend", "search")));
@@ -154,9 +154,9 @@ class SearchElasticsearchIntegrationTest {
         assertThat(response.results().get(0).title()).isEqualTo("스프링 검색");
     }
 
-    @DisplayName("hybridSearch_시맨틱결과가함께오면_shouldRrf점수순으로병합된다")
+    @DisplayName("시맨틱 결과가 함께 오면 RRF 점수순으로 병합된다")
     @Test
-    void hybridSearch_시맨틱결과가함께오면_shouldRrf점수순으로병합된다() {
+    void hybridSearch_withSemanticResults_shouldMergeByRrfScore() {
         // Given
         Long ownerId = 500L;
         String semanticActorId = UUID.randomUUID().toString();
@@ -193,9 +193,9 @@ class SearchElasticsearchIntegrationTest {
         assertThat(response.semanticFallback()).isFalse();
     }
 
-    @DisplayName("accuracyReport_benchmark세트를실행하면_should세모드리포트를생성한다")
+    @DisplayName("benchmark 세트를 실행하면 세 모드 리포트를 생성한다")
     @Test
-    void accuracyReport_benchmark세트를실행하면_should세모드리포트를생성한다() {
+    void accuracyReport_runBenchmarkSet_shouldGenerateThreeModeReport() {
         given(learningAiSearchClient.searchSemantic(anyString(), anyString(), anyInt())).willReturn(List.of());
 
         var report = searchAccuracyService.runAccuracyTest();

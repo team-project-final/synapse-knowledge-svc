@@ -36,8 +36,8 @@ class NoteEventOutboxDispatcherTest {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Test
-    @DisplayName("dispatchPending_발행성공이면_shouldOutbox상태를PUBLISHED로변경한다")
-    void dispatchPending_발행성공이면_shouldOutbox상태를PUBLISHED로변경한다() throws Exception {
+    @DisplayName("발행 성공이면 Outbox 상태를 PUBLISHED로 변경한다")
+    void dispatchPending_publishSucceeds_shouldMarkOutboxAsPublished() throws Exception {
         NoteCreatedPublishRequested payload = new NoteCreatedPublishRequested(
             "event-1",
             UUID.randomUUID(),
@@ -80,8 +80,8 @@ class NoteEventOutboxDispatcherTest {
     }
 
     @Test
-    @DisplayName("dispatchPending_발행실패이면_shouldPending상태로재시도정보를남긴다")
-    void dispatchPending_발행실패이면_shouldPending상태로재시도정보를남긴다() throws Exception {
+    @DisplayName("발행 실패이면 Pending 상태로 재시도 정보를 남긴다")
+    void dispatchPending_publishFails_shouldResetToPendingWithRetryInfo() throws Exception {
         NoteCreatedPublishRequested payload = new NoteCreatedPublishRequested(
             "event-2",
             UUID.randomUUID(),

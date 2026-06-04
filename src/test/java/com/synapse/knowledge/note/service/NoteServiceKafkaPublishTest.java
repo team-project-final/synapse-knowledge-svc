@@ -56,6 +56,9 @@ class NoteServiceKafkaPublishTest {
     @Mock
     private ApplicationEventPublisher eventPublisher;
 
+    @Mock
+    private NoteVersionService noteVersionService;
+
     @InjectMocks
     private NoteService noteService;
 

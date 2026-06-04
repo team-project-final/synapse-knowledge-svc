@@ -11,8 +11,8 @@ class SearchCursorCodecTest {
     private final SearchCursorCodec searchCursorCodec = new SearchCursorCodec();
 
     @Test
-    @DisplayName("encodeDecode_유효한점수와노트아이디_shouldRoundTrip")
-    void encodeDecode_유효한점수와노트아이디_shouldRoundTrip() {
+    @DisplayName("유효한 점수와 노트 아이디로 인코딩-디코딩하면 원본이 복원된다")
+    void encodeDecode_validScoreAndNoteId_shouldRoundTrip() {
         // Given
         double score = 12.5d;
         long noteId = 42L;
@@ -27,8 +27,8 @@ class SearchCursorCodecTest {
     }
 
     @Test
-    @DisplayName("decode_잘못된커서_shouldThrowIllegalArgumentException")
-    void decode_잘못된커서_shouldThrowIllegalArgumentException() {
+    @DisplayName("잘못된 커서를 디코딩하면 IllegalArgumentException을 던진다")
+    void decode_invalidCursor_shouldThrowIllegalArgumentException() {
         // Given
         String invalidCursor = "not-a-valid-cursor";
 
