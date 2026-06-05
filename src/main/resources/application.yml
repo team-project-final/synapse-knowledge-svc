@@ -3,6 +3,10 @@ spring:
     name: knowledge-svc
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:dev}
+  flyway:
+    out-of-order: true
+    baseline-on-migrate: true
+    baseline-version: 8
   elasticsearch:
     uris: ${ELASTICSEARCH_URIS:http://localhost:9200}
   kafka:
