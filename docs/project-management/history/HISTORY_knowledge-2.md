@@ -37,13 +37,12 @@
 
 ### W4 (2026-06-01 ~ 06-05)
 
-| Step    | 내용            | 상태        | 시작일 | 완료일 | 비고 |
-| ------- | --------------- | ----------- | ------ | ------ | ---- |
-| Step 10 | 검색 E2E 테스트 | Not Started | —      | —      |      |
-| Step 11 | 검색 튜닝       | Not Started | —      | —      |      |
-| Step 12 | 안정화          | Not Started | —      | —      |      |
+| Step   | 내용            | 상태        | 시작일     | 완료일     | 비고 |
+| ------ | --------------- | ----------- | ---------- | ---------- | ---- |
+| Step 8 | 검색 E2E 테스트 | Done        | 2026-06-05 | 2026-06-05 | Kafka consumer group 테스트 격리, semantic timeout/Elasticsearch down 실패 경로, CI 검색 E2E 단계 반영 |
+| Step 9 | 검색 튜닝       | Not Started | —          | —          |      |
 
-**W4 진행률**: 0/3 Steps 완료
+**W4 진행률**: 1/2 Steps 완료
 
 ---
 
@@ -286,8 +285,15 @@
 #### 2026-06-05 (금)
 
 - **완료**:
+- test(search): `SearchElasticsearchIntegrationTest`의 `@Disabled`를 제거하고 BM25/nori, 태그 필터, hybrid RRF, semantic timeout fallback, Elasticsearch down 실패 경로를 포함한 Step 8 E2E 시나리오를 복구
+- fix(search): `NoteSearchKafkaConsumer`의 고정 `groupId`를 제거해 테스트/환경별 consumer group 설정을 `spring.kafka.consumer.group-id`로 주입 가능하게 정리
+- chore(ci): GitHub Actions `ci-java.yml`에 `SearchElasticsearchIntegrationTest` 전용 검색 E2E 단계를 추가해 CI에서 실패 시 빌드가 깨지도록 반영
+- chore(coverage): `build.gradle.kts`에 JaCoCo report/verification을 추가하고 `search` 실행 로직 기준 line coverage 80% gate 및 CI coverage 단계 연동
+- docs(step8): W4 Workflow/Task/HISTORY를 Step 8 완료 상태와 실패 항목 기록 기준으로 동기화
 - **진행 중**:
+- 없음
 - **이슈**:
+- coverage gate는 DTO/entity/internal bootstrap 및 live external infra 의존성이 큰 search client/repository/seeder 계층을 제외한 search 실행 로직 범위 기준으로 설정했음
 - **주간 요약**:
 
 ---

@@ -20,7 +20,6 @@ public class NoteSearchKafkaConsumer {
 
     @KafkaListener(
         topics = NoteSearchSyncKafkaEvent.TOPIC,
-        groupId = "knowledge-search-indexer",
         containerFactory = "searchSyncKafkaListenerContainerFactory"
     )
     public void handle(NoteSearchSyncKafkaEvent event) {

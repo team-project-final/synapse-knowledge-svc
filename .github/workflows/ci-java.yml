@@ -32,6 +32,12 @@ jobs:
       - name: Build
         run: ./gradlew clean build --no-daemon
 
+      - name: Search E2E
+        run: ./gradlew test --tests '*SearchElasticsearchIntegrationTest' --no-daemon
+
+      - name: Search Coverage
+        run: ./gradlew jacocoTestCoverageVerification jacocoTestReport --no-daemon
+
       - name: Modulith verify
         run: ./gradlew test --tests '*ModuleStructureTest' --no-daemon
 

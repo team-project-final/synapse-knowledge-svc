@@ -1,6 +1,7 @@
 package com.synapse.knowledge.search.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
@@ -24,9 +25,11 @@ import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -40,10 +43,13 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 import org.testcontainers.utility.MountableFile;
 
-@Disabled("Kafka consumer group 격리 문제로 비활성화 — @EmbeddedKafka 격리 방식으로 전환 필요 (WORKPLAN step5 참고)")
-@SpringBootTest
+@SpringBootTest(properties = {
+    "spring.kafka.consumer.group-id=knowledge-search-indexer-e2e",
+    "search.ai.timeout=200ms"
+})
 @ActiveProfiles("test")
 @Testcontainers(disabledWithoutDocker = true)
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class SearchElasticsearchIntegrationTest {
 
     private static final String INDEX_NAME = "notes-v1";
@@ -91,6 +97,9 @@ class SearchElasticsearchIntegrationTest {
 
     @BeforeEach
     void setUp() throws IOException {
+        if (!elasticsearch.isRunning()) {
+            elasticsearch.start();
+        }
         noteIdentityMapRepository.deleteAll();
         noteRepository.deleteAll();
         deleteIndexIfExists();
@@ -98,6 +107,10 @@ class SearchElasticsearchIntegrationTest {
 
     @AfterEach
     void tearDown() throws IOException {
+        if (!elasticsearch.isRunning()) {
+            resetIndexEnsuredFlag();
+            return;
+        }
         noteIdentityMapRepository.deleteAll();
         noteRepository.deleteAll();
         deleteIndexIfExists();
@@ -105,6 +118,7 @@ class SearchElasticsearchIntegrationTest {
 
     @DisplayName("한국어 복합명사 노트를 저장하면 Nori 분해 검색과 하이라이트가 동작한다")
     @Test
+    @Order(1)
     void search_koreanCompoundNounNote_shouldWorkWithNoriAnalysisAndHighlight() throws IOException {
         // Given
         Long ownerId = 100L;
@@ -140,6 +154,7 @@ class SearchElasticsearchIntegrationTest {
 
     @DisplayName("태그 필터를 함께 주면 조건에 맞는 노트만 반환한다")
     @Test
+    @Order(2)
     void search_withTagFilter_shouldReturnOnlyMatchingNotes() {
         // Given
         Long ownerId = 300L;
@@ -156,6 +171,7 @@ class SearchElasticsearchIntegrationTest {
 
     @DisplayName("시맨틱 결과가 함께 오면 RRF 점수순으로 병합된다")
     @Test
+    @Order(3)
     void hybridSearch_withSemanticResults_shouldMergeByRrfScore() {
         // Given
         Long ownerId = 500L;
@@ -193,8 +209,45 @@ class SearchElasticsearchIntegrationTest {
         assertThat(response.semanticFallback()).isFalse();
     }
 
+    @DisplayName("시맨틱 검색이 타임아웃되면 BM25 결과만 반환한다")
+    @Test
+    @Order(4)
+    void hybridSearch_semanticTimeout_shouldReturnBm25Fallback() {
+        // Given
+        Long ownerId = 700L;
+        String semanticActorId = UUID.randomUUID().toString();
+        Long springNoteId = noteService.create(
+            ownerId,
+            new NoteCreateRequest("tenant1", "스프링 타임아웃", "spring timeout fallback search", List.of("backend", "search"))
+        ).id();
+        given(learningAiSearchClient.searchSemantic(semanticActorId, "스프링", 30))
+            .willAnswer(invocation -> {
+                sleep(Duration.ofMillis(400));
+                return List.of(new LearningAiSearchClient.LearningAiSemanticHit(
+                    UUID.randomUUID(),
+                    UUID.randomUUID(),
+                    "느린 semantic 응답",
+                    0.91f
+                ));
+            });
+
+        // When
+        waitForResults(ownerId, "스프링", null, 20);
+        HybridSearchResponse response = searchService.hybridSearch(
+            new SearchIdentity(ownerId, semanticActorId),
+            new HybridSearchRequest("스프링", 10, null)
+        );
+
+        // Then
+        assertThat(response.results()).isNotEmpty();
+        assertThat(response.results().get(0).noteId()).isEqualTo(springNoteId);
+        assertThat(response.results().get(0).semanticScore()).isNull();
+        assertThat(response.semanticFallback()).isTrue();
+    }
+
     @DisplayName("benchmark 세트를 실행하면 세 모드 리포트를 생성한다")
     @Test
+    @Order(5)
     void accuracyReport_runBenchmarkSet_shouldGenerateThreeModeReport() {
         given(learningAiSearchClient.searchSemantic(anyString(), anyString(), anyInt())).willReturn(List.of());
 
@@ -205,6 +258,25 @@ class SearchElasticsearchIntegrationTest {
         assertThat(report.semantic().queryCount()).isGreaterThanOrEqualTo(50);
         assertThat(report.hybrid().queryCount()).isGreaterThanOrEqualTo(50);
         assertThat(report.improvements()).isNotEmpty();
+    }
+
+    @DisplayName("Elasticsearch가 중단되면 검색 요청은 실패한다")
+    @Test
+    @Order(6)
+    void search_elasticsearchUnavailable_shouldThrowException() {
+        // Given
+        Long ownerId = 900L;
+        noteService.create(
+            ownerId,
+            new NoteCreateRequest("tenant1", "Elasticsearch 다운 테스트", "cluster unavailable failure path", List.of("ops"))
+        );
+        waitForResults(ownerId, "Elasticsearch", null, 20);
+        elasticsearch.stop();
+        resetIndexEnsuredFlag();
+
+        // When & Then
+        assertThatThrownBy(() -> searchService.search(ownerId, new SearchRequest("Elasticsearch", null, 20, null)))
+            .isInstanceOf(RuntimeException.class);
     }
 
     private SearchPageResponse waitForResults(Long userId, String query, List<String> tags, int limit) {
@@ -284,8 +356,12 @@ class SearchElasticsearchIntegrationTest {
     }
 
     private void sleepBriefly() {
+        sleep(Duration.ofMillis(250));
+    }
+
+    private void sleep(Duration duration) {
         try {
-            Thread.sleep(250L);
+            Thread.sleep(duration.toMillis());
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
             throw new IllegalStateException("Elasticsearch indexing wait interrupted", ex);
