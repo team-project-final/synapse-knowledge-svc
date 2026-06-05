@@ -18,9 +18,11 @@ import com.synapse.knowledge.search.dto.HybridSearchRequest;
 import com.synapse.knowledge.search.dto.HybridSearchResponse;
 import com.synapse.knowledge.search.dto.SearchPageResponse;
 import com.synapse.knowledge.search.dto.SearchRequest;
+import com.synapse.knowledge.search.service.consumer.NoteSearchKafkaConsumer;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
@@ -32,6 +34,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.kafka.config.KafkaListenerEndpointRegistry;
+import org.springframework.kafka.listener.MessageListenerContainer;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
@@ -93,6 +97,9 @@ class SearchElasticsearchIntegrationTest {
     @Autowired
     private com.synapse.knowledge.search.repository.ElasticsearchNoteSearchRepository elasticsearchNoteSearchRepository;
 
+    @Autowired
+    private KafkaListenerEndpointRegistry kafkaListenerEndpointRegistry;
+
     @MockitoBean
     private LearningAiSearchClient learningAiSearchClient;
 
@@ -104,6 +111,7 @@ class SearchElasticsearchIntegrationTest {
         noteIdentityMapRepository.deleteAll();
         noteRepository.deleteAll();
         deleteIndexIfExists();
+        waitForSearchListenerReady();
     }
 
     @AfterEach
@@ -384,5 +392,25 @@ class SearchElasticsearchIntegrationTest {
 
     private void resetIndexEnsuredFlag() {
         ReflectionTestUtils.setField(elasticsearchNoteSearchRepository, "indexEnsured", false);
+    }
+
+    private void waitForSearchListenerReady() {
+        Instant deadline = Instant.now().plus(Duration.ofSeconds(20));
+
+        while (Instant.now().isBefore(deadline)) {
+            MessageListenerContainer container =
+                kafkaListenerEndpointRegistry.getListenerContainer(NoteSearchKafkaConsumer.LISTENER_ID);
+            if (container != null && container.isRunning() && hasAssignedPartitions(container)) {
+                return;
+            }
+            sleepBriefly();
+        }
+
+        throw new IllegalStateException("search Kafka listener was not ready within PT20S");
+    }
+
+    private boolean hasAssignedPartitions(MessageListenerContainer container) {
+        Object assignedPartitions = ReflectionTestUtils.invokeMethod(container, "getAssignedPartitions");
+        return assignedPartitions instanceof Collection<?> partitions && !partitions.isEmpty();
     }
 }
