@@ -1,4 +1,6 @@
 import java.time.Duration
+import org.gradle.api.plugins.JavaBasePlugin
+import org.gradle.api.tasks.testing.Test
 
 plugins {
 	java
@@ -93,6 +95,19 @@ tasks.withType<Test> {
 		showStackTraces = true
 		showCauses = true
 	}
+}
+
+tasks.named<Test>("test") {
+	exclude("**/SearchElasticsearchIntegrationTest.class")
+}
+
+tasks.register<Test>("searchE2eTest") {
+	group = JavaBasePlugin.VERIFICATION_GROUP
+	description = "Runs the SearchElasticsearchIntegrationTest suite."
+	testClassesDirs = sourceSets["test"].output.classesDirs
+	classpath = sourceSets["test"].runtimeClasspath
+	include("**/SearchElasticsearchIntegrationTest.class")
+	shouldRunAfter(tasks.named("test"))
 }
 
 val searchCoverageIncludes = listOf("com/synapse/knowledge/search/**")

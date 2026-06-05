@@ -288,6 +288,7 @@
 - test(search): `SearchElasticsearchIntegrationTest`의 `@Disabled`를 제거하고 BM25/nori, 태그 필터, hybrid RRF, semantic timeout fallback, Elasticsearch down 실패 경로를 포함한 Step 8 E2E 시나리오를 복구
 - fix(search): `NoteSearchKafkaConsumer`의 고정 `groupId`를 제거해 테스트/환경별 consumer group 설정을 `spring.kafka.consumer.group-id`로 주입 가능하게 정리
 - chore(ci): GitHub Actions `ci-java.yml`에 `SearchElasticsearchIntegrationTest` 전용 검색 E2E 단계를 추가해 CI에서 실패 시 빌드가 깨지도록 반영
+- fix(ci): `build.gradle.kts`에 `searchE2eTest` 전용 Gradle task를 분리하고 기본 `test`에서는 `SearchElasticsearchIntegrationTest`를 제외해 `clean build`와 검색 E2E 단계의 중복 실행으로 인한 CI 플래키 실패를 제거
 - chore(coverage): `build.gradle.kts`에 JaCoCo report/verification을 추가하고 `search` 실행 로직 기준 line coverage 80% gate 및 CI coverage 단계 연동
 - docs(step8): W4 Workflow/Task/HISTORY를 Step 8 완료 상태와 실패 항목 기록 기준으로 동기화
 - **진행 중**:
