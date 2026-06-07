@@ -12,6 +12,8 @@ spring:
       ddl-auto: update
   kafka:
     bootstrap-servers: ${spring.embedded.kafka.brokers:localhost:9092}
+    listener:
+      auto-startup: false
     properties:
       schema.registry.url: mock://test-scope
       producer:

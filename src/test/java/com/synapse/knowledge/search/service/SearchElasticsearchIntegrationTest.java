@@ -50,6 +50,7 @@ import org.testcontainers.utility.MountableFile;
 @SpringBootTest(properties = {
     "spring.kafka.consumer.group-id=knowledge-search-indexer-e2e",
     "spring.kafka.consumer.auto-offset-reset=latest",
+    "spring.kafka.listener.auto-startup=true",
     "search.ai.timeout=200ms"
 })
 @ActiveProfiles("test")
