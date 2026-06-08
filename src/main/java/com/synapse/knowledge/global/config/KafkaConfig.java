@@ -20,12 +20,10 @@ import org.springframework.kafka.core.ProducerFactory;
 @ConditionalOnProperty(prefix = "synapse.kafka", name = "enabled", havingValue = "true")
 public class KafkaConfig {
 
-    @Value("${spring.kafka.security.protocol:PLAINTEXT}")
-    private String securityProtocol;
-
     @Bean
     public ProducerFactory<String, SpecificRecord> kafkaProducerFactory(
         @Value("${spring.kafka.bootstrap-servers}") String bootstrapServers,
+        @Value("${spring.kafka.security.protocol:PLAINTEXT}") String securityProtocol,
         @Value("${spring.kafka.properties.schema.registry.url}") String schemaRegistryUrl,
         @Value("${spring.kafka.producer.acks:all}") String acks,
         @Value("${spring.kafka.producer.retries:3}") int retries,
@@ -34,6 +32,7 @@ public class KafkaConfig {
     ) {
         Map<String, Object> props = new HashMap<>();
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        props.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, securityProtocol);
         props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, KafkaAvroSerializer.class);
         props.put(AbstractKafkaSchemaSerDeConfig.SCHEMA_REGISTRY_URL_CONFIG, schemaRegistryUrl);
@@ -41,7 +40,6 @@ public class KafkaConfig {
         props.put(ProducerConfig.RETRIES_CONFIG, retries);
         props.put(ProducerConfig.RETRY_BACKOFF_MS_CONFIG, retryBackoffMs);
         props.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, enableIdempotence);
-        applySecurityProtocol(props);
         return new DefaultKafkaProducerFactory<>(props);
     }
 
@@ -50,11 +48,5 @@ public class KafkaConfig {
         ProducerFactory<String, SpecificRecord> kafkaProducerFactory
     ) {
         return new KafkaTemplate<>(kafkaProducerFactory);
-    }
-
-    private void applySecurityProtocol(Map<String, Object> props) {
-        if (!"PLAINTEXT".equalsIgnoreCase(securityProtocol)) {
-            props.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, securityProtocol);
-        }
     }
 }

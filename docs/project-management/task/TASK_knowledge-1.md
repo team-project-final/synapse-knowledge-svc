@@ -367,12 +367,12 @@
 - **Step Name**: 노트/그래프 E2E 테스트
 - **Step Goal**: 노트/그래프 전체 E2E(노트생성→위키링크→그래프→검색) 시나리오가 통과한다.
 - **Done When**:
-  - [ ] 노트 생성 → 위키링크 파싱 → 링크 저장 시나리오 통과
-  - [ ] 백링크 조회 → 그래프 노드/엣지 데이터 반환 시나리오 통과
-  - [ ] 노트 생성 → Kafka → ES 인덱싱 → 검색 시나리오 통과
-  - [ ] 태그 추가 → 태그 필터링 시나리오 통과
-  - [ ] 노트 수정 → 버전 이력 → 복원 시나리오 통과
-  - [ ] 실패 케이스 식별 및 이슈 등록
+  - [x] 노트 생성 → 위키링크 파싱 → 링크 저장 시나리오 통과
+  - [x] 백링크 조회 → 그래프 노드/엣지 데이터 반환 시나리오 통과
+  - [x] 노트 생성 → Kafka → ES 인덱싱 → 검색 시나리오 통과
+  - [x] 태그 추가 → 태그 필터링 시나리오 통과
+  - [x] 노트 수정 → 버전 이력 → 복원 시나리오 통과
+  - [x] 실패 케이스 식별 및 이슈 등록
 - **Scope**:
   - In Scope:
     - 노트 CRUD → 위키링크 → 그래프 E2E
@@ -404,7 +404,7 @@
 - **Assignee**: @knowledge-owner-1
 - **Reviewer**: @team-lead
 
-**Status**: [ ] Not Started / [ ] In Progress / [ ] Done
+**Status**: [ ] Not Started / [ ] In Progress / [x] Done
 
 ---
 
@@ -450,4 +450,4 @@
 - **Assignee**: @knowledge-owner-1
 - **Reviewer**: @team-lead
 
-**Status**: [ ] Not Started / [ ] In Progress / [ ] Done
+**Status**: [ ] Not Started / [x] In Progress / [ ] Done
