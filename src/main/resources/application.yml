@@ -55,6 +55,7 @@ synapse:
     public-key: ${JWT_PUBLIC_KEY:}
     issuer: ${JWT_ISSUER:synapse-auth}
   kafka:
+    enabled: ${KAFKA_ENABLED:false}
     outbox:
       fixed-delay-ms: ${KAFKA_OUTBOX_FIXED_DELAY_MS:1000}
       batch-size: ${KAFKA_OUTBOX_BATCH_SIZE:50}

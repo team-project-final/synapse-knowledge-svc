@@ -17,6 +17,11 @@ class KnowledgeSvcApplicationTests {
     @Test
     void contextLoads() {
         assertThat(applicationContext.getBeansOfType(NoteEventPublisher.class)).isEmpty();
+        assertThat(applicationContext.containsBean("searchSyncKafkaConfig")).isFalse();
+        assertThat(applicationContext.containsBean("searchSyncKafkaTemplate")).isFalse();
+        assertThat(applicationContext.containsBean("noteSearchKafkaProducer")).isFalse();
+        assertThat(applicationContext.containsBean("noteSearchKafkaConsumer")).isFalse();
+        assertThat(applicationContext.containsBean("noteEventOutboxDispatcher")).isFalse();
     }
 
 }
