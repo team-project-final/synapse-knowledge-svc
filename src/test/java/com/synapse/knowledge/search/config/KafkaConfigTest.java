@@ -9,6 +9,9 @@ import org.apache.kafka.clients.CommonClientConfigs;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.boot.test.context.runner.ApplicationContextRunner;
+import org.springframework.context.annotation.Bean;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
@@ -18,6 +21,8 @@ import org.springframework.test.util.ReflectionTestUtils;
 class KafkaConfigTest {
 
     private final KafkaConfig kafkaConfig = new KafkaConfig(mock(SlackNotifier.class));
+    private final ApplicationContextRunner contextRunner = new ApplicationContextRunner()
+        .withUserConfiguration(KafkaConfig.class, KafkaConfigTestSupport.class);
 
     KafkaConfigTest() {
         ReflectionTestUtils.setField(kafkaConfig, "autoOffsetReset", "earliest");
@@ -100,5 +105,26 @@ class KafkaConfigTest {
 
         // Then
         assertThat(props).containsEntry(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
+    }
+
+    @Test
+    @DisplayName("synapseKafkaEnabled_false면SearchKafkaBean을등록하지않는다")
+    void context_synapseKafkaEnabledFalse_shouldNotRegisterSearchKafkaBeans() {
+        contextRunner
+            .withPropertyValues("synapse.kafka.enabled=false")
+            .run(context -> {
+                assertThat(context).doesNotHaveBean("searchSyncKafkaTemplate");
+                assertThat(context).doesNotHaveBean("searchSyncConsumerFactory");
+                assertThat(context).doesNotHaveBean("searchSyncKafkaListenerContainerFactory");
+            });
+    }
+
+    @TestConfiguration(proxyBeanMethods = false)
+    static class KafkaConfigTestSupport {
+
+        @Bean
+        SlackNotifier slackNotifier() {
+            return mock(SlackNotifier.class);
+        }
     }
 }

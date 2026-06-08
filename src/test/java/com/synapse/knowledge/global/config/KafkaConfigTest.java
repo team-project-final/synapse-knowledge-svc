@@ -8,11 +8,14 @@ import org.apache.kafka.clients.CommonClientConfigs;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
+import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.test.util.ReflectionTestUtils;
 
 class KafkaConfigTest {
 
     private final KafkaConfig kafkaConfig = new KafkaConfig();
+    private final ApplicationContextRunner contextRunner = new ApplicationContextRunner()
+        .withUserConfiguration(KafkaConfig.class);
 
     @Test
     @DisplayName("kafkaProducerFactory_SSL설정_shouldSecurityProtocol포함")
@@ -56,5 +59,16 @@ class KafkaConfigTest {
 
         // Then
         assertThat(props).doesNotContainKey(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG);
+    }
+
+    @Test
+    @DisplayName("synapseKafkaEnabled_false면KafkaProducerBean을등록하지않는다")
+    void context_synapseKafkaEnabledFalse_shouldNotRegisterKafkaProducerBeans() {
+        contextRunner
+            .withPropertyValues("synapse.kafka.enabled=false")
+            .run(context -> {
+                assertThat(context).doesNotHaveBean("kafkaProducerFactory");
+                assertThat(context).doesNotHaveBean("kafkaTemplate");
+            });
     }
 }

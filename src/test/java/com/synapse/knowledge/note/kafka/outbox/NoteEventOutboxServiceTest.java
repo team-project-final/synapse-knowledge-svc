@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.never;
 import static org.mockito.BDDMockito.given;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -38,6 +39,7 @@ class NoteEventOutboxServiceTest {
         ReflectionTestUtils.setField(note, "createdAt", LocalDateTime.of(2026, 6, 1, 9, 0));
 
         NoteEventOutboxService service = new NoteEventOutboxService(noteEventOutboxRepository, objectMapper);
+        ReflectionTestUtils.setField(service, "kafkaEnabled", true);
 
         service.enqueueCreated(note, externalNoteId, eventUserId);
 
@@ -60,9 +62,25 @@ class NoteEventOutboxServiceTest {
         UUID externalNoteId = UUID.randomUUID();
         String eventUserId = "11111111-1111-1111-1111-111111111111";
         NoteEventOutboxService service = new NoteEventOutboxService(noteEventOutboxRepository, objectMapper);
+        ReflectionTestUtils.setField(service, "kafkaEnabled", true);
         given(noteEventOutboxRepository.save(any(NoteEventOutbox.class)))
             .willThrow(new DataIntegrityViolationException("duplicate"));
 
         assertThatNoException().isThrownBy(() -> service.enqueueCreated(note, externalNoteId, eventUserId));
+    }
+
+    @Test
+    @DisplayName("Kafka가 비활성화면 Outbox Row를 저장하지 않는다")
+    void enqueueCreated_kafkaDisabled_shouldNotSaveOutboxRow() {
+        Note note = Note.create("tenant-1", 10L, "제목", "본문", "본문", List.of("tag"));
+        UUID externalNoteId = UUID.randomUUID();
+        String eventUserId = "11111111-1111-1111-1111-111111111111";
+
+        NoteEventOutboxService service = new NoteEventOutboxService(noteEventOutboxRepository, objectMapper);
+        ReflectionTestUtils.setField(service, "kafkaEnabled", false);
+
+        service.enqueueCreated(note, externalNoteId, eventUserId);
+
+        verify(noteEventOutboxRepository, never()).save(any(NoteEventOutbox.class));
     }
 }

@@ -10,6 +10,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -23,7 +24,14 @@ public class NoteEventOutboxService {
     private final NoteEventOutboxRepository noteEventOutboxRepository;
     private final ObjectMapper objectMapper;
 
+    @Value("${synapse.kafka.enabled:false}")
+    private boolean kafkaEnabled;
+
     public void enqueueCreated(Note note, UUID externalNoteId, String eventUserId) {
+        if (!kafkaEnabled) {
+            log.debug("Kafka disabled, skipping note created outbox enqueue noteId={}", note.getId());
+            return;
+        }
         NoteCreatedPublishRequested payload = NoteCreatedPublishRequested.from(note, externalNoteId, eventUserId);
         enqueue(
             payload.eventId(),
@@ -35,6 +43,10 @@ public class NoteEventOutboxService {
     }
 
     public void enqueueUpdated(Note note, UUID externalNoteId, String eventUserId) {
+        if (!kafkaEnabled) {
+            log.debug("Kafka disabled, skipping note updated outbox enqueue noteId={}", note.getId());
+            return;
+        }
         NoteUpdatedPublishRequested payload = NoteUpdatedPublishRequested.from(note, externalNoteId, eventUserId);
         enqueue(
             payload.eventId(),
