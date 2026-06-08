@@ -48,9 +48,10 @@ class SearchAccuracyServiceTest {
     private NoteIdentityQueryPort noteIdentityQueryPort;
 
     private final SearchProperties searchProperties = new SearchProperties(
-        new SearchProperties.Ai("http://localhost:8090", Duration.ofSeconds(3), 0.7d),
-        new SearchProperties.Hybrid(60, 3),
-        new SearchProperties.Accuracy("test-v1", 910000L, "benchmark-search", "11111111-1111-1111-1111-111111111111", 10, Duration.ofSeconds(5))
+        new SearchProperties.Ai("http://localhost:8090", Duration.ofSeconds(3), 0.55d),
+        new SearchProperties.Hybrid(40, 5),
+        new SearchProperties.Accuracy("test-v1", 910000L, "benchmark-search", "11111111-1111-1111-1111-111111111111", 10, Duration.ofSeconds(5)),
+        new SearchProperties.Bm25(1.4d, 0.65d, 4.0d, 1.0d, 2.5d, "70%")
     );
 
     @Test

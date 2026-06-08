@@ -11,8 +11,11 @@ import com.synapse.knowledge.search.service.support.SearchCandidate;
 import com.synapse.knowledge.shared.NoteIdentityQueryPort;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
@@ -80,8 +83,11 @@ public class HybridSearchService {
             return List.of();
         }
 
-        return semanticHits.stream()
-            .map(hit -> noteIdentityQueryPort.findByExternalNoteId(hit.noteId())
+        Map<UUID, SearchCandidate> deduplicatedCandidates = new LinkedHashMap<>();
+        int missingMappings = 0;
+
+        for (LearningAiSearchClient.LearningAiSemanticHit hit : semanticHits) {
+            SearchCandidate candidate = noteIdentityQueryPort.findByExternalNoteId(hit.noteId())
                 .map(noteIdentity -> new SearchCandidate(
                     noteIdentity.noteId(),
                     noteIdentity.externalNoteId(),
@@ -91,11 +97,32 @@ public class HybridSearchService {
                     null,
                     hit.score()
                 ))
-                .orElseGet(() -> {
-                    log.warn("semantic hit noteId={} has no knowledge note mapping", hit.noteId());
-                    return null;
-                }))
+                .orElse(null);
+
+            if (candidate == null) {
+                missingMappings++;
+                continue;
+            }
+
+            deduplicatedCandidates.merge(
+                candidate.externalNoteId(),
+                candidate,
+                this::pickHigherSemanticScore
+            );
+        }
+
+        if (missingMappings > 0) {
+            log.warn("semantic hits missing knowledge note mapping: {}/{}", missingMappings, semanticHits.size());
+        }
+
+        return deduplicatedCandidates.values().stream()
             .filter(Objects::nonNull)
             .toList();
+    }
+
+    private SearchCandidate pickHigherSemanticScore(SearchCandidate left, SearchCandidate right) {
+        float leftScore = left.semanticScore() == null ? Float.NEGATIVE_INFINITY : left.semanticScore();
+        float rightScore = right.semanticScore() == null ? Float.NEGATIVE_INFINITY : right.semanticScore();
+        return rightScore > leftScore ? right : left;
     }
 }

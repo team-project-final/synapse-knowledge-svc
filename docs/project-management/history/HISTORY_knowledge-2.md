@@ -40,9 +40,9 @@
 | Step   | 내용            | 상태        | 시작일     | 완료일     | 비고 |
 | ------ | --------------- | ----------- | ---------- | ---------- | ---- |
 | Step 8 | 검색 E2E 테스트 | Done        | 2026-06-05 | 2026-06-05 | Kafka consumer group 테스트 격리, semantic timeout/Elasticsearch down 실패 경로, CI 검색 E2E 단계 반영 |
-| Step 9 | 검색 튜닝       | Not Started | —          | —          |      |
+| Step 9 | 검색 튜닝       | Done | 2026-06-08 | 2026-06-08 | semantic duplicate hit dedupe, tuned BM25/RRF 파라미터, 전체 테스트 및 coverage gate 재검증 완료 |
 
-**W4 진행률**: 1/2 Steps 완료
+**W4 진행률**: 2/2 Steps 완료
 
 ---
 
@@ -313,12 +313,17 @@
   - test(kafka): Kafka gate 비활성 시 bean 미등록 검증과 outbox no-op 테스트를 추가하고 관련 테스트 4종을 통과 확인
   - fix(search): `SearchElasticsearchIntegrationTest`가 `synapse.kafka.enabled=true`를 자체 주입하도록 바꾸고, `KafkaConfigTest`에 enabled 경로 bean 등록 회귀 테스트를 추가해 CI 환경 변수 상태와 무관하게 검색 E2E가 동일하게 동작하도록 고정
   - verify(ci): `docker compose -f docker-compose.ci.yml up -d --wait` 후 `./gradlew.bat clean build --no-daemon`, `./gradlew.bat searchE2eTest --no-daemon`, `./gradlew.bat jacocoTestCoverageVerification jacocoTestReport --no-daemon`, `./gradlew.bat test --tests '*ModuleStructureTest' --no-daemon`를 순서대로 재현해 전체 CI 빌드 경로 통과 확인
+  - fix(search): `HybridSearchService`에서 같은 note의 duplicate semantic hit를 note 단위로 dedupe하고 최고 `semanticScore`만 반영하도록 수정
+  - fix(search): `RrfMergeService`에서 같은 source의 동일 note가 RRF 점수에 중복 가산되지 않도록 방어 로직 추가
+  - tune(search): `search.ai.threshold`, `search.hybrid.rrf-k`, `candidate-multiplier`, BM25 field boost와 tuned BM25 similarity(`k1=1.4`, `b=0.65`)를 설정 기반으로 조정
+  - test(search): duplicate semantic hit unit/integration 시나리오를 추가하고 `./gradlew.bat test`, `./gradlew.bat jacocoTestCoverageVerification` 통과 확인
+  - docs(step9): `REPORT_knowledge-2_step9.md`, W4 workflow, HISTORY를 Step 9 완료 상태로 동기화
 - **진행 중**:
   - 없음
 - **이슈**:
   - 없음
 - **다음**:
-  - 필요 시 동일 게이트 패턴을 다른 서비스 Kafka 설정과도 정렬할지 점검
+  - 필요 시 tuned search 파라미터를 staging benchmark 결과와 비교해 추가 보정 여부 점검
 
 ---
 

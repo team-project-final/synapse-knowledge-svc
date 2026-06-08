@@ -56,4 +56,25 @@ class RrfMergeServiceTest {
         assertThat(merged.get(0).noteId()).isEqualTo(1L);
         assertThat(merged.get(0).semanticScore()).isNull();
     }
+
+    @Test
+    @DisplayName("같은 source 안에서 중복 노트는 한 번만 RRF 점수에 반영한다")
+    void merge_duplicateResultsFromSameSource_shouldScoreOnlyOncePerSource() {
+        UUID noteA = UUID.randomUUID();
+        UUID noteB = UUID.randomUUID();
+        List<SearchCandidate> keywordResults = List.of(
+            new SearchCandidate(1L, noteA, "A", List.of(), "snippet-a", 10.0f, null),
+            new SearchCandidate(2L, noteB, "B", List.of(), "snippet-b", 9.0f, null)
+        );
+        List<SearchCandidate> semanticResults = List.of(
+            new SearchCandidate(2L, noteB, "B", List.of(), "snippet-b-1", null, 0.99f),
+            new SearchCandidate(2L, noteB, "B", List.of(), "snippet-b-2", null, 0.97f)
+        );
+
+        List<UnifiedSearchResultResponse> merged = rrfMergeService.merge(keywordResults, semanticResults, 3, 40);
+
+        assertThat(merged).hasSize(2);
+        assertThat(merged.get(0).noteId()).isEqualTo(2L);
+        assertThat(merged.get(0).rrfScore()).isCloseTo((float) ((1.0d / 42.0d) + (1.0d / 41.0d)), org.assertj.core.data.Offset.offset(0.000001f));
+    }
 }

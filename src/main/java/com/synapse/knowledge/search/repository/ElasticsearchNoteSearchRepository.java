@@ -14,6 +14,7 @@ import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.elasticsearch.core.search.HighlightField;
 import co.elastic.clients.util.NamedValue;
 import com.synapse.knowledge.search.entity.NoteSearchDocument;
+import com.synapse.knowledge.search.config.SearchProperties;
 import com.synapse.knowledge.search.dto.SearchPageResponse;
 import com.synapse.knowledge.search.dto.SearchRequest;
 import com.synapse.knowledge.search.dto.SearchResultResponse;
@@ -37,6 +38,7 @@ public class ElasticsearchNoteSearchRepository implements NoteSearchRepository {
 
     private final ElasticsearchClient elasticsearchClient;
     private final SearchCursorCodec searchCursorCodec;
+    private final SearchProperties searchProperties;
     private final Object indexInitializationMonitor = new Object();
     private volatile boolean indexEnsured;
 
@@ -172,8 +174,13 @@ public class ElasticsearchNoteSearchRepository implements NoteSearchRepository {
                 .query(searchQuery -> searchQuery.bool(bool -> {
                     bool.must(must -> must.multiMatch(multiMatch -> multiMatch
                         .query(query)
-                        .fields("title^3", "content", "tags^2")
-                        .operator(Operator.And)
+                        .fields(
+                            "title^" + searchProperties.bm25().titleBoost(),
+                            "content^" + searchProperties.bm25().contentBoost(),
+                            "tags^" + searchProperties.bm25().tagBoost()
+                        )
+                        .operator(Operator.Or)
+                        .minimumShouldMatch(searchProperties.bm25().minimumShouldMatch())
                     ));
                     bool.filter(filter -> filter.term(term -> term.field("userId").value(userId)));
 
@@ -231,6 +238,12 @@ public class ElasticsearchNoteSearchRepository implements NoteSearchRepository {
                     elasticsearchClient.indices().create(create -> create
                         .index(INDEX_NAME)
                         .settings(settings -> settings
+                            .similarity("bm25_tuned", similarity -> similarity
+                                .bm25(bm25 -> bm25
+                                    .k1(searchProperties.bm25().k1())
+                                    .b(searchProperties.bm25().b())
+                                )
+                            )
                             .analysis(analysis -> analysis
                                 .tokenizer("korean_nori_tokenizer", tokenizer -> tokenizer
                                     .definition(definition -> definition.noriTokenizer(nori -> nori.decompoundMode(NoriDecompoundMode.Mixed)))
@@ -255,11 +268,16 @@ public class ElasticsearchNoteSearchRepository implements NoteSearchRepository {
                             .properties("userId", Property.of(property -> property.long_(field -> field)))
                             .properties("title", Property.of(property -> property.text(field -> field
                                 .analyzer("korean_nori")
+                                .similarity("bm25_tuned")
                                 .fields("keyword", sub -> sub.keyword(keyword -> keyword))
                             )))
-                            .properties("content", Property.of(property -> property.text(field -> field.analyzer("korean_nori"))))
+                            .properties("content", Property.of(property -> property.text(field -> field
+                                .analyzer("korean_nori")
+                                .similarity("bm25_tuned")
+                            )))
                             .properties("tags", Property.of(property -> property.text(field -> field
                                 .analyzer("korean_nori")
+                                .similarity("bm25_tuned")
                                 .fields("keyword", sub -> sub.keyword(keyword -> keyword))
                             )))
                             .properties("updatedAt", Property.of(property -> property.date(field -> field)))
