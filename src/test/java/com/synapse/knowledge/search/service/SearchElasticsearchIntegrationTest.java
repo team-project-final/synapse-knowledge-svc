@@ -201,7 +201,7 @@ class SearchElasticsearchIntegrationTest {
         UUID elasticExternalNoteId = noteIdentityMapRepository.findById(elasticNoteId)
             .orElseThrow(() -> new IllegalStateException("missing note identity mapping: " + elasticNoteId))
             .getExternalNoteId();
-        given(learningAiSearchClient.searchSemantic(semanticActorId, "스프링", 30)).willReturn(List.of(
+        given(learningAiSearchClient.searchSemantic(semanticActorId, "스프링", 50)).willReturn(List.of(
             new LearningAiSearchClient.LearningAiSemanticHit(UUID.randomUUID(), springExternalNoteId, "의미상 관련", 0.98f),
             new LearningAiSearchClient.LearningAiSemanticHit(UUID.randomUUID(), elasticExternalNoteId, "의미상 관련", 0.95f)
         ));
@@ -231,7 +231,7 @@ class SearchElasticsearchIntegrationTest {
             ownerId,
             new NoteCreateRequest("tenant1", "스프링 타임아웃", "spring timeout fallback search", List.of("backend", "search"))
         ).id();
-        given(learningAiSearchClient.searchSemantic(semanticActorId, "스프링", 30))
+        given(learningAiSearchClient.searchSemantic(semanticActorId, "스프링", 50))
             .willAnswer(invocation -> {
                 sleep(Duration.ofMillis(400));
                 return List.of(new LearningAiSearchClient.LearningAiSemanticHit(
@@ -256,9 +256,47 @@ class SearchElasticsearchIntegrationTest {
         assertThat(response.semanticFallback()).isTrue();
     }
 
-    @DisplayName("benchmark 세트를 실행하면 세 모드 리포트를 생성한다")
+    @DisplayName("같은 노트의 중복 시맨틱 hit는 한 번만 반영해 순위를 안정적으로 유지한다")
     @Test
     @Order(5)
+    void hybridSearch_duplicateSemanticHitsForSameNote_shouldKeepStableRanking() {
+        Long ownerId = 800L;
+        String semanticActorId = UUID.randomUUID().toString();
+        Long springNoteId = noteService.create(
+            ownerId,
+            new NoteCreateRequest("tenant1", "스프링 아키텍처", "spring architecture and modulith design", List.of("backend", "spring"))
+        ).id();
+        Long searchNoteId = noteService.create(
+            ownerId,
+            new NoteCreateRequest("tenant1", "검색 시스템", "search pipeline tuning and bm25 fallback", List.of("search"))
+        ).id();
+        UUID springExternalNoteId = noteIdentityMapRepository.findById(springNoteId)
+            .orElseThrow(() -> new IllegalStateException("missing note identity mapping: " + springNoteId))
+            .getExternalNoteId();
+        UUID searchExternalNoteId = noteIdentityMapRepository.findById(searchNoteId)
+            .orElseThrow(() -> new IllegalStateException("missing note identity mapping: " + searchNoteId))
+            .getExternalNoteId();
+        given(learningAiSearchClient.searchSemantic(semanticActorId, "스프링", 50)).willReturn(List.of(
+            new LearningAiSearchClient.LearningAiSemanticHit(UUID.randomUUID(), searchExternalNoteId, "검색 의미 1", 0.99f),
+            new LearningAiSearchClient.LearningAiSemanticHit(UUID.randomUUID(), searchExternalNoteId, "검색 의미 2", 0.97f),
+            new LearningAiSearchClient.LearningAiSemanticHit(UUID.randomUUID(), springExternalNoteId, "스프링 의미", 0.94f)
+        ));
+
+        waitForResults(ownerId, "스프링", null, 20);
+        HybridSearchResponse response = searchService.hybridSearch(
+            new SearchIdentity(ownerId, semanticActorId),
+            new HybridSearchRequest("스프링", 10, null)
+        );
+
+        assertThat(response.results()).hasSizeGreaterThanOrEqualTo(2);
+        assertThat(response.results().stream().map(result -> result.noteId()).distinct().count())
+            .isEqualTo(response.results().size());
+        assertThat(response.results().get(0).noteId()).isEqualTo(springNoteId);
+    }
+
+    @DisplayName("benchmark 세트를 실행하면 세 모드 리포트를 생성한다")
+    @Test
+    @Order(6)
     void accuracyReport_runBenchmarkSet_shouldGenerateThreeModeReport() {
         given(learningAiSearchClient.searchSemantic(anyString(), anyString(), anyInt())).willReturn(List.of());
 
@@ -273,7 +311,7 @@ class SearchElasticsearchIntegrationTest {
 
     @DisplayName("Elasticsearch가 중단되면 검색 요청은 실패한다")
     @Test
-    @Order(6)
+    @Order(7)
     void search_elasticsearchUnavailable_shouldThrowException() {
         // Given
         Long ownerId = 900L;

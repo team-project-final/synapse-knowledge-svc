@@ -35,10 +35,10 @@ search:
   ai:
     base-url: http://localhost:8090
     timeout: 3s
-    threshold: 0.7
+    threshold: 0.55
   hybrid:
-    rrf-k: 60
-    candidate-multiplier: 3
+    rrf-k: 40
+    candidate-multiplier: 5
   accuracy:
     dataset-version: test-v1
     benchmark-user-id: 910000
@@ -46,3 +46,10 @@ search:
     semantic-actor-id: 11111111-1111-1111-1111-111111111111
     top-k: 10
     indexing-wait-timeout: 20s
+  bm25:
+    k1: 1.4
+    b: 0.65
+    title-boost: 4.0
+    content-boost: 1.0
+    tag-boost: 2.5
+    minimum-should-match: 70%
