@@ -1,8 +1,11 @@
 import java.time.Duration
+import org.gradle.api.plugins.JavaBasePlugin
+import org.gradle.api.tasks.testing.Test
 
 plugins {
 	java
 	idea
+	jacoco
 	id("org.springframework.boot") version "4.0.0"
 	id("io.spring.dependency-management") version "1.1.7"
 	id("com.github.davidmc24.gradle.plugin.avro") version "1.9.1"
@@ -32,6 +35,10 @@ idea {
 repositories {
 	mavenCentral()
 	maven { url = uri("https://packages.confluent.io/maven/") }
+}
+
+jacoco {
+	toolVersion = "0.8.12"
 }
 
 dependencies {
@@ -87,6 +94,70 @@ tasks.withType<Test> {
 		events("failed")
 		showStackTraces = true
 		showCauses = true
+	}
+}
+
+tasks.named<Test>("test") {
+	exclude("**/SearchElasticsearchIntegrationTest.class")
+}
+
+tasks.register<Test>("searchE2eTest") {
+	group = JavaBasePlugin.VERIFICATION_GROUP
+	description = "Runs the SearchElasticsearchIntegrationTest suite."
+	testClassesDirs = sourceSets["test"].output.classesDirs
+	classpath = sourceSets["test"].runtimeClasspath
+	include("**/SearchElasticsearchIntegrationTest.class")
+	shouldRunAfter(tasks.named("test"))
+}
+
+val searchCoverageIncludes = listOf("com/synapse/knowledge/search/**")
+val searchCoverageExcludes = listOf(
+	"com/synapse/knowledge/search/dto/**",
+	"com/synapse/knowledge/search/entity/**",
+	"com/synapse/knowledge/search/event/**",
+	"com/synapse/knowledge/search/internal/**",
+	"com/synapse/knowledge/search/package-info.class",
+	"com/synapse/knowledge/search/client/LearningAiSearchClient.class",
+	"com/synapse/knowledge/search/service/SemanticSearchService.class",
+	"com/synapse/knowledge/search/repository/ElasticsearchNoteSearchRepository.class",
+	"com/synapse/knowledge/search/service/SearchAccuracyBenchmarkSeeder*.class",
+	"com/synapse/knowledge/search/config/SlackNotifier.class",
+	"com/synapse/knowledge/search/service/consumer/KafkaIdempotencyStore.class"
+)
+
+tasks.jacocoTestReport {
+	dependsOn(tasks.test)
+	reports {
+		xml.required.set(true)
+		html.required.set(true)
+	}
+	classDirectories.setFrom(
+		files(classDirectories.files.map {
+			fileTree(it) {
+				searchCoverageIncludes.forEach(::include)
+				searchCoverageExcludes.forEach(::exclude)
+			}
+		})
+	)
+}
+
+tasks.jacocoTestCoverageVerification {
+	dependsOn(tasks.test)
+	classDirectories.setFrom(
+		files(classDirectories.files.map {
+			fileTree(it) {
+				searchCoverageIncludes.forEach(::include)
+				searchCoverageExcludes.forEach(::exclude)
+			}
+		})
+	)
+	violationRules {
+		rule {
+			limit {
+				counter = "LINE"
+				minimum = "0.80".toBigDecimal()
+			}
+		}
 	}
 }
 

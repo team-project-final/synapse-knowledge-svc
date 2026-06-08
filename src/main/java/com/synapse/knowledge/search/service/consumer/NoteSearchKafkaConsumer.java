@@ -15,12 +15,14 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class NoteSearchKafkaConsumer {
 
+    public static final String LISTENER_ID = "searchSyncKafkaListener";
+
     private final NoteSearchRepository noteSearchRepository;
     private final KafkaIdempotencyStore idempotencyStore;
 
     @KafkaListener(
+        id = LISTENER_ID,
         topics = NoteSearchSyncKafkaEvent.TOPIC,
-        groupId = "knowledge-search-indexer",
         containerFactory = "searchSyncKafkaListenerContainerFactory"
     )
     public void handle(NoteSearchSyncKafkaEvent event) {
