@@ -311,6 +311,7 @@
   - fix(kafka): `synapse.kafka.enabled` 게이트를 `application.yml`, `global/search KafkaConfig`, note/search producer·consumer·dispatcher에 반영해 `KAFKA_ENABLED`가 실제로 Kafka 빈 활성 여부를 제어하도록 수정
   - fix(kafka): Kafka 비활성화 시 `NoteEventOutboxService`가 outbox row를 적재하지 않고 no-op 처리하도록 보강
   - test(kafka): Kafka gate 비활성 시 bean 미등록 검증과 outbox no-op 테스트를 추가하고 관련 테스트 4종을 통과 확인
+  - fix(search): `SearchElasticsearchIntegrationTest`가 `synapse.kafka.enabled=true`를 자체 주입하도록 바꾸고, `KafkaConfigTest`에 enabled 경로 bean 등록 회귀 테스트를 추가해 CI 환경 변수 상태와 무관하게 검색 E2E가 동일하게 동작하도록 고정
   - verify(ci): `docker compose -f docker-compose.ci.yml up -d --wait` 후 `./gradlew.bat clean build --no-daemon`, `./gradlew.bat searchE2eTest --no-daemon`, `./gradlew.bat jacocoTestCoverageVerification jacocoTestReport --no-daemon`, `./gradlew.bat test --tests '*ModuleStructureTest' --no-daemon`를 순서대로 재현해 전체 CI 빌드 경로 통과 확인
 - **진행 중**:
   - 없음

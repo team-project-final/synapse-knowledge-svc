@@ -119,6 +119,21 @@ class KafkaConfigTest {
             });
     }
 
+    @Test
+    @DisplayName("synapseKafkaEnabled_true면SearchKafkaBean을등록한다")
+    void context_synapseKafkaEnabledTrue_shouldRegisterSearchKafkaBeans() {
+        contextRunner
+            .withPropertyValues(
+                "synapse.kafka.enabled=true",
+                "spring.kafka.bootstrap-servers=localhost:9092"
+            )
+            .run(context -> {
+                assertThat(context).hasBean("searchSyncKafkaTemplate");
+                assertThat(context).hasBean("searchSyncConsumerFactory");
+                assertThat(context).hasBean("searchSyncKafkaListenerContainerFactory");
+            });
+    }
+
     @TestConfiguration(proxyBeanMethods = false)
     static class KafkaConfigTestSupport {
 

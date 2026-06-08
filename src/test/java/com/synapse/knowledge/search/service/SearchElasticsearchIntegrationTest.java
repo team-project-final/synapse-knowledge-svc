@@ -48,6 +48,7 @@ import org.testcontainers.utility.DockerImageName;
 import org.testcontainers.utility.MountableFile;
 
 @SpringBootTest(properties = {
+    "synapse.kafka.enabled=true",
     "spring.kafka.consumer.group-id=knowledge-search-indexer-e2e",
     "spring.kafka.consumer.auto-offset-reset=latest",
     "spring.kafka.listener.auto-startup=true",
