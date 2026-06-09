@@ -39,6 +39,7 @@ import org.springframework.transaction.annotation.Transactional;
 class KnowledgeGraphFlowE2ETest {
 
     private static final long USER = 100L;
+    private static final long OTHER_USER = 200L;
     private static final String TENANT = "tenant-e2e";
 
     @Autowired
@@ -163,6 +164,23 @@ class KnowledgeGraphFlowE2ETest {
         mockMvc.perform(get("/api/v1/notes/{id}", noteId).with(E2eJwtHelper.user(USER)))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.data.title").value("원본 제목"));
+    }
+
+    @Test
+    @DisplayName("noteAccessIsolation_타인노트접근_shouldDenyAndExcludeFromList")
+    void noteAccessIsolation_타인노트접근_shouldDenyAndExcludeFromList() throws Exception {
+        // Given: 사용자 A(USER)가 노트를 생성
+        long ownerNoteId = createNote("A의 노트", "소유자 전용 본문", List.of());
+
+        // When & Then 1: 다른 사용자(B)가 A의 노트 상세를 조회하면 403
+        mockMvc.perform(get("/api/v1/notes/{id}", ownerNoteId).with(E2eJwtHelper.user(OTHER_USER)))
+            .andExpect(status().isForbidden());
+
+        // When & Then 2: B의 노트 목록에는 A의 노트가 포함되지 않는다 (소유자 격리)
+        mockMvc.perform(get("/api/v1/notes").with(E2eJwtHelper.user(OTHER_USER)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.success").value(true))
+            .andExpect(jsonPath("$.data.totalElements").value(0));
     }
 
     /** 노트를 수정한다 (이전 상태가 버전으로 스냅샷됨). */
