@@ -186,4 +186,4 @@
 | **RULE Reference** | [03-아키텍처](../../wiki/03-아키텍처.md) · [09-버전-관리-정책](../../wiki/09-버전-관리-정책.md) |
 | **Assignee** | @knowledge-owner-2 |
 | **Reviewer** | @team-lead |
-| **Status** | TODO |
+| **Status** | DONE - semantic duplicate hit dedupe, BM25/RRF 파라미터 튜닝, 회귀 테스트 및 coverage gate 재검증 완료 |

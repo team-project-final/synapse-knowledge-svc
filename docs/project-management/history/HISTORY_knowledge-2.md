@@ -325,6 +325,19 @@
 - **다음**:
   - 필요 시 tuned search 파라미터를 staging benchmark 결과와 비교해 추가 보정 여부 점검
 
+#### 2026-06-09 (화)
+
+- **완료**:
+  - docs(workflow): `WORKFLOW_knowledge-2_W5.md`를 실제 완료 상태 기준으로 동기화하고 발표용 검색 데모 쿼리 항목을 반영
+  - docs(report): `REPORT_knowledge-2_W5_demo-search.md`를 추가해 발표용 검색 데모 쿼리, 기대 결과, 시연 전제를 고정
+  - docs(task): Step 9 상태를 실제 완료 이력과 Step 9 보고서 기준으로 동기화
+- **진행 중**:
+  - 없음
+- **이슈**:
+  - semantic/hybrid 발표 시연 안정성은 benchmark seed 적재와 learning-ai semantic proxy contract 유지가 전제다
+- **다음**:
+  - 필요 시 발표용 검색 데모 쿼리를 staging 환경에서 한 번 더 리허설
+
 ---
 
 ## 변경 이력
