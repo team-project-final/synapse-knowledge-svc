@@ -2,9 +2,12 @@ package com.synapse.knowledge.search.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
+import static org.mockito.Mockito.mock;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.ElasticsearchException;
@@ -16,8 +19,10 @@ import com.synapse.knowledge.search.SearchIdentity;
 import com.synapse.knowledge.search.client.LearningAiSearchClient;
 import com.synapse.knowledge.search.dto.HybridSearchRequest;
 import com.synapse.knowledge.search.dto.HybridSearchResponse;
-import com.synapse.knowledge.search.dto.SearchPageResponse;
 import com.synapse.knowledge.search.dto.SearchRequest;
+import com.synapse.knowledge.search.dto.SearchPageResponse;
+import com.synapse.knowledge.search.entity.NoteSearchDocument;
+import com.synapse.knowledge.search.repository.ElasticsearchNoteSearchRepository;
 import com.synapse.knowledge.search.service.consumer.NoteSearchKafkaConsumer;
 import java.io.IOException;
 import java.time.Duration;
@@ -38,14 +43,7 @@ import org.springframework.kafka.config.KafkaListenerEndpointRegistry;
 import org.springframework.kafka.listener.MessageListenerContainer;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.util.ReflectionTestUtils;
-import org.testcontainers.elasticsearch.ElasticsearchContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.utility.DockerImageName;
-import org.testcontainers.utility.MountableFile;
 
 @SpringBootTest(properties = {
     "synapse.kafka.enabled=true",
@@ -55,28 +53,10 @@ import org.testcontainers.utility.MountableFile;
     "search.ai.timeout=200ms"
 })
 @ActiveProfiles("test")
-@Testcontainers(disabledWithoutDocker = true)
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class SearchElasticsearchIntegrationTest {
 
     private static final String INDEX_NAME = "notes-v1";
-
-    @Container
-    static final ElasticsearchContainer elasticsearch = new ElasticsearchContainer(
-        DockerImageName.parse("docker.elastic.co/elasticsearch/elasticsearch:9.2.1")
-    )
-        .withEnv("discovery.type", "single-node")
-        .withEnv("xpack.security.enabled", "false")
-        .withEnv("ES_JAVA_OPTS", "-Xms512m -Xmx512m")
-        .withCopyFileToContainer(
-            MountableFile.forClasspathResource("elasticsearch/elasticsearch-plugins.yml"),
-            "/usr/share/elasticsearch/config/elasticsearch-plugins.yml"
-        );
-
-    @DynamicPropertySource
-    static void registerElasticProperties(DynamicPropertyRegistry registry) {
-        registry.add("spring.elasticsearch.uris", elasticsearch::getHttpHostAddress);
-    }
 
     @Autowired
     private NoteService noteService;
@@ -97,7 +77,7 @@ class SearchElasticsearchIntegrationTest {
     private ElasticsearchClient elasticsearchClient;
 
     @Autowired
-    private com.synapse.knowledge.search.repository.ElasticsearchNoteSearchRepository elasticsearchNoteSearchRepository;
+    private ElasticsearchNoteSearchRepository elasticsearchNoteSearchRepository;
 
     @Autowired
     private KafkaListenerEndpointRegistry kafkaListenerEndpointRegistry;
@@ -107,9 +87,7 @@ class SearchElasticsearchIntegrationTest {
 
     @BeforeEach
     void setUp() throws IOException {
-        if (!elasticsearch.isRunning()) {
-            elasticsearch.start();
-        }
+        assertElasticsearchReachable();
         noteIdentityMapRepository.deleteAll();
         noteRepository.deleteAll();
         deleteIndexIfExists();
@@ -118,10 +96,6 @@ class SearchElasticsearchIntegrationTest {
 
     @AfterEach
     void tearDown() throws IOException {
-        if (!elasticsearch.isRunning()) {
-            resetIndexEnsuredFlag();
-            return;
-        }
         noteIdentityMapRepository.deleteAll();
         noteRepository.deleteAll();
         deleteIndexIfExists();
@@ -309,10 +283,10 @@ class SearchElasticsearchIntegrationTest {
         assertThat(report.improvements()).isNotEmpty();
     }
 
-    @DisplayName("Elasticsearch가 중단되면 검색 요청은 실패한다")
+    @DisplayName("Elasticsearch endpoint에 연결할 수 없으면 검색 요청은 실패한다")
     @Test
     @Order(7)
-    void search_elasticsearchUnavailable_shouldThrowException() {
+    void search_elasticsearchEndpointUnavailable_shouldThrowException() throws IOException {
         // Given
         Long ownerId = 900L;
         noteService.create(
@@ -320,12 +294,22 @@ class SearchElasticsearchIntegrationTest {
             new NoteCreateRequest("tenant1", "Elasticsearch 다운 테스트", "cluster unavailable failure path", List.of("ops"))
         );
         waitForResults(ownerId, "Elasticsearch", null, 20);
-        elasticsearch.stop();
-        resetIndexEnsuredFlag();
+        ElasticsearchClient originalClient =
+            (ElasticsearchClient) ReflectionTestUtils.getField(elasticsearchNoteSearchRepository, "elasticsearchClient");
+        ElasticsearchClient failingClient = mock(ElasticsearchClient.class, RETURNS_DEEP_STUBS);
+        ReflectionTestUtils.setField(elasticsearchNoteSearchRepository, "elasticsearchClient", failingClient);
+        given(failingClient.search(any(java.util.function.Function.class), org.mockito.ArgumentMatchers.eq(NoteSearchDocument.class)))
+            .willThrow(new IOException("connection refused"));
 
         // When & Then
-        assertThatThrownBy(() -> searchService.search(ownerId, new SearchRequest("Elasticsearch", null, 20, null)))
-            .isInstanceOf(RuntimeException.class);
+        try {
+            assertThatThrownBy(() -> searchService.search(ownerId, new SearchRequest("Elasticsearch", null, 20, null)))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("Elasticsearch 검색 요청에 실패했습니다");
+        } finally {
+            ReflectionTestUtils.setField(elasticsearchNoteSearchRepository, "elasticsearchClient", originalClient);
+            resetIndexEnsuredFlag();
+        }
     }
 
     private SearchPageResponse waitForResults(Long userId, String query, List<String> tags, int limit) {
@@ -432,6 +416,20 @@ class SearchElasticsearchIntegrationTest {
 
     private void resetIndexEnsuredFlag() {
         ReflectionTestUtils.setField(elasticsearchNoteSearchRepository, "indexEnsured", false);
+    }
+
+    private void assertElasticsearchReachable() {
+        try {
+            boolean reachable = elasticsearchClient.ping().value();
+            if (!reachable) {
+                throw new IllegalStateException("searchE2eTest requires Elasticsearch at spring.elasticsearch.uris");
+            }
+        } catch (IOException ex) {
+            throw new IllegalStateException(
+                "searchE2eTest requires a reachable Elasticsearch instance. Start docker compose -f docker-compose.ci.yml up -d --wait first.",
+                ex
+            );
+        }
     }
 
     private void waitForSearchListenerReady() {
