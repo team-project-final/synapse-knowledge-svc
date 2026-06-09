@@ -330,6 +330,7 @@
 - **완료**:
   - docs(workflow): `WORKFLOW_knowledge-2_W5.md`를 실제 완료 상태 기준으로 동기화하고 발표용 검색 데모 쿼리 항목을 반영
   - docs(report): `REPORT_knowledge-2_W5_demo-search.md`를 추가해 발표용 검색 데모 쿼리, 기대 결과, 시연 전제를 고정
+  - docs(report): `REPORT_knowledge-2_step7.md`에 dataset 규모, Task 완료 기준 매핑, 메트릭 결과표 형식, 관리자 API 응답 예시를 보강해 Step 7 산출물 기준을 명확히 정리
   - docs(task): Step 9 상태를 실제 완료 이력과 Step 9 보고서 기준으로 동기화
   - fix(test): `SearchElasticsearchIntegrationTest`를 Testcontainers Elasticsearch 부팅 대신 `docker-compose.ci.yml` 외부 Elasticsearch를 사용하도록 전환하고, Elasticsearch 플러그인 설정을 compose 마운트로 옮겨 Windows 로컬과 CI에서 같은 경로로 `searchE2eTest`를 실행 가능하게 정리
   - verify(search): `docker compose -f docker-compose.ci.yml up -d --wait` 후 `./gradlew.bat searchE2eTest --no-daemon --rerun-tasks`를 재실행해 7 tests / 0 skipped / 0 failures를 확인
