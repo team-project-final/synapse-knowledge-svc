@@ -45,11 +45,30 @@ class CurrentUserArgumentResolverTest {
     }
 
     @Test
-    @DisplayName("userId Claim이 없으면 인증 예외를 던진다")
-    void resolveArgument_noUserIdClaim_shouldThrowAuthenticationException() {
+    @DisplayName("userId Claim이 없고 sub가 UUID이면 subject를 결정적 Long으로 도출한다")
+    void resolveArgument_noUserIdClaimButUuidSubject_resolvesDeterministicLong() throws Exception {
         Jwt jwt = Jwt.withTokenValue("token")
             .header("alg", "none")
             .subject("22222222-2222-2222-2222-222222222222")
+            .build();
+        SecurityContextHolder.getContext().setAuthentication(new JwtAuthenticationToken(jwt, AuthorityUtils.NO_AUTHORITIES));
+
+        CurrentUser first = (CurrentUser) resolver.resolveArgument(
+            null, null, new ServletWebRequest(new MockHttpServletRequest()), null);
+        CurrentUser second = (CurrentUser) resolver.resolveArgument(
+            null, null, new ServletWebRequest(new MockHttpServletRequest()), null);
+
+        assertThat(first.userId()).isNotNull().isPositive();
+        assertThat(first.userId()).isEqualTo(second.userId()); // 동일 UUID → 결정적 Long
+        assertThat(first.subject()).isEqualTo("22222222-2222-2222-2222-222222222222");
+    }
+
+    @Test
+    @DisplayName("userId Claim도 sub도 없으면 인증 예외를 던진다")
+    void resolveArgument_noUserIdClaimNoSubject_shouldThrowAuthenticationException() {
+        Jwt jwt = Jwt.withTokenValue("token")
+            .header("alg", "none")
+            .claim("scope", "read")
             .build();
         SecurityContextHolder.getContext().setAuthentication(new JwtAuthenticationToken(jwt, AuthorityUtils.NO_AUTHORITIES));
 
