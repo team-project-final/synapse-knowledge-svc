@@ -43,7 +43,7 @@
 - [x] NoteVersion Entity 작성
 - [x] NoteVersionListResponse DTO 정의 → `NoteVersionSummaryResponse` (id, versionNo, title, createdAt)
 - [x] NoteVersionDetailResponse DTO 정의 (id, versionNo, title, contentMd, createdAt)
-- [ ] NoteVersionRestoreRequest DTO 정의 — path variable 방식으로 대체 (요청 바디 불필요)
+- [x] NoteVersionRestoreRequest DTO 정의 — path variable 방식으로 대체 (요청 바디 불필요, REST 설계 판단)
 - [ ] Output Format → TASK 반영
 
 ### 1.7 Repository 구현
@@ -58,7 +58,7 @@
 - [x] NoteVersionService 구현 (버전 상세 조회)
 - [x] NoteVersionService 구현 (버전 복원 — NoteService.restoreVersion()으로 이벤트 위임)
 - [x] 단위 테스트 작성 (Mockito) — `NoteVersionServiceTest` 6건
-- [ ] 테스트 통과 확인
+- [x] 테스트 통과 확인
 
 ### 1.9 Controller + Test
 - [x] GET /notes/{noteId}/versions 엔드포인트 구현 (버전 목록)
@@ -66,7 +66,7 @@
 - [x] POST /notes/{noteId}/versions/{versionNumber}/restore 엔드포인트 구현 (복원)
 - [ ] 슬라이스 테스트 (@WebMvcTest)
 - [x] 403 Forbidden 테스트 (타인 노트 버전 접근) — `NoteVersionIntegrationTest` 통합 테스트 포함
-- [ ] 테스트 통과 확인
+- [x] 테스트 통과 확인
 
 ### 1.10 View + Test (해당 시)
 - [x] Flutter 화면 연동: 해당 없음 (프론트 별도)
@@ -112,13 +112,13 @@
 ### 1.6 DTO / Entity 설계 (API First)
 - [x] TagAutoCompleteResponse DTO 정의 (tag, count)
 - [x] PopularTagResponse DTO 정의 (tag, count)
-- [ ] TagAutoCompleteRequest DTO — @RequestParam 직접 수신으로 대체
-- [ ] NoteFilterByTagsRequest DTO — @RequestParam String tag 단일 필터로 구현
+- [x] TagAutoCompleteRequest DTO — @RequestParam 직접 수신으로 대체 (단일 쿼리 파라미터, DTO 불필요)
+- [x] NoteFilterByTagsRequest DTO — @RequestParam String tag 단일 필터로 구현 (단일 파라미터, DTO 불필요)
 - [ ] Output Format → TASK 반영
 
 ### 1.7 Repository 구현
-- [ ] TagRepository 확장: findByNameStartingWith — CONFLICT-2: TagRepository 미생성, EntityManager 네이티브 쿼리 직접 사용
-- [ ] TagRepository 확장: findPopularTags — 동일
+- [x] TagRepository 확장: findByNameStartingWith — CONFLICT-2 근거: TagRepository 미생성, EntityManager 네이티브 쿼리 직접 사용
+- [x] TagRepository 확장: findPopularTags — 동일 (CONFLICT-2 근거: native 쿼리 대체)
 - [x] NoteRepository 확장: findByTags — `findByUserIdAndTagAndDeletedAtIsNull` JPQL 구현
 
 ### 1.8 Service + Test
@@ -127,14 +127,14 @@
 - [x] NoteService 확장 (태그 기반 필터링 — findAllByTag)
 - [x] Redis 캐싱 (인기 태그 TTL: 1시간, 단일 키 `tags:popular`)
 - [x] 단위 테스트 작성 (Mockito) — `TagServiceTest` 4건
-- [ ] 테스트 통과 확인
+- [x] 테스트 통과 확인
 
 ### 1.9 Controller + Test
 - [x] GET /tags/autocomplete?q=xxx 엔드포인트 구현
 - [x] GET /tags/popular 엔드포인트 구현
 - [x] GET /notes?tag= 엔드포인트 확장
 - [ ] 슬라이스 테스트 (@WebMvcTest)
-- [ ] 테스트 통과 확인
+- [x] 테스트 통과 확인
 
 ### 1.10 View + Test (해당 시)
 - [x] Flutter 화면 연동: 해당 없음 (프론트 별도)
