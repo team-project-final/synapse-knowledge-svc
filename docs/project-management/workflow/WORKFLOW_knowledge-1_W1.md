@@ -148,7 +148,7 @@
 - [x] Swagger API 문서 확인
 - [x] RULE Reference → TASK 반영
 
-**Step 2 Status**: [ ] Not Started / [ ] In Progress / [ Done
+**Step 2 Status**: [ ] Not Started / [ ] In Progress / [x] Done
 
 ---
 
