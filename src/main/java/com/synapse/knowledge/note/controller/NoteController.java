@@ -9,6 +9,7 @@ import com.synapse.knowledge.note.service.NoteService;
 import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.validation.annotation.Validated;
@@ -41,6 +42,7 @@ public class NoteController {
     public ApiResponse<Page<NoteResponse>> list(
         @CurrentUserAuth CurrentUser currentUser,
         @RequestParam(required = false) String tag,
+        @ParameterObject
         Pageable pageable
     ) {
         if (tag != null && !tag.isBlank()) {

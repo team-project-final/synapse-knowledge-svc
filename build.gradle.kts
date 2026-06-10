@@ -54,7 +54,9 @@ dependencies {
 	implementation("com.googlecode.owasp-java-html-sanitizer:owasp-java-html-sanitizer:20240325.1")
 	implementation("org.mapstruct:mapstruct:1.6.3")
 	implementation("org.apache.avro:avro:1.11.3")
-	implementation("io.confluent:kafka-avro-serializer:7.5.0")
+	implementation("io.confluent:kafka-avro-serializer:7.5.0") {
+		exclude(group = "io.swagger.core.v3", module = "swagger-annotations")
+	}
 	compileOnly("org.projectlombok:lombok")
 	annotationProcessor("org.projectlombok:lombok")
 	annotationProcessor("org.mapstruct:mapstruct-processor:1.6.3")
@@ -62,7 +64,7 @@ dependencies {
 	implementation("org.flywaydb:flyway-database-postgresql")
 	runtimeOnly("org.postgresql:postgresql")
 	testRuntimeOnly("com.h2database:h2")
-	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.6")
+	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.3")
 	implementation("org.springframework.modulith:spring-modulith-starter-core")
 	implementation("org.springframework.modulith:spring-modulith-events-api")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")

@@ -349,10 +349,14 @@
   - fix(chunking): `NoteChunk`의 `chunkText`를 실제 PostgreSQL `TEXT` 컬럼에 맞게 매핑하고 `embedding vector(1536)` 컬럼은 insert/update 대상에서 제외해 pgvector 저장 경로 충돌을 제거
   - verify(chunking): `docker compose -f docker-compose.ci.yml up -d --wait postgres`, `./gradlew.bat chunkingPgTest --no-daemon --rerun-tasks`에서 `2 tests / 0 skipped / 0 failures` 확인
   - verify(build): `docker compose -f docker-compose.ci.yml up -d --wait redis`, `./gradlew.bat clean build --no-daemon` 재실행까지 통과 확인
+  - fix(openapi): `springdoc-openapi-starter-webmvc-ui`를 `3.0.3`으로 정렬하고 `CurrentUser` ignore + `Pageable @ParameterObject` 설정을 추가해 `/v3/api-docs` 문서 생성 경로를 보강
+  - fix(openapi): `io.confluent:kafka-avro-serializer:7.5.0` 전이 의존성에서 비-jakarta `io.swagger.core.v3:swagger-annotations:2.1.10`을 제외해 `Schema.types()` `NoSuchMethodError` 충돌을 제거
+  - test(openapi): `OpenApiDocumentationIntegrationTest`를 추가해 `/v3/api-docs` 200과 Swagger UI 200 회귀 검증 경로를 고정
+  - verify(openapi): `./gradlew.bat test --tests "*OpenApiDocumentationIntegrationTest"` 통과와 `dependencyInsight --dependency swagger-annotations --configuration runtimeClasspath`에서 `swagger-annotations-jakarta:2.2.47`만 남는 것 확인
 - **이슈**:
   - 없음
 - **다음**:
-  - PR 본문 정리 후 `fix/KNOW-chunking-pg-flyway` 브랜치 리뷰 요청
+  - PR 본문 정리 후 `fix/KNOW-openapi-docs-500` 브랜치 리뷰 요청
 
 ---
 
