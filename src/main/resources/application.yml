@@ -56,6 +56,8 @@ synapse:
     issuer: ${JWT_ISSUER:synapse-auth}
   kafka:
     enabled: ${KAFKA_ENABLED:false}
+    search-sync-listener:
+      auto-startup: ${KAFKA_SEARCH_SYNC_LISTENER_AUTO_STARTUP:true}
     outbox:
       fixed-delay-ms: ${KAFKA_OUTBOX_FIXED_DELAY_MS:1000}
       batch-size: ${KAFKA_OUTBOX_BATCH_SIZE:50}

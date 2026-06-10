@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.context.annotation.Bean;
+import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
@@ -131,6 +132,44 @@ class KafkaConfigTest {
                 assertThat(context).hasBean("searchSyncKafkaTemplate");
                 assertThat(context).hasBean("searchSyncConsumerFactory");
                 assertThat(context).hasBean("searchSyncKafkaListenerContainerFactory");
+            });
+    }
+
+    @Test
+    @DisplayName("전역 listener auto-startup이 false여도 search listener 기본값은 true다")
+    void context_globalListenerAutoStartupFalse_shouldKeepSearchListenerAutoStartupTrue() {
+        contextRunner
+            .withPropertyValues(
+                "synapse.kafka.enabled=true",
+                "spring.kafka.bootstrap-servers=localhost:9092",
+                "spring.kafka.listener.auto-startup=false"
+            )
+            .run(context -> {
+                var factory = context.getBean(
+                    "searchSyncKafkaListenerContainerFactory",
+                    ConcurrentKafkaListenerContainerFactory.class
+                );
+
+                assertThat(ReflectionTestUtils.getField(factory, "autoStartup")).isEqualTo(Boolean.TRUE);
+            });
+    }
+
+    @Test
+    @DisplayName("search listener 전용 설정이 false면 명시적으로 비활성화된다")
+    void context_searchListenerAutoStartupFalse_shouldDisableSearchListener() {
+        contextRunner
+            .withPropertyValues(
+                "synapse.kafka.enabled=true",
+                "spring.kafka.bootstrap-servers=localhost:9092",
+                "synapse.kafka.search-sync-listener.auto-startup=false"
+            )
+            .run(context -> {
+                var factory = context.getBean(
+                    "searchSyncKafkaListenerContainerFactory",
+                    ConcurrentKafkaListenerContainerFactory.class
+                );
+
+                assertThat(ReflectionTestUtils.getField(factory, "autoStartup")).isEqualTo(Boolean.FALSE);
             });
     }
 

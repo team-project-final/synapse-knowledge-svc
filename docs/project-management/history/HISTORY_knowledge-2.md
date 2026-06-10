@@ -353,10 +353,16 @@
   - fix(openapi): `io.confluent:kafka-avro-serializer:7.5.0` 전이 의존성에서 비-jakarta `io.swagger.core.v3:swagger-annotations:2.1.10`을 제외해 `Schema.types()` `NoSuchMethodError` 충돌을 제거
   - test(openapi): `OpenApiDocumentationIntegrationTest`를 추가해 `/v3/api-docs` 200과 Swagger UI 200 회귀 검증 경로를 고정
   - verify(openapi): `./gradlew.bat test --tests "*OpenApiDocumentationIntegrationTest"` 통과와 `dependencyInsight --dependency swagger-annotations --configuration runtimeClasspath`에서 `swagger-annotations-jakarta:2.2.47`만 남는 것 확인
+  - fix(kafka): search sync listener의 `auto-startup`을 전역 `spring.kafka.listener.auto-startup`에서 분리하고 `synapse.kafka.search-sync-listener.auto-startup` 전용 키로 제어하도록 수정
+  - fix(kafka): `NoteSearchKafkaConsumer`에 명시적 `groupId`와 `idIsGroup=false`를 지정해 런타임 consumer group이 리스너 ID가 아닌 `spring.kafka.consumer.group-id`(`knowledge-search-indexer`)를 따르도록 수정
+  - test(kafka): search listener 전용 `auto-startup` 회귀 테스트를 추가해 전역 listener 설정과 독립적으로 동작함을 검증
+  - test(search): `SearchElasticsearchIntegrationTest`가 listener readiness와 함께 runtime `groupId`까지 검증하도록 보강
+  - fix(observability): `GlobalExceptionHandler.handleException`가 C500 응답 전에 `log.error`로 path와 stack trace를 남기도록 보강
+  - test(exception): `GlobalExceptionHandlerTest`를 추가해 500 응답과 error 로그 회귀를 고정
 - **이슈**:
-  - 없음
+- 없음
 - **다음**:
-  - PR 본문 정리 후 `fix/KNOW-openapi-docs-500` 브랜치 리뷰 요청
+- PR 본문 정리 후 `fix/KNOW-openapi-docs-500` 브랜치 리뷰 요청
 
 ---
 
