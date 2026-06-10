@@ -24,6 +24,8 @@ public class NoteSearchKafkaConsumer {
 
     @KafkaListener(
         id = LISTENER_ID,
+        idIsGroup = false,
+        groupId = "${spring.kafka.consumer.group-id:knowledge-search-indexer}",
         topics = NoteSearchSyncKafkaEvent.TOPIC,
         containerFactory = "searchSyncKafkaListenerContainerFactory"
     )

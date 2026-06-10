@@ -38,6 +38,7 @@ import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.kafka.config.KafkaListenerEndpointRegistry;
 import org.springframework.kafka.listener.MessageListenerContainer;
@@ -81,6 +82,9 @@ class SearchElasticsearchIntegrationTest {
 
     @Autowired
     private KafkaListenerEndpointRegistry kafkaListenerEndpointRegistry;
+
+    @Value("${spring.kafka.consumer.group-id}")
+    private String searchIndexerGroupId;
 
     @MockitoBean
     private LearningAiSearchClient learningAiSearchClient;
@@ -438,7 +442,10 @@ class SearchElasticsearchIntegrationTest {
         while (Instant.now().isBefore(deadline)) {
             MessageListenerContainer container =
                 kafkaListenerEndpointRegistry.getListenerContainer(NoteSearchKafkaConsumer.LISTENER_ID);
-            if (container != null && container.isRunning() && hasAssignedPartitions(container)) {
+            if (container != null
+                && container.isRunning()
+                && hasExpectedGroupId(container)
+                && hasAssignedPartitions(container)) {
                 return;
             }
             sleepBriefly();
@@ -450,5 +457,9 @@ class SearchElasticsearchIntegrationTest {
     private boolean hasAssignedPartitions(MessageListenerContainer container) {
         Object assignedPartitions = ReflectionTestUtils.invokeMethod(container, "getAssignedPartitions");
         return assignedPartitions instanceof Collection<?> partitions && !partitions.isEmpty();
+    }
+
+    private boolean hasExpectedGroupId(MessageListenerContainer container) {
+        return searchIndexerGroupId.equals(container.getContainerProperties().getGroupId());
     }
 }
