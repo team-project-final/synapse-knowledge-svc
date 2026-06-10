@@ -6,7 +6,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.Lob;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
@@ -33,13 +32,13 @@ public class NoteChunk extends BaseEntity {
     @Column(nullable = false)
     private Integer chunkIndex;
 
-    @Lob
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String chunkText;
 
     @Column(nullable = false)
     private Integer tokenCount;
 
+    @Column(insertable = false, updatable = false)
     private String embedding;
 
     public static NoteChunk create(Long noteId, Integer chunkIndex, String chunkText, Integer tokenCount) {

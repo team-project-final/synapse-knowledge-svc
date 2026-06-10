@@ -21,36 +21,50 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 @SpringBootTest(properties = {
     "spring.flyway.enabled=true",
     "spring.jpa.hibernate.ddl-auto=none",
+    "spring.jpa.database-platform=org.hibernate.dialect.PostgreSQLDialect",
     "spring.kafka.listener.auto-startup=false",
     "synapse.kafka.enabled=false"
 })
 @ActiveProfiles("test")
-@Testcontainers(disabledWithoutDocker = true)
 class ChunkingPostgresFlywayIntegrationTest {
-
-    @Container
-    static final PostgreSQLContainer<?> postgres =
-        new PostgreSQLContainer<>("pgvector/pgvector:pg16")
-            .withDatabaseName("synapse")
-            .withUsername("synapse")
-            .withPassword("synapse");
 
     @DynamicPropertySource
     static void registerProperties(DynamicPropertyRegistry registry) {
-        registry.add("spring.datasource.url", postgres::getJdbcUrl);
-        registry.add("spring.datasource.username", postgres::getUsername);
-        registry.add("spring.datasource.password", postgres::getPassword);
-        registry.add("spring.datasource.driver-class-name", postgres::getDriverClassName);
-        registry.add("spring.flyway.url", postgres::getJdbcUrl);
-        registry.add("spring.flyway.user", postgres::getUsername);
-        registry.add("spring.flyway.password", postgres::getPassword);
+        registry.add("spring.datasource.url", () -> lookupProperty(
+            "chunking.pg.jdbc-url",
+            "CHUNKING_PG_JDBC_URL",
+            "jdbc:postgresql://localhost:5432/synapse"
+        ));
+        registry.add("spring.datasource.username", () -> lookupProperty(
+            "chunking.pg.username",
+            "CHUNKING_PG_USERNAME",
+            "synapse"
+        ));
+        registry.add("spring.datasource.password", () -> lookupProperty(
+            "chunking.pg.password",
+            "CHUNKING_PG_PASSWORD",
+            "synapse_local_pw"
+        ));
+        registry.add("spring.datasource.driver-class-name", () -> "org.postgresql.Driver");
+        registry.add("spring.flyway.url", () -> lookupProperty(
+            "chunking.pg.jdbc-url",
+            "CHUNKING_PG_JDBC_URL",
+            "jdbc:postgresql://localhost:5432/synapse"
+        ));
+        registry.add("spring.flyway.user", () -> lookupProperty(
+            "chunking.pg.username",
+            "CHUNKING_PG_USERNAME",
+            "synapse"
+        ));
+        registry.add("spring.flyway.password", () -> lookupProperty(
+            "chunking.pg.password",
+            "CHUNKING_PG_PASSWORD",
+            "synapse_local_pw"
+        ));
     }
 
     @Autowired
@@ -188,5 +202,19 @@ class ChunkingPostgresFlywayIntegrationTest {
             }
         }
         return builder.toString().trim();
+    }
+
+    private static String lookupProperty(String systemPropertyKey, String envKey, String defaultValue) {
+        String systemPropertyValue = System.getProperty(systemPropertyKey);
+        if (systemPropertyValue != null && !systemPropertyValue.isBlank()) {
+            return systemPropertyValue;
+        }
+
+        String envValue = System.getenv(envKey);
+        if (envValue != null && !envValue.isBlank()) {
+            return envValue;
+        }
+
+        return defaultValue;
     }
 }

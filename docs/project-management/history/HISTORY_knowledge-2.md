@@ -341,6 +341,18 @@
 - **다음**:
   - 필요 시 발표용 검색 데모 쿼리를 staging 환경에서 한 번 더 리허설
 
+#### 2026-06-10 (수)
+
+- **완료**:
+  - fix(test): `ChunkingPostgresFlywayIntegrationTest`를 Testcontainers 대신 `docker-compose.ci.yml` Postgres 경로로 전환해 Windows/WSL에서 더 이상 skip 없이 실행되도록 정리
+  - fix(chunking): `NoteChunk`의 `chunkText`를 실제 PostgreSQL `TEXT` 컬럼에 맞게 매핑하고 `embedding vector(1536)` 컬럼은 insert/update 대상에서 제외해 pgvector 저장 경로 충돌을 제거
+  - verify(chunking): `docker compose -f docker-compose.ci.yml up -d --wait postgres`, `./gradlew.bat chunkingPgTest --no-daemon --rerun-tasks`에서 `2 tests / 0 skipped / 0 failures` 확인
+  - verify(build): `docker compose -f docker-compose.ci.yml up -d --wait redis`, `./gradlew.bat clean build --no-daemon` 재실행까지 통과 확인
+- **이슈**:
+  - 없음
+- **다음**:
+  - PR 본문 정리 후 `fix/KNOW-chunking-pg-flyway` 브랜치 리뷰 요청
+
 ---
 
 ## 변경 이력
