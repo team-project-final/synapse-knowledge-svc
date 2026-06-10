@@ -99,6 +99,7 @@ tasks.withType<Test> {
 
 tasks.named<Test>("test") {
 	exclude("**/SearchElasticsearchIntegrationTest.class")
+	exclude("**/ChunkingPostgresFlywayIntegrationTest.class")
 }
 
 tasks.register<Test>("searchE2eTest") {
@@ -107,6 +108,15 @@ tasks.register<Test>("searchE2eTest") {
 	testClassesDirs = sourceSets["test"].output.classesDirs
 	classpath = sourceSets["test"].runtimeClasspath
 	include("**/SearchElasticsearchIntegrationTest.class")
+	shouldRunAfter(tasks.named("test"))
+}
+
+tasks.register<Test>("chunkingPgTest") {
+	group = JavaBasePlugin.VERIFICATION_GROUP
+	description = "Runs the ChunkingPostgresFlywayIntegrationTest suite."
+	testClassesDirs = sourceSets["test"].output.classesDirs
+	classpath = sourceSets["test"].runtimeClasspath
+	include("**/ChunkingPostgresFlywayIntegrationTest.class")
 	shouldRunAfter(tasks.named("test"))
 }
 

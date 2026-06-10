@@ -32,6 +32,9 @@ jobs:
       - name: Build
         run: ./gradlew clean build --no-daemon
 
+      - name: Chunking Postgres/Flyway
+        run: ./gradlew chunkingPgTest --no-daemon
+
       - name: Search E2E
         run: ./gradlew searchE2eTest --no-daemon
 
