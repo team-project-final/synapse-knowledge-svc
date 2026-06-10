@@ -22,24 +22,24 @@
 | Step   | 내용                       | 상태        | 시작일     | 완료일     | 비고 |
 | ------ | -------------------------- | ----------- | ---------- | ---------- | ---- |
 | Step 4 | 백링크/지식 그래프 API     | Done        | 2026-05-22 | 2026-05-22 | GraphQueryPort 패턴 적용 |
-| Step 5 | Kafka→ES 자동 동기화       | Not Started | —          | —          | Kafka 다음 주로 연기, ES+PG 우선 |
+| Step 5 | Kafka→ES 자동 동기화       | Done        | —          | 2026-06-02 | Kafka 다음 주로 연기, ES+PG 우선 |
 
-**W2 진행률**: 1/2 Steps 완료
+**W2 진행률**: 2/2 Steps 완료
 
 ### W3 (2026-05-26 ~ 05-29)
 
 | Step   | 내용                   | 상태        | 시작일 | 완료일 | 비고 |
 | ------ | ---------------------- | ----------- | ------ | ------ | ---- |
-| Step 6 | 노트 버전 이력/복원    | Not Started | —      | —      |      |
-| Step 7 | 태그 필터링/자동완성   | Not Started | —      | —      |      |
+| Step 6 | 노트 버전 이력/복원    | Done        | —      | 2026-06-04 |      |
+| Step 7 | 태그 필터링/자동완성   | Done        | —      | 2026-06-04 |      |
 
-**W3 진행률**: 0/2 Steps 완료
+**W3 진행률**: 2/2 Steps 완료
 
 ### W5 (2026-06-08 ~ 06-12)
 
 | Step   | 내용                       | 상태        | 시작일 | 완료일 | 비고 |
 | ------ | -------------------------- | ----------- | ------ | ------ | ---- |
-| Step 8 | 노트/그래프 E2E 테스트     | Not Started | —      | —      |      |
+| Step 8 | 노트/그래프 E2E 테스트     | In Progress | 2026-06-09 | —      |      |
 | Step 9 | P0 버그 수정 및 ES 안정화  | Not Started | —      | —      |      |
 
 **W5 진행률**: 0/2 Steps 완료
@@ -224,20 +224,35 @@
   - `build` 잡이 인프라 없이 통합 테스트를 실행해 장시간 대기하던 CI 이슈 원인 분석
   - `.github/workflows/ci-java.yml`에 `build` 잡용 compose 기동/정리 스텝 추가
   - `docker-compose.ci.yml`에 Kafka 브로커 추가, `application-test.yml`과 `build.gradle.kts`에 테스트 timeout/빠른 실패 설정 반영
+  - `application-test.yml`의 `listener.auto-startup: false` 설정 오기입 발견 및 제거
+  - `SearchElasticsearchIntegrationTest` Kafka consumer group 격리 문제 원인 분석 → WORKPLAN에 따라 `@Disabled` 처리
+  - `feature/kafka-es-sync` PR CI 최종 통과 확인
+  - RULE 04.1·04.4·12.3 컨벤션 위반 수정 → `fix/convention-violations` PR #42 생성
+  - W3 Step 6 구현: `note_versions` 테이블(V8 Flyway), `NoteVersion` 엔티티/리포지토리, `NoteVersionService`, `NoteVersionController` (버전 목록/상세/복원 3 엔드포인트), `NoteService.update()` 버전 스냅샷 훅, 단위+통합 테스트
+  - W3 Step 7 구현: `TagService`(자동완성 userId 필터링·인기태그 Redis 캐싱), `TagController`, `NoteController` `?tag=` 필터 확장, `RedisConfig`, 단위+통합 테스트
+  - 코드 리뷰 버그 수정 8건: autocomplete 타인 태그 노출 보안 패치, restore() 이벤트 위임(NoteService.restoreVersion), LIMIT→setMaxResults, prune try-catch, TagController 인증 정리, keys() NPE, EntityManager 생성자 주입, Note.sanitizeTags 소문자 정규화
+  - `feat/step6-step7-note-version-tag-api` 브랜치 생성 (dev 기준)
 - **이슈**:
   - 기존 `docker-compose.ci.yml`에는 PostgreSQL/Elasticsearch만 있어 Kafka producer 초기화 경로를 충족하지 못했음
+  - 동일 consumer group ID(`knowledge-search-indexer`)를 사용하는 여러 `@SpringBootTest` 컨텍스트가 Kafka 파티션을 경쟁하여 `SearchElasticsearchIntegrationTest`가 메시지를 수신하지 못하는 구조적 문제 확인
 - **내일 계획**:
-  - CI 재실행 결과 확인
-  - 실패 시 Kafka healthcheck 또는 테스트 프로파일 추가 보정
+  - PR #42 머지 확인 후 `feat/step6-step7-note-version-tag-api` rebase → W3 PR 생성 (dev 타겟)
+  - TASK Step 6·7 Done When 체크박스 업데이트
 
 ### W5 (2026-06-08 ~ 06-12)
 
 #### 2026-06-09 (월)
 
 - **완료**:
-- **진행 중**:
+  - dev 최신화(#58 검색 튜닝·#59 검색 인증 반영) + 빌드 검증(인프라 기동 후 그린)
+  - 노트/그래프 E2E 클래스 A 작성·통과 (`KnowledgeGraphFlowE2ETest`, 로컬 4/4)
+    - S1 노트→위키링크→백링크/아웃링크, S2 백링크→그래프, S4 태그 필터·자동완성, S5 버전 이력·복원
+    - MockMvc + jwt() 인증, 신규 테스트 파일만 추가(기존 코드/설정 무수정)
+- **진행 중**: 클래스 A PR 준비
 - **이슈**:
-- **다음**:
+  - 검색 동기화 E2E(S3)는 로컬 testcontainers가 Docker 미감지로 skip(기존 `SearchElasticsearchIntegrationTest`도 동일) → 검색=knowledge-2 영역이라 리체크 후 재작성 예정
+  - #48 flyway-guard caller는 CI(.github/workflows) 변경이라 사고 직후 신중 → 팀 조율 후 진행(보류)
+- **다음**: 클래스 A PR, Phase 5 잔여 docs 정리
 
 #### 2026-06-10 (화)
 

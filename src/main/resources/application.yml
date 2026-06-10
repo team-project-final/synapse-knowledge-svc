@@ -3,10 +3,16 @@ spring:
     name: knowledge-svc
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:dev}
+  flyway:
+    out-of-order: true
+    baseline-on-migrate: true
+    baseline-version: 8
   elasticsearch:
     uris: ${ELASTICSEARCH_URIS:http://localhost:9200}
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    security:
+      protocol: ${SPRING_KAFKA_SECURITY_PROTOCOL:PLAINTEXT}
     properties:
       schema.registry.url: ${SCHEMA_REGISTRY_URL:http://localhost:8086}
     producer:
@@ -49,6 +55,7 @@ synapse:
     public-key: ${JWT_PUBLIC_KEY:}
     issuer: ${JWT_ISSUER:synapse-auth}
   kafka:
+    enabled: ${KAFKA_ENABLED:false}
     outbox:
       fixed-delay-ms: ${KAFKA_OUTBOX_FIXED_DELAY_MS:1000}
       batch-size: ${KAFKA_OUTBOX_BATCH_SIZE:50}
@@ -57,10 +64,10 @@ search:
   ai:
     base-url: ${SEARCH_AI_BASE_URL:http://localhost:8090}
     timeout: ${SEARCH_AI_TIMEOUT:3s}
-    threshold: ${SEARCH_AI_THRESHOLD:0.7}
+    threshold: ${SEARCH_AI_THRESHOLD:0.55}
   hybrid:
-    rrf-k: ${SEARCH_HYBRID_RRF_K:60}
-    candidate-multiplier: ${SEARCH_HYBRID_CANDIDATE_MULTIPLIER:3}
+    rrf-k: ${SEARCH_HYBRID_RRF_K:40}
+    candidate-multiplier: ${SEARCH_HYBRID_CANDIDATE_MULTIPLIER:5}
   accuracy:
     dataset-version: ${SEARCH_ACCURACY_DATASET_VERSION:v1}
     benchmark-user-id: ${SEARCH_ACCURACY_BENCHMARK_USER_ID:910000}
@@ -68,6 +75,13 @@ search:
     semantic-actor-id: ${SEARCH_ACCURACY_SEMANTIC_ACTOR_ID:11111111-1111-1111-1111-111111111111}
     top-k: ${SEARCH_ACCURACY_TOP_K:10}
     indexing-wait-timeout: ${SEARCH_ACCURACY_INDEXING_WAIT_TIMEOUT:20s}
+  bm25:
+    k1: ${SEARCH_BM25_K1:1.4}
+    b: ${SEARCH_BM25_B:0.65}
+    title-boost: ${SEARCH_BM25_TITLE_BOOST:4.0}
+    content-boost: ${SEARCH_BM25_CONTENT_BOOST:1.0}
+    tag-boost: ${SEARCH_BM25_TAG_BOOST:2.5}
+    minimum-should-match: ${SEARCH_BM25_MINIMUM_SHOULD_MATCH:70%}
 
 slack:
   webhook-url: ${SLACK_WEBHOOK_URL:}

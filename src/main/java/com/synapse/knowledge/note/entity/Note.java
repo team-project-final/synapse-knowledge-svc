@@ -85,6 +85,7 @@ public class Note extends BaseEntity {
 
         return new ArrayList<>(tags.stream()
             .map(String::trim)
+            .map(String::toLowerCase)
             .filter(tag -> !tag.isBlank())
             .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new)));
     }

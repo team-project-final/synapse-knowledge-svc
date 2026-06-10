@@ -35,6 +35,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/v1/admin/search/**").hasRole("ADMIN")
                         .requestMatchers("/api/v1/notes/**").authenticated()
+                        .requestMatchers("/api/v1/tags/autocomplete").authenticated()
                         .requestMatchers("/api/v1/ai/search/**").authenticated()
                         .requestMatchers("/api/v1/graphs/**").authenticated()
                         .requestMatchers("/actuator/health").permitAll()

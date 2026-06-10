@@ -19,31 +19,30 @@
 
 ### W2 (2026-05-18 ~ 05-22)
 
-| Step   | 내용               | 상태        | 시작일     | 완료일     | 비고                                                                 |
-| ------ | ------------------ | ----------- | ---------- | ---------- | -------------------------------------------------------------------- |
-| Step 4 | chunking 전략 구현 | Done        | 2026-05-19 | 2026-05-19 | Spring event + @Async 기반 비동기 청크 분할, 수정/삭제 정리까지 구현 |
-| Step 5 | BM25 검색 엔진     | Done        | 2026-05-20 | 2026-05-20 | JWT 검증 골격 + BM25 검색 API/비동기 인덱싱 + live ES nori 통합 검증 완료 |
+| Step   | 내용               | 상태 | 시작일     | 완료일     | 비고                                                                      |
+| ------ | ------------------ | ---- | ---------- | ---------- | ------------------------------------------------------------------------- |
+| Step 4 | chunking 전략 구현 | Done | 2026-05-19 | 2026-05-19 | Spring event + @Async 기반 비동기 청크 분할, 수정/삭제 정리까지 구현      |
+| Step 5 | BM25 검색 엔진     | Done | 2026-05-20 | 2026-05-20 | JWT 검증 골격 + BM25 검색 API/비동기 인덱싱 + live ES nori 통합 검증 완료 |
 
 **W2 진행률**: 2/2 Steps 완료
 
 ### W3 (2026-05-26 ~ 05-29)
 
-| Step   | 내용                   | 상태        | 시작일 | 완료일 | 비고 |
-| ------ | ---------------------- | ----------- | ------ | ------ | ---- |
-| Step 6 | 하이브리드 검색        | Done | 2026-05-26 | 2026-05-29 | semantic contract 정렬 + `note_identity_map` UUID 매핑으로 hybrid RRF 병합 복구 |
+| Step   | 내용                   | 상태 | 시작일     | 완료일     | 비고                                                                                |
+| ------ | ---------------------- | ---- | ---------- | ---------- | ----------------------------------------------------------------------------------- |
+| Step 6 | 하이브리드 검색        | Done | 2026-05-26 | 2026-05-29 | semantic contract 정렬 + `note_identity_map` UUID 매핑으로 hybrid RRF 병합 복구     |
 | Step 7 | 정확도 측정 파이프라인 | Done | 2026-06-01 | 2026-06-01 | benchmark 노트/쿼리 세트 + 관리자 API + Precision@10/Recall@10/MRR/NDCG 리포트 구현 |
 
 **W3 진행률**: 1/2 Steps 완료
 
 ### W4 (2026-06-01 ~ 06-05)
 
-| Step    | 내용            | 상태        | 시작일 | 완료일 | 비고 |
-| ------- | --------------- | ----------- | ------ | ------ | ---- |
-| Step 10 | 검색 E2E 테스트 | Not Started | —      | —      |      |
-| Step 11 | 검색 튜닝       | Not Started | —      | —      |      |
-| Step 12 | 안정화          | Not Started | —      | —      |      |
+| Step   | 내용            | 상태 | 시작일     | 완료일     | 비고                                                                                                   |
+| ------ | --------------- | ---- | ---------- | ---------- | ------------------------------------------------------------------------------------------------------ |
+| Step 8 | 검색 E2E 테스트 | Done | 2026-06-05 | 2026-06-05 | Kafka consumer group 테스트 격리, semantic timeout/Elasticsearch down 실패 경로, CI 검색 E2E 단계 반영 |
+| Step 9 | 검색 튜닝       | Done | 2026-06-08 | 2026-06-08 | semantic duplicate hit dedupe, tuned BM25/RRF 파라미터, 전체 테스트 및 coverage gate 재검증 완료       |
 
-**W4 진행률**: 0/3 Steps 완료
+**W4 진행률**: 2/2 Steps 완료
 
 ---
 
@@ -273,16 +272,87 @@
 #### 2026-06-04 (목)
 
 - **완료**:
+- fix(kafka): `spring.kafka.security.protocol` 설정을 `global` producer와 `search` producer/consumer factory props에 조건부 반영해 MSK TLS-only(9094) 연결 경로를 추가
+- test(kafka): `KafkaConfig` 단위 테스트 5건을 추가해 SSL 주입 시 `security.protocol=SSL`, 기본값 PLAINTEXT 시 미주입 동작을 검증
+- config(kafka): `application.yml`에 `spring.kafka.security.protocol` 환경변수 바인딩을 명시
 - **진행 중**:
+- 없음
 - **이슈**:
+- 없음
 - **다음**:
+- 최신 main 기준 브랜치에서 PR 생성 및 후속 배포 검증 경로 정리
 
 #### 2026-06-05 (금)
 
 - **완료**:
+- test(search): `SearchElasticsearchIntegrationTest`의 `@Disabled`를 제거하고 BM25/nori, 태그 필터, hybrid RRF, semantic timeout fallback, Elasticsearch down 실패 경로를 포함한 Step 8 E2E 시나리오를 복구
+- fix(search): `NoteSearchKafkaConsumer`의 고정 `groupId`를 제거해 테스트/환경별 consumer group 설정을 `spring.kafka.consumer.group-id`로 주입 가능하게 정리
+- chore(ci): GitHub Actions `ci-java.yml`에 `SearchElasticsearchIntegrationTest` 전용 검색 E2E 단계를 추가해 CI에서 실패 시 빌드가 깨지도록 반영
+- fix(ci): `build.gradle.kts`에 `searchE2eTest` 전용 Gradle task를 분리하고 기본 `test`에서는 `SearchElasticsearchIntegrationTest`를 제외해 `clean build`와 검색 E2E 단계의 중복 실행으로 인한 CI 플래키 실패를 제거
+- chore(coverage): `build.gradle.kts`에 JaCoCo report/verification을 추가하고 `search` 실행 로직 기준 line coverage 80% gate 및 CI coverage 단계 연동
+- fix(search): `searchSyncConsumerFactory`의 `auto.offset.reset` 하드코딩을 설정값 주입으로 바꾸고, `SearchElasticsearchIntegrationTest`는 `latest` 오프셋으로 시작하게 조정해 `clean build`가 남긴 Kafka backlog를 재소비하지 않도록 수정
+- test(search): `KafkaConfigTest`에 `auto.offset.reset` 설정 배선 회귀 테스트를 추가하고, CI와 동일하게 `docker compose -f docker-compose.ci.yml up -d --wait` 후 `./gradlew.bat clean build --no-daemon`, `./gradlew.bat searchE2eTest --no-daemon` 재현 순서까지 통과 확인
+- fix(search): `NoteSearchKafkaConsumer`에 listener id를 부여하고 `SearchElasticsearchIntegrationTest`가 Kafka listener running + partition assignment 완료를 기다린 뒤 note를 생성하게 바꿔, 느린 CI에서 `latest` consumer가 첫 search sync event를 놓치는 startup race를 제거
+- verify(search): 같은 compose 환경에서 `clean build -> searchE2eTest` 순서를 다시 실행해 통과 확인
+- docs(step8): W4 Workflow/Task/HISTORY를 Step 8 완료 상태와 실패 항목 기록 기준으로 동기화
 - **진행 중**:
+- 없음
 - **이슈**:
+- coverage gate는 DTO/entity/internal bootstrap 및 live external infra 의존성이 큰 search client/repository/seeder 계층을 제외한 search 실행 로직 범위 기준으로 설정했음
+- `SearchElasticsearchIntegrationTest`는 Kafka topic을 비우지 않고 새 consumer group으로만 격리하면 backlog를 재생할 수 있으므로, E2E에서는 `spring.kafka.consumer.auto-offset-reset=latest`가 필요함
+- `latest`만으로는 충분하지 않았고, listener assignment 전에 첫 이벤트가 발행되면 CI에서 인덱싱이 0건이 될 수 있어 listener readiness wait가 함께 필요했음
 - **주간 요약**:
+
+### W5 (2026-06-08 ~ 06-12)
+
+#### 2026-06-08 (월)
+
+- **완료**:
+  - fix(kafka): `synapse.kafka.enabled` 게이트를 `application.yml`, `global/search KafkaConfig`, note/search producer·consumer·dispatcher에 반영해 `KAFKA_ENABLED`가 실제로 Kafka 빈 활성 여부를 제어하도록 수정
+  - fix(kafka): Kafka 비활성화 시 `NoteEventOutboxService`가 outbox row를 적재하지 않고 no-op 처리하도록 보강
+  - test(kafka): Kafka gate 비활성 시 bean 미등록 검증과 outbox no-op 테스트를 추가하고 관련 테스트 4종을 통과 확인
+  - fix(search): `SearchElasticsearchIntegrationTest`가 `synapse.kafka.enabled=true`를 자체 주입하도록 바꾸고, `KafkaConfigTest`에 enabled 경로 bean 등록 회귀 테스트를 추가해 CI 환경 변수 상태와 무관하게 검색 E2E가 동일하게 동작하도록 고정
+  - verify(ci): `docker compose -f docker-compose.ci.yml up -d --wait` 후 `./gradlew.bat clean build --no-daemon`, `./gradlew.bat searchE2eTest --no-daemon`, `./gradlew.bat jacocoTestCoverageVerification jacocoTestReport --no-daemon`, `./gradlew.bat test --tests '*ModuleStructureTest' --no-daemon`를 순서대로 재현해 전체 CI 빌드 경로 통과 확인
+  - fix(search): `HybridSearchService`에서 같은 note의 duplicate semantic hit를 note 단위로 dedupe하고 최고 `semanticScore`만 반영하도록 수정
+  - fix(search): `RrfMergeService`에서 같은 source의 동일 note가 RRF 점수에 중복 가산되지 않도록 방어 로직 추가
+  - tune(search): `search.ai.threshold`, `search.hybrid.rrf-k`, `candidate-multiplier`, BM25 field boost와 tuned BM25 similarity(`k1=1.4`, `b=0.65`)를 설정 기반으로 조정
+  - test(search): duplicate semantic hit unit/integration 시나리오를 추가하고 `./gradlew.bat test`, `./gradlew.bat jacocoTestCoverageVerification` 통과 확인
+  - docs(step9): `REPORT_knowledge-2_step9.md`, W4 workflow, HISTORY를 Step 9 완료 상태로 동기화
+- **진행 중**:
+  - 없음
+- **이슈**:
+  - 없음
+- **다음**:
+  - 필요 시 tuned search 파라미터를 staging benchmark 결과와 비교해 추가 보정 여부 점검
+
+#### 2026-06-09 (화)
+
+- **완료**:
+  - docs(workflow): `WORKFLOW_knowledge-2_W5.md`를 실제 완료 상태 기준으로 동기화하고 발표용 검색 데모 쿼리 항목을 반영
+  - docs(report): `REPORT_knowledge-2_W5_demo-search.md`를 추가해 발표용 검색 데모 쿼리, 기대 결과, 시연 전제를 고정
+  - test(chunking): `ChunkingPostgresFlywayIntegrationTest`와 `chunkingPgTest` task를 추가해 W2 Step 4의 Postgres/Flyway/pgvector 실제 검증 경로를 보강하고 `./gradlew.bat chunkingPgTest --no-daemon` 통과를 확인
+  - docs(report): `REPORT_knowledge-2_step7.md`에 dataset 규모, Task 완료 기준 매핑, 메트릭 결과표 형식, 관리자 API 응답 예시를 보강해 Step 7 산출물 기준을 명확히 정리
+  - docs(task): Step 9 상태를 실제 완료 이력과 Step 9 보고서 기준으로 동기화
+  - fix(test): `SearchElasticsearchIntegrationTest`를 Testcontainers Elasticsearch 부팅 대신 `docker-compose.ci.yml` 외부 Elasticsearch를 사용하도록 전환하고, Elasticsearch 플러그인 설정을 compose 마운트로 옮겨 Windows 로컬과 CI에서 같은 경로로 `searchE2eTest`를 실행 가능하게 정리
+  - verify(search): `docker compose -f docker-compose.ci.yml up -d --wait` 후 `./gradlew.bat searchE2eTest --no-daemon --rerun-tasks`를 재실행해 7 tests / 0 skipped / 0 failures를 확인
+- **진행 중**:
+  - 없음
+- **이슈**:
+  - semantic/hybrid 발표 시연 안정성은 benchmark seed 적재와 learning-ai semantic proxy contract 유지가 전제다
+- **다음**:
+  - 필요 시 발표용 검색 데모 쿼리를 staging 환경에서 한 번 더 리허설
+
+#### 2026-06-10 (수)
+
+- **완료**:
+  - fix(test): `ChunkingPostgresFlywayIntegrationTest`를 Testcontainers 대신 `docker-compose.ci.yml` Postgres 경로로 전환해 Windows/WSL에서 더 이상 skip 없이 실행되도록 정리
+  - fix(chunking): `NoteChunk`의 `chunkText`를 실제 PostgreSQL `TEXT` 컬럼에 맞게 매핑하고 `embedding vector(1536)` 컬럼은 insert/update 대상에서 제외해 pgvector 저장 경로 충돌을 제거
+  - verify(chunking): `docker compose -f docker-compose.ci.yml up -d --wait postgres`, `./gradlew.bat chunkingPgTest --no-daemon --rerun-tasks`에서 `2 tests / 0 skipped / 0 failures` 확인
+  - verify(build): `docker compose -f docker-compose.ci.yml up -d --wait redis`, `./gradlew.bat clean build --no-daemon` 재실행까지 통과 확인
+- **이슈**:
+  - 없음
+- **다음**:
+  - PR 본문 정리 후 `fix/KNOW-chunking-pg-flyway` 브랜치 리뷰 요청
 
 ---
 

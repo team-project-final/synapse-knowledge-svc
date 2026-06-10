@@ -2,9 +2,11 @@ package com.synapse.knowledge.search.service;
 
 import com.synapse.knowledge.search.dto.UnifiedSearchResultResponse;
 import com.synapse.knowledge.search.service.support.SearchCandidate;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
 
@@ -34,9 +36,11 @@ public class RrfMergeService {
         int rrfK,
         boolean keywordSource
     ) {
+        Set<UUID> seenNoteIds = new HashSet<>();
+
         for (int index = 0; index < results.size(); index++) {
             SearchCandidate candidate = results.get(index);
-            if (candidate.externalNoteId() == null) {
+            if (candidate.externalNoteId() == null || !seenNoteIds.add(candidate.externalNoteId())) {
                 continue;
             }
 

@@ -1,9 +1,13 @@
 package com.synapse.knowledge.search.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
+import static org.mockito.Mockito.mock;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.ElasticsearchException;
@@ -15,55 +19,44 @@ import com.synapse.knowledge.search.SearchIdentity;
 import com.synapse.knowledge.search.client.LearningAiSearchClient;
 import com.synapse.knowledge.search.dto.HybridSearchRequest;
 import com.synapse.knowledge.search.dto.HybridSearchResponse;
-import com.synapse.knowledge.search.dto.SearchPageResponse;
 import com.synapse.knowledge.search.dto.SearchRequest;
+import com.synapse.knowledge.search.dto.SearchPageResponse;
+import com.synapse.knowledge.search.entity.NoteSearchDocument;
+import com.synapse.knowledge.search.repository.ElasticsearchNoteSearchRepository;
+import com.synapse.knowledge.search.service.consumer.NoteSearchKafkaConsumer;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.kafka.config.KafkaListenerEndpointRegistry;
+import org.springframework.kafka.listener.MessageListenerContainer;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.util.ReflectionTestUtils;
-import org.testcontainers.elasticsearch.ElasticsearchContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.utility.DockerImageName;
-import org.testcontainers.utility.MountableFile;
 
-@Disabled("Kafka consumer group 격리 문제로 비활성화 — @EmbeddedKafka 격리 방식으로 전환 필요 (WORKPLAN step5 참고)")
-@SpringBootTest
+@SpringBootTest(properties = {
+    "synapse.kafka.enabled=true",
+    "spring.kafka.consumer.group-id=knowledge-search-indexer-e2e",
+    "spring.kafka.consumer.auto-offset-reset=latest",
+    "spring.kafka.listener.auto-startup=true",
+    "search.ai.timeout=200ms"
+})
 @ActiveProfiles("test")
-@Testcontainers(disabledWithoutDocker = true)
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class SearchElasticsearchIntegrationTest {
 
     private static final String INDEX_NAME = "notes-v1";
-
-    @Container
-    static final ElasticsearchContainer elasticsearch = new ElasticsearchContainer(
-        DockerImageName.parse("docker.elastic.co/elasticsearch/elasticsearch:9.2.1")
-    )
-        .withEnv("discovery.type", "single-node")
-        .withEnv("xpack.security.enabled", "false")
-        .withEnv("ES_JAVA_OPTS", "-Xms512m -Xmx512m")
-        .withCopyFileToContainer(
-            MountableFile.forClasspathResource("elasticsearch/elasticsearch-plugins.yml"),
-            "/usr/share/elasticsearch/config/elasticsearch-plugins.yml"
-        );
-
-    @DynamicPropertySource
-    static void registerElasticProperties(DynamicPropertyRegistry registry) {
-        registry.add("spring.elasticsearch.uris", elasticsearch::getHttpHostAddress);
-    }
 
     @Autowired
     private NoteService noteService;
@@ -84,16 +77,21 @@ class SearchElasticsearchIntegrationTest {
     private ElasticsearchClient elasticsearchClient;
 
     @Autowired
-    private com.synapse.knowledge.search.repository.ElasticsearchNoteSearchRepository elasticsearchNoteSearchRepository;
+    private ElasticsearchNoteSearchRepository elasticsearchNoteSearchRepository;
+
+    @Autowired
+    private KafkaListenerEndpointRegistry kafkaListenerEndpointRegistry;
 
     @MockitoBean
     private LearningAiSearchClient learningAiSearchClient;
 
     @BeforeEach
     void setUp() throws IOException {
+        assertElasticsearchReachable();
         noteIdentityMapRepository.deleteAll();
         noteRepository.deleteAll();
         deleteIndexIfExists();
+        waitForSearchListenerReady();
     }
 
     @AfterEach
@@ -103,9 +101,10 @@ class SearchElasticsearchIntegrationTest {
         deleteIndexIfExists();
     }
 
-    @DisplayName("search_한국어복합명사노트를저장하면_shouldNori분해검색과하이라이트가동작")
+    @DisplayName("한국어 복합명사 노트를 저장하면 Nori 분해 검색과 하이라이트가 동작한다")
     @Test
-    void search_한국어복합명사노트를저장하면_shouldNori분해검색과하이라이트가동작() throws IOException {
+    @Order(1)
+    void search_koreanCompoundNounNote_shouldWorkWithNoriAnalysisAndHighlight() throws IOException {
         // Given
         Long ownerId = 100L;
         noteService.create(
@@ -138,9 +137,10 @@ class SearchElasticsearchIntegrationTest {
         assertThat(response.totalCount()).isEqualTo(1L);
     }
 
-    @DisplayName("search_태그필터를함께주면_should조건에맞는노트만반환")
+    @DisplayName("태그 필터를 함께 주면 조건에 맞는 노트만 반환한다")
     @Test
-    void search_태그필터를함께주면_should조건에맞는노트만반환() {
+    @Order(2)
+    void search_withTagFilter_shouldReturnOnlyMatchingNotes() {
         // Given
         Long ownerId = 300L;
         noteService.create(ownerId, new NoteCreateRequest("tenant1", "스프링 검색", "spring boot elasticsearch", List.of("backend", "search")));
@@ -154,9 +154,10 @@ class SearchElasticsearchIntegrationTest {
         assertThat(response.results().get(0).title()).isEqualTo("스프링 검색");
     }
 
-    @DisplayName("hybridSearch_시맨틱결과가함께오면_shouldRrf점수순으로병합된다")
+    @DisplayName("시맨틱 결과가 함께 오면 RRF 점수순으로 병합된다")
     @Test
-    void hybridSearch_시맨틱결과가함께오면_shouldRrf점수순으로병합된다() {
+    @Order(3)
+    void hybridSearch_withSemanticResults_shouldMergeByRrfScore() {
         // Given
         Long ownerId = 500L;
         String semanticActorId = UUID.randomUUID().toString();
@@ -174,7 +175,7 @@ class SearchElasticsearchIntegrationTest {
         UUID elasticExternalNoteId = noteIdentityMapRepository.findById(elasticNoteId)
             .orElseThrow(() -> new IllegalStateException("missing note identity mapping: " + elasticNoteId))
             .getExternalNoteId();
-        given(learningAiSearchClient.searchSemantic(semanticActorId, "스프링", 30)).willReturn(List.of(
+        given(learningAiSearchClient.searchSemantic(semanticActorId, "스프링", 50)).willReturn(List.of(
             new LearningAiSearchClient.LearningAiSemanticHit(UUID.randomUUID(), springExternalNoteId, "의미상 관련", 0.98f),
             new LearningAiSearchClient.LearningAiSemanticHit(UUID.randomUUID(), elasticExternalNoteId, "의미상 관련", 0.95f)
         ));
@@ -193,9 +194,84 @@ class SearchElasticsearchIntegrationTest {
         assertThat(response.semanticFallback()).isFalse();
     }
 
-    @DisplayName("accuracyReport_benchmark세트를실행하면_should세모드리포트를생성한다")
+    @DisplayName("시맨틱 검색이 타임아웃되면 BM25 결과만 반환한다")
     @Test
-    void accuracyReport_benchmark세트를실행하면_should세모드리포트를생성한다() {
+    @Order(4)
+    void hybridSearch_semanticTimeout_shouldReturnBm25Fallback() {
+        // Given
+        Long ownerId = 700L;
+        String semanticActorId = UUID.randomUUID().toString();
+        Long springNoteId = noteService.create(
+            ownerId,
+            new NoteCreateRequest("tenant1", "스프링 타임아웃", "spring timeout fallback search", List.of("backend", "search"))
+        ).id();
+        given(learningAiSearchClient.searchSemantic(semanticActorId, "스프링", 50))
+            .willAnswer(invocation -> {
+                sleep(Duration.ofMillis(400));
+                return List.of(new LearningAiSearchClient.LearningAiSemanticHit(
+                    UUID.randomUUID(),
+                    UUID.randomUUID(),
+                    "느린 semantic 응답",
+                    0.91f
+                ));
+            });
+
+        // When
+        waitForResults(ownerId, "스프링", null, 20);
+        HybridSearchResponse response = searchService.hybridSearch(
+            new SearchIdentity(ownerId, semanticActorId),
+            new HybridSearchRequest("스프링", 10, null)
+        );
+
+        // Then
+        assertThat(response.results()).isNotEmpty();
+        assertThat(response.results().get(0).noteId()).isEqualTo(springNoteId);
+        assertThat(response.results().get(0).semanticScore()).isNull();
+        assertThat(response.semanticFallback()).isTrue();
+    }
+
+    @DisplayName("같은 노트의 중복 시맨틱 hit는 한 번만 반영해 순위를 안정적으로 유지한다")
+    @Test
+    @Order(5)
+    void hybridSearch_duplicateSemanticHitsForSameNote_shouldKeepStableRanking() {
+        Long ownerId = 800L;
+        String semanticActorId = UUID.randomUUID().toString();
+        Long springNoteId = noteService.create(
+            ownerId,
+            new NoteCreateRequest("tenant1", "스프링 아키텍처", "spring architecture and modulith design", List.of("backend", "spring"))
+        ).id();
+        Long searchNoteId = noteService.create(
+            ownerId,
+            new NoteCreateRequest("tenant1", "검색 시스템", "search pipeline tuning and bm25 fallback", List.of("search"))
+        ).id();
+        UUID springExternalNoteId = noteIdentityMapRepository.findById(springNoteId)
+            .orElseThrow(() -> new IllegalStateException("missing note identity mapping: " + springNoteId))
+            .getExternalNoteId();
+        UUID searchExternalNoteId = noteIdentityMapRepository.findById(searchNoteId)
+            .orElseThrow(() -> new IllegalStateException("missing note identity mapping: " + searchNoteId))
+            .getExternalNoteId();
+        given(learningAiSearchClient.searchSemantic(semanticActorId, "스프링", 50)).willReturn(List.of(
+            new LearningAiSearchClient.LearningAiSemanticHit(UUID.randomUUID(), searchExternalNoteId, "검색 의미 1", 0.99f),
+            new LearningAiSearchClient.LearningAiSemanticHit(UUID.randomUUID(), searchExternalNoteId, "검색 의미 2", 0.97f),
+            new LearningAiSearchClient.LearningAiSemanticHit(UUID.randomUUID(), springExternalNoteId, "스프링 의미", 0.94f)
+        ));
+
+        waitForResults(ownerId, "스프링", null, 20);
+        HybridSearchResponse response = searchService.hybridSearch(
+            new SearchIdentity(ownerId, semanticActorId),
+            new HybridSearchRequest("스프링", 10, null)
+        );
+
+        assertThat(response.results()).hasSizeGreaterThanOrEqualTo(2);
+        assertThat(response.results().stream().map(result -> result.noteId()).distinct().count())
+            .isEqualTo(response.results().size());
+        assertThat(response.results().get(0).noteId()).isEqualTo(springNoteId);
+    }
+
+    @DisplayName("benchmark 세트를 실행하면 세 모드 리포트를 생성한다")
+    @Test
+    @Order(6)
+    void accuracyReport_runBenchmarkSet_shouldGenerateThreeModeReport() {
         given(learningAiSearchClient.searchSemantic(anyString(), anyString(), anyInt())).willReturn(List.of());
 
         var report = searchAccuracyService.runAccuracyTest();
@@ -205,6 +281,35 @@ class SearchElasticsearchIntegrationTest {
         assertThat(report.semantic().queryCount()).isGreaterThanOrEqualTo(50);
         assertThat(report.hybrid().queryCount()).isGreaterThanOrEqualTo(50);
         assertThat(report.improvements()).isNotEmpty();
+    }
+
+    @DisplayName("Elasticsearch endpoint에 연결할 수 없으면 검색 요청은 실패한다")
+    @Test
+    @Order(7)
+    void search_elasticsearchEndpointUnavailable_shouldThrowException() throws IOException {
+        // Given
+        Long ownerId = 900L;
+        noteService.create(
+            ownerId,
+            new NoteCreateRequest("tenant1", "Elasticsearch 다운 테스트", "cluster unavailable failure path", List.of("ops"))
+        );
+        waitForResults(ownerId, "Elasticsearch", null, 20);
+        ElasticsearchClient originalClient =
+            (ElasticsearchClient) ReflectionTestUtils.getField(elasticsearchNoteSearchRepository, "elasticsearchClient");
+        ElasticsearchClient failingClient = mock(ElasticsearchClient.class, RETURNS_DEEP_STUBS);
+        ReflectionTestUtils.setField(elasticsearchNoteSearchRepository, "elasticsearchClient", failingClient);
+        given(failingClient.search(any(java.util.function.Function.class), org.mockito.ArgumentMatchers.eq(NoteSearchDocument.class)))
+            .willThrow(new IOException("connection refused"));
+
+        // When & Then
+        try {
+            assertThatThrownBy(() -> searchService.search(ownerId, new SearchRequest("Elasticsearch", null, 20, null)))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("Elasticsearch 검색 요청에 실패했습니다");
+        } finally {
+            ReflectionTestUtils.setField(elasticsearchNoteSearchRepository, "elasticsearchClient", originalClient);
+            resetIndexEnsuredFlag();
+        }
     }
 
     private SearchPageResponse waitForResults(Long userId, String query, List<String> tags, int limit) {
@@ -284,8 +389,12 @@ class SearchElasticsearchIntegrationTest {
     }
 
     private void sleepBriefly() {
+        sleep(Duration.ofMillis(250));
+    }
+
+    private void sleep(Duration duration) {
         try {
-            Thread.sleep(250L);
+            Thread.sleep(duration.toMillis());
         } catch (InterruptedException ex) {
             Thread.currentThread().interrupt();
             throw new IllegalStateException("Elasticsearch indexing wait interrupted", ex);
@@ -307,5 +416,39 @@ class SearchElasticsearchIntegrationTest {
 
     private void resetIndexEnsuredFlag() {
         ReflectionTestUtils.setField(elasticsearchNoteSearchRepository, "indexEnsured", false);
+    }
+
+    private void assertElasticsearchReachable() {
+        try {
+            boolean reachable = elasticsearchClient.ping().value();
+            if (!reachable) {
+                throw new IllegalStateException("searchE2eTest requires Elasticsearch at spring.elasticsearch.uris");
+            }
+        } catch (IOException ex) {
+            throw new IllegalStateException(
+                "searchE2eTest requires a reachable Elasticsearch instance. Start docker compose -f docker-compose.ci.yml up -d --wait first.",
+                ex
+            );
+        }
+    }
+
+    private void waitForSearchListenerReady() {
+        Instant deadline = Instant.now().plus(Duration.ofSeconds(20));
+
+        while (Instant.now().isBefore(deadline)) {
+            MessageListenerContainer container =
+                kafkaListenerEndpointRegistry.getListenerContainer(NoteSearchKafkaConsumer.LISTENER_ID);
+            if (container != null && container.isRunning() && hasAssignedPartitions(container)) {
+                return;
+            }
+            sleepBriefly();
+        }
+
+        throw new IllegalStateException("search Kafka listener was not ready within PT20S");
+    }
+
+    private boolean hasAssignedPartitions(MessageListenerContainer container) {
+        Object assignedPartitions = ReflectionTestUtils.invokeMethod(container, "getAssignedPartitions");
+        return assignedPartitions instanceof Collection<?> partitions && !partitions.isEmpty();
     }
 }

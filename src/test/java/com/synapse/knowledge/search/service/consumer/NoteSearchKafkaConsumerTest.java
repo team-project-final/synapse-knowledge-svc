@@ -33,7 +33,7 @@ class NoteSearchKafkaConsumerTest {
 
     @Test
     @DisplayName("upsert 이벤트 수신 시 ES에 인덱싱되고 멱등 키를 기록한다")
-    void upsert이벤트수신시_ES에인덱싱되고_멱등키를기록한다() {
+    void handle_upsertEvent_shouldIndexInESAndMarkProcessed() {
         given(idempotencyStore.isProcessed(anyString())).willReturn(false);
         var event = buildEvent(false);
 
@@ -45,7 +45,7 @@ class NoteSearchKafkaConsumerTest {
 
     @Test
     @DisplayName("delete 이벤트 수신 시 ES에서 삭제되고 멱등 키를 기록한다")
-    void delete이벤트수신시_ES에서삭제되고_멱등키를기록한다() {
+    void handle_deleteEvent_shouldDeleteFromESAndMarkProcessed() {
         given(idempotencyStore.isProcessed(anyString())).willReturn(false);
         var event = buildEvent(true);
 
@@ -57,7 +57,7 @@ class NoteSearchKafkaConsumerTest {
 
     @Test
     @DisplayName("중복 이벤트 수신 시 ES 호출 없이 skip한다")
-    void 중복이벤트수신시_ES호출없이skip한다() {
+    void handle_duplicateEvent_shouldSkipWithoutESCall() {
         given(idempotencyStore.isProcessed(anyString())).willReturn(true);
         var event = buildEvent(false);
 
@@ -70,7 +70,7 @@ class NoteSearchKafkaConsumerTest {
 
     @Test
     @DisplayName("tags가 null인 이벤트 수신 시 빈 리스트로 upsert한다")
-    void tags가null인이벤트수신시_빈리스트로upsert한다() {
+    void handle_nullTagsEvent_shouldUpsertWithEmptyTagList() {
         given(idempotencyStore.isProcessed(anyString())).willReturn(false);
         var event = buildEventWithNullTags();
 

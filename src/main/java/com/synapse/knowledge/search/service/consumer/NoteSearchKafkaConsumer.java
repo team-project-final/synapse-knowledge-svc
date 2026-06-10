@@ -7,20 +7,24 @@ import java.time.Instant;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
+@ConditionalOnProperty(prefix = "synapse.kafka", name = "enabled", havingValue = "true")
 @RequiredArgsConstructor
 public class NoteSearchKafkaConsumer {
+
+    public static final String LISTENER_ID = "searchSyncKafkaListener";
 
     private final NoteSearchRepository noteSearchRepository;
     private final KafkaIdempotencyStore idempotencyStore;
 
     @KafkaListener(
+        id = LISTENER_ID,
         topics = NoteSearchSyncKafkaEvent.TOPIC,
-        groupId = "knowledge-search-indexer",
         containerFactory = "searchSyncKafkaListenerContainerFactory"
     )
     public void handle(NoteSearchSyncKafkaEvent event) {
