@@ -244,9 +244,15 @@
 #### 2026-06-09 (월)
 
 - **완료**:
-- **진행 중**:
+  - dev 최신화(#58 검색 튜닝·#59 검색 인증 반영) + 빌드 검증(인프라 기동 후 그린)
+  - 노트/그래프 E2E 클래스 A 작성·통과 (`KnowledgeGraphFlowE2ETest`, 로컬 4/4)
+    - S1 노트→위키링크→백링크/아웃링크, S2 백링크→그래프, S4 태그 필터·자동완성, S5 버전 이력·복원
+    - MockMvc + jwt() 인증, 신규 테스트 파일만 추가(기존 코드/설정 무수정)
+- **진행 중**: 클래스 A PR 준비
 - **이슈**:
-- **다음**:
+  - 검색 동기화 E2E(S3)는 로컬 testcontainers가 Docker 미감지로 skip(기존 `SearchElasticsearchIntegrationTest`도 동일) → 검색=knowledge-2 영역이라 리체크 후 재작성 예정
+  - #48 flyway-guard caller는 CI(.github/workflows) 변경이라 사고 직후 신중 → 팀 조율 후 진행(보류)
+- **다음**: 클래스 A PR, Phase 5 잔여 docs 정리
 
 #### 2026-06-10 (화)
 
