@@ -1,13 +1,16 @@
 package com.synapse.knowledge.global.exception;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -40,7 +43,8 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleException(Exception ex) {
+    public ResponseEntity<ErrorResponse> handleException(Exception ex, HttpServletRequest request) {
+        log.error("Unhandled exception occurred path={}", request.getRequestURI(), ex);
         return ResponseEntity.internalServerError()
             .body(ErrorResponse.of(ErrorCode.INTERNAL_ERROR, "Internal server error occurred"));
     }

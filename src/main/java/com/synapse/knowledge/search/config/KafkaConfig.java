@@ -40,8 +40,8 @@ class KafkaConfig {
     @Value("${spring.kafka.consumer.auto-offset-reset:earliest}")
     private String autoOffsetReset;
 
-    @Value("${spring.kafka.listener.auto-startup:true}")
-    private boolean listenerAutoStartup;
+    @Value("${synapse.kafka.search-sync-listener.auto-startup:true}")
+    private boolean searchSyncListenerAutoStartup;
 
     @Bean("searchSyncKafkaTemplate")
     KafkaTemplate<Object, Object> searchSyncKafkaTemplate(
@@ -88,7 +88,7 @@ class KafkaConfig {
 
         var factory = new ConcurrentKafkaListenerContainerFactory<String, NoteSearchSyncKafkaEvent>();
         factory.setConsumerFactory(searchSyncConsumerFactory);
-        factory.setAutoStartup(listenerAutoStartup);
+        factory.setAutoStartup(searchSyncListenerAutoStartup);
         factory.setCommonErrorHandler(new DefaultErrorHandler(recoverer, backOff));
         return factory;
     }
