@@ -375,12 +375,16 @@
   - verify(coverage): `./gradlew.bat test jacocoTestReport`, `./gradlew.bat chunkingPgTest searchE2eTest jacocoTestCoverageVerification jacocoTestReport`를 통과하고 JaCoCo line coverage `84.11%` (`covered=1212`, `missed=229`)를 확인
   - verify(ci): `docker compose -f docker-compose.ci.yml up -d --wait` 후 `./gradlew.bat clean build --no-daemon`, `chunkingPgTest`, `searchE2eTest`, `jacocoTestCoverageVerification jacocoTestReport`, `test --tests *ModuleStructureTest`를 CI 순서대로 재현해 전부 통과 확인
   - verify(ci): Gradle 리포트 기준 `test` 126건, `chunkingPgTest` 2건, `searchE2eTest` 7건 모두 `skipped=0`, `failures=0`, `errors=0` 확인
+  - chore(ci): `.github/workflows/ci-java.yml`, `.github/workflows/parse-workflow.yml`의 GitHub Actions 메이저를 `checkout v6`, `setup-java v5`, `setup-node v6`로 상향해 Node 20 런타임 deprecation 대응
+  - verify(ci): 액션 업그레이드 후 `./gradlew.bat test`를 재실행해 기존 자바 테스트 회귀가 없음을 확인
+  - verify(ci): 액션 업그레이드 브랜치에서 `docker compose -f docker-compose.ci.yml up -d --wait` 후 `./gradlew.bat clean build --no-daemon`, `./gradlew.bat chunkingPgTest --no-daemon --rerun-tasks`, `./gradlew.bat searchE2eTest --no-daemon --rerun-tasks`, `./gradlew.bat jacocoTestCoverageVerification jacocoTestReport --no-daemon --rerun-tasks`, `./gradlew.bat test --tests '*ModuleStructureTest' --no-daemon --rerun-tasks`, `./gradlew.bat test --no-daemon --rerun-tasks`를 순서대로 재현해 모두 통과 확인
+  - verify(ci): Gradle XML 리포트 기준 `test` 128건, `chunkingPgTest` 2건, `searchE2eTest` 7건, `ModuleStructureTest` 2건 모두 `skipped=0`, `failures=0`, `errors=0` 확인
 - **진행 중**:
   - 없음
 - **이슈**:
-  - 없음
+  - GitHub Actions runner의 Node 20 deprecation 경고 소멸 여부는 원격 CI 실행에서 최종 확인 필요
 - **다음**:
-  - PR 본문에 service-wide coverage 근거와 JaCoCo report 경로를 포함해 리뷰 요청
+  - PR 본문에 GitHub Actions 메이저 업그레이드 근거와 로컬 `./gradlew.bat test` 검증 결과를 포함해 리뷰 요청
 
 ---
 
