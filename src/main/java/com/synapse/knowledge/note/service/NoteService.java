@@ -57,7 +57,7 @@ public class NoteService {
 
         updateWikiLinks(savedNote.getId(), request.tenantId(), sanitizedMd);
         noteEventOutboxService.enqueueCreated(savedNote, identityMap.getExternalNoteId(), resolveEventUserId(eventUserId, userId));
-        publishChunkingRequested(savedNote, "created");
+        publishChunkingRequested(savedNote, resolveEventUserId(eventUserId, userId), "created");
         publishSearchSyncRequested(savedNote, identityMap.getExternalNoteId(), false);
         return NoteResponse.from(savedNote);
     }
@@ -106,7 +106,7 @@ public class NoteService {
 
         updateWikiLinks(note.getId(), note.getTenantId(), sanitizedMd);
         noteEventOutboxService.enqueueUpdated(note, identityMap.getExternalNoteId(), resolveEventUserId(eventUserId, userId));
-        publishChunkingRequested(note, "updated");
+        publishChunkingRequested(note, resolveEventUserId(eventUserId, userId), "updated");
         publishSearchSyncRequested(note, identityMap.getExternalNoteId(), false);
         return NoteResponse.from(note);
     }
@@ -121,6 +121,7 @@ public class NoteService {
             new NoteChunkingRequested(
                 note.getId(),
                 note.getTenantId(),
+                String.valueOf(userId),
                 null,
                 "deleted",
                 Instant.now()
@@ -184,10 +185,15 @@ public class NoteService {
     }
 
     private void publishChunkingRequested(Note note, String reason) {
+        publishChunkingRequested(note, String.valueOf(note.getUserId()), reason);
+    }
+
+    private void publishChunkingRequested(Note note, String actorId, String reason) {
         eventPublisher.publishEvent(
             new NoteChunkingRequested(
                 note.getId(),
                 note.getTenantId(),
+                actorId,
                 note.getContentPlain(),
                 reason,
                 Instant.now()

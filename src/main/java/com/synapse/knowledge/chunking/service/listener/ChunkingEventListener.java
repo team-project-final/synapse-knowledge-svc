@@ -16,6 +16,6 @@ class ChunkingEventListener {
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handle(NoteChunkingRequested event) {
-        chunkingService.chunkNote(event.noteId(), event.tenantId(), event.contentPlain());
+        chunkingService.chunkNote(event.noteId(), event.actorId(), event.contentPlain());
     }
 }

@@ -364,6 +364,21 @@
 - **다음**:
 - PR 본문 정리 후 `fix/KNOW-openapi-docs-500` 브랜치 리뷰 요청
 
+#### 2026-06-11 (목)
+
+- **완료**:
+  - fix(chunking): `ChunkingEventListener` 경로를 청크 저장 후 `learning-ai /ai/embeddings` HTTP 호출 + JDBC `cast(? as vector)` 업데이트 구조로 재배치
+  - fix(chunking): `NoteChunkingRequested`에 actor id를 추가하고, `ChunkingService`에서 임베딩 개수/차원(1536) 검증 후 `note_chunks.embedding` 적재 로직을 구현
+  - test(chunking): `ChunkingServiceTest`, `ChunkingIntegrationTest`, `ChunkingPostgresFlywayIntegrationTest`를 보강해 임베딩 저장/개수 불일치/차원 불일치와 pgvector 실제 적재를 함께 검증
+  - verify(ci): `docker compose -f docker-compose.ci.yml up -d --wait` 후 `./gradlew.bat clean build --no-daemon`, `chunkingPgTest`, `searchE2eTest`, `jacocoTestCoverageVerification jacocoTestReport`, `test --tests *ModuleStructureTest`를 CI 순서대로 재현해 전부 통과 확인
+  - verify(ci): Gradle 리포트 기준 `test` 126건, `chunkingPgTest` 2건, `searchE2eTest` 7건 모두 `skipped=0`, `failures=0`, `errors=0` 확인
+- **진행 중**:
+  - 없음
+- **이슈**:
+  - 없음
+- **다음**:
+  - 이슈 close 및 PR 본문 정리
+
 ---
 
 ## 변경 이력

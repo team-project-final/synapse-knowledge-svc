@@ -1,7 +1,11 @@
 package com.synapse.knowledge.chunking.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.BDDMockito.given;
 
+import com.synapse.knowledge.chunking.client.LearningAiEmbeddingClient;
 import com.synapse.knowledge.chunking.entity.NoteChunk;
 import com.synapse.knowledge.chunking.repository.NoteChunkRepository;
 import com.synapse.knowledge.note.dto.NoteCreateRequest;
@@ -21,13 +25,15 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 @SpringBootTest(properties = {
     "spring.flyway.enabled=true",
     "spring.jpa.hibernate.ddl-auto=none",
     "spring.jpa.database-platform=org.hibernate.dialect.PostgreSQLDialect",
     "spring.kafka.listener.auto-startup=false",
-    "synapse.kafka.enabled=false"
+    "synapse.kafka.enabled=false",
+    "chunking.ai.enabled=true"
 })
 @ActiveProfiles("test")
 class ChunkingPostgresFlywayIntegrationTest {
@@ -82,11 +88,23 @@ class ChunkingPostgresFlywayIntegrationTest {
     @Autowired
     private NoteIdentityMapRepository noteIdentityMapRepository;
 
+    @MockitoBean
+    private LearningAiEmbeddingClient learningAiEmbeddingClient;
+
     @BeforeEach
     void setUp() {
         noteChunkRepository.deleteAll();
         noteIdentityMapRepository.deleteAll();
         noteRepository.deleteAll();
+        given(learningAiEmbeddingClient.createEmbeddings(anyString(), anyList()))
+            .willAnswer(invocation -> {
+                @SuppressWarnings("unchecked")
+                List<String> texts = invocation.getArgument(1);
+                List<List<Float>> embeddings = texts.stream()
+                    .map(text -> createEmbedding(text.hashCode()))
+                    .toList();
+                return new LearningAiEmbeddingClient.EmbeddingBatchResponse(embeddings, "mock-model");
+            });
     }
 
     @DisplayName("flyway_실행후_should_pgvector확장과_noteChunks스키마가생성됨")
@@ -148,19 +166,33 @@ class ChunkingPostgresFlywayIntegrationTest {
 
         // When
         List<NoteChunk> initialChunks = waitForChunks(created.id(), 2);
+        waitForEmbeddings(created.id(), initialChunks.size());
+
+        // Then
+        assertThat(initialChunks).hasSizeGreaterThan(1);
+        assertThat(initialChunks).allMatch(chunk -> chunk.getEmbedding() != null && !chunk.getEmbedding().isBlank());
+        assertEmbeddingStored(created.id(), initialChunks.size());
+
+        // When
         noteService.update(
             userId,
             created.id(),
             new NoteCreateRequest("tenant1", "Chunk Title Updated", buildLongContent("after", 120))
         );
         List<NoteChunk> updatedChunks = waitForChunkPrefix(created.id(), "after");
+        waitForEmbeddings(created.id(), updatedChunks.size());
+
+        // Then
+        assertThat(updatedChunks).isNotEmpty();
+        assertThat(updatedChunks).allMatch(chunk -> chunk.getChunkText().contains("after"));
+        assertThat(updatedChunks).allMatch(chunk -> chunk.getEmbedding() != null && !chunk.getEmbedding().isBlank());
+        assertEmbeddingStored(created.id(), updatedChunks.size());
+
+        // When
         noteService.delete(userId, created.id());
         List<NoteChunk> deletedChunks = waitUntil(created.id(), List::isEmpty);
 
         // Then
-        assertThat(initialChunks).hasSizeGreaterThan(1);
-        assertThat(updatedChunks).isNotEmpty();
-        assertThat(updatedChunks).allMatch(chunk -> chunk.getChunkText().contains("after"));
         assertThat(deletedChunks).isEmpty();
     }
 
@@ -193,6 +225,58 @@ class ChunkingPostgresFlywayIntegrationTest {
         return noteChunkRepository.findByNoteIdOrderByChunkIndex(noteId);
     }
 
+    private void waitForEmbeddings(Long noteId, int expectedCount) {
+        Instant deadline = Instant.now().plus(Duration.ofSeconds(5));
+
+        while (Instant.now().isBefore(deadline)) {
+            Integer embeddedChunkCount = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from note_chunks
+                where note_id = ?
+                  and embedding is not null
+                """,
+                Integer.class,
+                noteId
+            );
+            if (embeddedChunkCount != null && embeddedChunkCount == expectedCount) {
+                return;
+            }
+
+            try {
+                Thread.sleep(100L);
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();
+                throw new IllegalStateException("Async embedding wait interrupted", ex);
+            }
+        }
+    }
+
+    private void assertEmbeddingStored(Long noteId, int expectedChunkCount) {
+        Integer embeddedChunkCount = jdbcTemplate.queryForObject(
+            """
+            select count(*)
+            from note_chunks
+            where note_id = ?
+              and embedding is not null
+            """,
+            Integer.class,
+            noteId
+        );
+        Integer minDimensions = jdbcTemplate.queryForObject(
+            """
+            select min(vector_dims(embedding))
+            from note_chunks
+            where note_id = ?
+            """,
+            Integer.class,
+            noteId
+        );
+
+        assertThat(embeddedChunkCount).isEqualTo(expectedChunkCount);
+        assertThat(minDimensions).isEqualTo(1536);
+    }
+
     private String buildLongContent(String prefix, int tokenCount) {
         StringBuilder builder = new StringBuilder();
         for (int i = 0; i < tokenCount; i++) {
@@ -202,6 +286,15 @@ class ChunkingPostgresFlywayIntegrationTest {
             }
         }
         return builder.toString().trim();
+    }
+
+    private List<Float> createEmbedding(int seed) {
+        float base = Math.abs(seed % 1000) / 1000.0f;
+        List<Float> embedding = new java.util.ArrayList<>(1536);
+        for (int i = 0; i < 1536; i++) {
+            embedding.add(base + (i * 0.0001f));
+        }
+        return embedding;
     }
 
     private static String lookupProperty(String systemPropertyKey, String envKey, String defaultValue) {

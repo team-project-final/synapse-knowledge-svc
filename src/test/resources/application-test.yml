@@ -56,3 +56,10 @@ search:
     content-boost: 1.0
     tag-boost: 2.5
     minimum-should-match: 70%
+
+chunking:
+  ai:
+    enabled: false
+    base-url: http://localhost:8090
+    timeout: 3s
+    expected-dimensions: 1536

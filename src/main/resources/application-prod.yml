@@ -48,6 +48,13 @@ search:
     tag-boost: ${SEARCH_BM25_TAG_BOOST:2.5}
     minimum-should-match: ${SEARCH_BM25_MINIMUM_SHOULD_MATCH:70%}
 
+chunking:
+  ai:
+    enabled: ${CHUNKING_AI_ENABLED:true}
+    base-url: ${CHUNKING_AI_BASE_URL:${SEARCH_AI_BASE_URL}}
+    timeout: ${CHUNKING_AI_TIMEOUT:3s}
+    expected-dimensions: ${CHUNKING_AI_EXPECTED_DIMENSIONS:1536}
+
 logging:
   level:
     root: INFO
