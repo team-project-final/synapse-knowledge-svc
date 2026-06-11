@@ -95,24 +95,24 @@
 
 ### 5.1 TASK 시작
 
-- [ ] Step Goal / Done When / Scope / Input 확인
-- [ ] PRD_W2 해당 요구사항 확인 (ES 동기화)
-- [ ] Duration 산정 확인
+- [x] Step Goal / Done When / Scope / Input 확인
+- [x] PRD_W2 해당 요구사항 확인 (ES 동기화)
+- [x] Duration 산정 확인
 
 ### 5.2 요구사항 분석
 
 - [x] 노트 변경 이벤트 종류 정의 (created, updated, deleted)
 - [x] Kafka consumer 그룹 및 토픽 (note.updated) 확인
 - [x] Elasticsearch 인덱스 매핑 요건 분석 (title, content, tags, userId)
-- [ ] 동기화 지연 허용 범위 (eventual consistency) 정의
-- [ ] Instructions 초안 → TASK 문서 반영
+- [x] 동기화 지연 허용 범위 (eventual consistency) 정의
+- [x] Instructions 초안 → TASK 문서 반영
 
 ### 5.3 Security 1차 검토
 
 - [x] Kafka 메시지 위변조 방지 확인
 - [ ] ES 인덱스 접근 제어 (내부 네트워크만)
 - [x] 사용자 데이터 격리 (userId 필드 기반 검색 필터)
-- [ ] 결과 → TASK Constraints 반영
+- [x] 결과 → TASK Constraints 반영
 
 ### 5.4 인프라 설계
 
@@ -125,13 +125,13 @@
 
 - [x] ES 인덱스 데이터 삭제 동기화 확인 (노트 삭제 → ES 문서 삭제)
 - [x] 인덱스 갱신 실패 시 재처리 전략 (DLQ 또는 재시도)
-- [ ] 결과 → TASK Constraints 반영
+- [x] 결과 → TASK Constraints 반영
 
 ### 5.6 DTO / Entity 설계 (API First)
 
 - [x] NoteIndexDocument 정의 (noteId, userId, title, content, tags, updatedAt)
 - [x] NoteEvent Avro/DTO 정의 (eventType, noteId, userId, title, content, tags)
-- [ ] Output Format → TASK 반영
+- [x] Output Format → TASK 반영
 
 ### 5.7 Repository 구현
 
@@ -160,6 +160,6 @@
 
 - [x] Flutter 화면 연동: 해당 없음
 - [ ] ES 인덱스 데이터 Kibana/curl 확인
-- [ ] RULE Reference → TASK 반영
+- [x] RULE Reference → TASK 반영
 
 **Step 5 Status**: [ ] Not Started / [ ] In Progress / [x] Done
