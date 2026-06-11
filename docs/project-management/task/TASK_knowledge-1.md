@@ -247,6 +247,7 @@
   - 검색 API 응답 시간 < 200ms
   - nori 한글 형태소 분석 필수
 - **Duration**: 1일
+- **Duration(final)**: 1일 (Kafka 연동 W4로 연기 → 2026-06-02 완료)
 - **RULE Reference**: wiki 03*아키텍처*정의서 §이벤트 설계, wiki 18*기술*스택\_정의서 §Elasticsearch
 - **Assignee**: @knowledge-owner-1
 - **Reviewer**: @team-lead

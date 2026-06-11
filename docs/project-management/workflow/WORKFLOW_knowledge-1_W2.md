@@ -119,7 +119,7 @@
 - [x] Kafka consumer 설정 (group-id, auto-offset-reset, concurrency)
 - [x] ES 인덱스 매핑 설계 (notes 인덱스 — text/keyword 필드 타입)
 - [x] nori 분석기 설정 (한국어 형태소 분석)
-- [ ] Duration(final) 갱신
+- [x] Duration(final) 갱신
 
 ### 5.5 Security 2차 검토
 
