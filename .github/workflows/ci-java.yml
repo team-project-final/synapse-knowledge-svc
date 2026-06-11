@@ -38,7 +38,7 @@ jobs:
       - name: Search E2E
         run: ./gradlew searchE2eTest --no-daemon
 
-      - name: Search Coverage
+      - name: Service Coverage
         run: ./gradlew jacocoTestCoverageVerification jacocoTestReport --no-daemon
 
       - name: Modulith verify

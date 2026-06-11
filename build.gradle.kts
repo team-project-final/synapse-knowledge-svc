@@ -122,47 +122,43 @@ tasks.register<Test>("chunkingPgTest") {
 	shouldRunAfter(tasks.named("test"))
 }
 
-val searchCoverageIncludes = listOf("com/synapse/knowledge/search/**")
-val searchCoverageExcludes = listOf(
-	"com/synapse/knowledge/search/dto/**",
-	"com/synapse/knowledge/search/entity/**",
-	"com/synapse/knowledge/search/event/**",
-	"com/synapse/knowledge/search/internal/**",
-	"com/synapse/knowledge/search/package-info.class",
-	"com/synapse/knowledge/search/client/LearningAiSearchClient.class",
-	"com/synapse/knowledge/search/service/SemanticSearchService.class",
-	"com/synapse/knowledge/search/repository/ElasticsearchNoteSearchRepository.class",
-	"com/synapse/knowledge/search/service/SearchAccuracyBenchmarkSeeder*.class",
-	"com/synapse/knowledge/search/config/SlackNotifier.class",
-	"com/synapse/knowledge/search/service/consumer/KafkaIdempotencyStore.class"
+val serviceCoverageExcludes = listOf(
+	"com/synapse/knowledge/KnowledgeSvcApplication.class",
+	"com/synapse/knowledge/NoteCreated.class",
+	"com/synapse/knowledge/NoteUpdated.class",
+	"com/synapse/knowledge/**/dto/**",
+	"com/synapse/knowledge/**/entity/**",
+	"com/synapse/knowledge/**/internal/**",
+	"com/synapse/knowledge/**/package-info.class"
 )
+val serviceCoverageExecutionData = fileTree(layout.buildDirectory.dir("jacoco")) {
+	include("*.exec")
+}
+
+fun serviceCoverageClassDirectories() = files(sourceSets.main.get().output.classesDirs.files.map {
+	fileTree(it) {
+		serviceCoverageExcludes.forEach(::exclude)
+	}
+})
 
 tasks.jacocoTestReport {
 	dependsOn(tasks.test)
+	mustRunAfter(tasks.named("chunkingPgTest"))
+	mustRunAfter(tasks.named("searchE2eTest"))
+	executionData(serviceCoverageExecutionData)
 	reports {
 		xml.required.set(true)
 		html.required.set(true)
 	}
-	classDirectories.setFrom(
-		files(classDirectories.files.map {
-			fileTree(it) {
-				searchCoverageIncludes.forEach(::include)
-				searchCoverageExcludes.forEach(::exclude)
-			}
-		})
-	)
+	classDirectories.setFrom(serviceCoverageClassDirectories())
 }
 
 tasks.jacocoTestCoverageVerification {
 	dependsOn(tasks.test)
-	classDirectories.setFrom(
-		files(classDirectories.files.map {
-			fileTree(it) {
-				searchCoverageIncludes.forEach(::include)
-				searchCoverageExcludes.forEach(::exclude)
-			}
-		})
-	)
+	mustRunAfter(tasks.named("chunkingPgTest"))
+	mustRunAfter(tasks.named("searchE2eTest"))
+	executionData(serviceCoverageExecutionData)
+	classDirectories.setFrom(serviceCoverageClassDirectories())
 	violationRules {
 		rule {
 			limit {

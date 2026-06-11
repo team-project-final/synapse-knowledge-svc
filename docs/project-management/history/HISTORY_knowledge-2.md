@@ -370,6 +370,9 @@
   - fix(chunking): `ChunkingEventListener` 경로를 청크 저장 후 `learning-ai /ai/embeddings` HTTP 호출 + JDBC `cast(? as vector)` 업데이트 구조로 재배치
   - fix(chunking): `NoteChunkingRequested`에 actor id를 추가하고, `ChunkingService`에서 임베딩 개수/차원(1536) 검증 후 `note_chunks.embedding` 적재 로직을 구현
   - test(chunking): `ChunkingServiceTest`, `ChunkingIntegrationTest`, `ChunkingPostgresFlywayIntegrationTest`를 보강해 임베딩 저장/개수 불일치/차원 불일치와 pgvector 실제 적재를 함께 검증
+  - chore(coverage): `build.gradle.kts`의 JaCoCo 집계를 `search` 한정에서 service-wide 기준으로 재정렬하고 `chunkingPgTest`/`searchE2eTest` 실행 데이터까지 읽도록 수정
+  - test(coverage): `MarkdownSanitizerTest`, `TokenCounterTest`, `WebMvcConfigTest`, `NoteChunkEmbeddingJdbcRepositoryTest`, `NoteCommandAdapterTest`, `NoteIdentityQueryAdapterTest`를 추가해 설정/유틸/어댑터 계층 coverage를 보강
+  - verify(coverage): `./gradlew.bat test jacocoTestReport`, `./gradlew.bat chunkingPgTest searchE2eTest jacocoTestCoverageVerification jacocoTestReport`를 통과하고 JaCoCo line coverage `84.11%` (`covered=1212`, `missed=229`)를 확인
   - verify(ci): `docker compose -f docker-compose.ci.yml up -d --wait` 후 `./gradlew.bat clean build --no-daemon`, `chunkingPgTest`, `searchE2eTest`, `jacocoTestCoverageVerification jacocoTestReport`, `test --tests *ModuleStructureTest`를 CI 순서대로 재현해 전부 통과 확인
   - verify(ci): Gradle 리포트 기준 `test` 126건, `chunkingPgTest` 2건, `searchE2eTest` 7건 모두 `skipped=0`, `failures=0`, `errors=0` 확인
 - **진행 중**:
@@ -377,7 +380,7 @@
 - **이슈**:
   - 없음
 - **다음**:
-  - 이슈 close 및 PR 본문 정리
+  - PR 본문에 service-wide coverage 근거와 JaCoCo report 경로를 포함해 리뷰 요청
 
 ---
 

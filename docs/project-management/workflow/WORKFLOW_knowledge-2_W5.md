@@ -39,5 +39,7 @@
 - [x] 검색 E2E가 통과한다.
 - [x] 정확도 리포트가 작성된다.
 - [x] knowledge-2 P0 버그가 0건이다.
+- [x] knowledge-svc JaCoCo service line coverage가 80% 이상이다.
+  - 근거: `build/reports/jacoco/test/jacocoTestReport.xml` line coverage `84.11%` (`covered=1212`, `missed=229`) + `jacocoTestCoverageVerification` 통과
 - [x] 발표용 검색 쿼리가 안정적으로 동작한다.
   - 근거: benchmark seed + 정확도 리포트 + CI 동일 compose 재검증 + [REPORT_knowledge-2_W5_demo-search.md](../report/REPORT_knowledge-2_W5_demo-search.md)
