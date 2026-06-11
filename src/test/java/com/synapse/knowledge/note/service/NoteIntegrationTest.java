@@ -38,11 +38,23 @@ class NoteIntegrationTest {
         assertThat(response.title()).isEqualTo("Title");
         assertThat(response.contentMd()).contains("tags");
         assertThat(response.contentPlain()).doesNotContain("<b>", "</b>");
+        assertThat(response.deckId()).isNull();
         assertThat(noteIdentityMapRepository.findById(response.id()))
             .isPresent()
             .get()
             .extracting(mapping -> mapping.getExternalNoteId())
             .isNotNull();
+    }
+
+    @Test
+    void createNote_deckId포함_shouldPersistDeckId() {
+        Long userId = 100L;
+        String deckId = "550e8400-e29b-41d4-a716-446655440000";
+        NoteCreateRequest request = new NoteCreateRequest("tenant1", "Deck Note", "Content", java.util.List.of(), deckId);
+
+        NoteResponse response = noteService.create(userId, request);
+
+        assertThat(response.deckId()).isEqualTo(deckId);
     }
 
     @Test

@@ -30,6 +30,7 @@ class NoteEventPublisherTest {
     @Test
     @DisplayName("노트 생성 이벤트를 받으면 NoteCreated 토픽으로 발행한다")
     void handle_noteCreatedEvent_shouldPublishToNoteCreatedTopic() {
+        String deckId = "550e8400-e29b-41d4-a716-446655440000";
         NoteCreatedPublishRequested event = new NoteCreatedPublishRequested(
             "event-1",
             UUID.randomUUID(),
@@ -39,7 +40,7 @@ class NoteEventPublisherTest {
             "평문 내용",
             "2026-06-01T10:15:30",
             1_717_234_530_000L,
-            null
+            deckId
         );
         given(kafkaTemplate.send(eq(NoteKafkaTopics.NOTE_CREATED), eq("tenant-a"), org.mockito.ArgumentMatchers.any(SpecificRecord.class)))
             .willReturn(CompletableFuture.completedFuture(null));
@@ -56,7 +57,7 @@ class NoteEventPublisherTest {
         assertThat(payload.getTenantId()).isEqualTo("tenant-a");
         assertThat(payload.getTitle()).isEqualTo("새 노트");
         assertThat(payload.getContent()).isEqualTo("평문 내용");
-        assertThat(payload.getDeckId()).isNull();
+        assertThat(payload.getDeckId()).isEqualTo(deckId);
     }
 
     @Test

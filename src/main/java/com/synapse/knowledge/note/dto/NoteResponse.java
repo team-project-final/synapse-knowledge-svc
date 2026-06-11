@@ -10,6 +10,7 @@ public record NoteResponse(
     String contentMd, 
     String contentPlain,
     List<String> tags,
+    String deckId,
     String status, 
     LocalDateTime createdAt,
     LocalDateTime updatedAt
@@ -21,6 +22,7 @@ public record NoteResponse(
             note.getContentMd(), 
             note.getContentPlain(),
             note.getTags(),
+            note.getDeckId(),
             note.getStatus(), 
             note.getCreatedAt(),
             note.getUpdatedAt()

@@ -28,7 +28,7 @@ public record NoteCreatedPublishRequested(
             note.getContentPlain(),
             resolveTimestamp(note.getCreatedAt(), now),
             now.toEpochMilli(),
-            null
+            note.getDeckId()
         );
     }
 

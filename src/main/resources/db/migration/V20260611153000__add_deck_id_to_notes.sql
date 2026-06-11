@@ -1,0 +1,2 @@
+ALTER TABLE notes
+    ADD COLUMN deck_id VARCHAR(36);
