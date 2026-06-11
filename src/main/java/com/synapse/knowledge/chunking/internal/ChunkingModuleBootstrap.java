@@ -13,8 +13,8 @@ class ChunkingModuleBootstrap implements ChunkingModuleApi {
     private final ChunkingService chunkingService;
 
     @Override
-    public void chunkNote(Long noteId, String tenantId, String contentPlain) {
-        chunkingService.chunkNote(noteId, tenantId, contentPlain);
+    public void chunkNote(Long noteId, String actorId, String contentPlain) {
+        chunkingService.chunkNote(noteId, actorId, contentPlain);
     }
 
     @Override

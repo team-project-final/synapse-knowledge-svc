@@ -11,6 +11,7 @@ import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.ColumnTransformer;
 
 @Entity
 @Table(
@@ -39,6 +40,7 @@ public class NoteChunk extends BaseEntity {
     private Integer tokenCount;
 
     @Column(insertable = false, updatable = false)
+    @ColumnTransformer(read = "cast(embedding as varchar)")
     private String embedding;
 
     public static NoteChunk create(Long noteId, Integer chunkIndex, String chunkText, Integer tokenCount) {

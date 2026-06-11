@@ -7,22 +7,29 @@ import com.synapse.knowledge.search.dto.client.LearningAiSemanticRequest;
 import com.synapse.knowledge.search.dto.client.LearningAiSemanticResponse;
 import java.util.List;
 import java.util.UUID;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 
 @Component
-@RequiredArgsConstructor
 public class LearningAiSearchClient {
 
     private static final String SEMANTIC_SEARCH_PATH = "/ai/search/semantic";
 
-    @Qualifier("learningAiRestClient")
     private final RestClient restClient;
     private final ObjectMapper objectMapper;
     private final SearchProperties searchProperties;
+
+    public LearningAiSearchClient(
+        @Qualifier("learningAiRestClient") RestClient restClient,
+        ObjectMapper objectMapper,
+        SearchProperties searchProperties
+    ) {
+        this.restClient = restClient;
+        this.objectMapper = objectMapper;
+        this.searchProperties = searchProperties;
+    }
 
     public List<LearningAiSemanticHit> searchSemantic(String semanticActorId, String query, int topK) {
         try {
