@@ -31,7 +31,7 @@
 - [x] 인덱스 설계 (note_id + version_no UNIQUE, note_id + created_at DESC)
 - [x] 관계 정의 (notes 1:N note_versions, ON DELETE CASCADE)
 - [x] 버전 번호 자동 증가 로직 설계 — `findMaxVersionNoByNoteId() + 1`
-- [ ] Duration(final) 갱신
+- [x] Duration(final) 갱신
 
 ### 1.5 Security 2차 검토
 - [x] 버전 삭제 불가 (append-only) — 복원 시 새 버전 생성으로 이력 보존
@@ -101,7 +101,7 @@
 - [x] 태그 사용 빈도 집계 쿼리 설계 — COUNT(*) GROUP BY tag
 - [x] 태그 prefix 검색 쿼리 설계 — LIKE ':prefix%' + setMaxResults(10)
 - [x] 태그 기반 노트 필터링 쿼리 설계 — JPQL JOIN @ElementCollection
-- [ ] Duration(final) 갱신
+- [x] Duration(final) 갱신
 
 ### 1.5 Security 2차 검토
 - [x] 태그 자동완성 응답에 사용자 개인정보 미포함 — tag 문자열만 반환

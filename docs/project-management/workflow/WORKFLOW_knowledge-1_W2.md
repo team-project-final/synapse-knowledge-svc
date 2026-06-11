@@ -159,7 +159,7 @@
 ### 5.10 View + Test (해당 시)
 
 - [x] Flutter 화면 연동: 해당 없음
-- [ ] ES 인덱스 데이터 Kibana/curl 확인
+- [x] ES 인덱스 데이터 Kibana/curl 확인
 - [x] RULE Reference → TASK 반영
 
 **Step 5 Status**: [ ] Not Started / [ ] In Progress / [x] Done

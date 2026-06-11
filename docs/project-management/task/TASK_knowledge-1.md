@@ -301,6 +301,7 @@
   - 복원 시 새 버전으로 생성 (이력 보존)
   - 최대 50개 버전 보존 (초과 시 가장 오래된 버전 삭제)
 - **Duration**: 1.5일
+- **Duration(final)**: 1.5일 (2026-06-04 완료)
 - **RULE Reference**: wiki 03*아키텍처*정의서 §REST API 규칙, wiki 09*Git*규칙\_정의서 §커밋 컨벤션
 - **Assignee**: @knowledge-owner-1
 - **Reviewer**: @team-lead
@@ -351,6 +352,7 @@
   - 한 노트 최대 10개 태그
   - 자동완성: 최대 10개 결과, 응답 < 100ms
 - **Duration**: 1.5일
+- **Duration(final)**: 1.5일 (2026-06-04 완료)
 - **RULE Reference**: wiki 03*아키텍처*정의서 §REST API 규칙, wiki 09*Git*규칙\_정의서 §커밋 컨벤션
 - **Assignee**: @knowledge-owner-1
 - **Reviewer**: @team-lead
