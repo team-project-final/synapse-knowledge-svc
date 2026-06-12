@@ -92,6 +92,10 @@ chunking:
     timeout: ${CHUNKING_AI_TIMEOUT:3s}
     expected-dimensions: ${CHUNKING_AI_EXPECTED_DIMENSIONS:1536}
 
+engagement:
+  base-url: ${ENGAGEMENT_BASE_URL:http://localhost:8083}
+  timeout: ${ENGAGEMENT_TIMEOUT:3s}
+
 slack:
   webhook-url: ${SLACK_WEBHOOK_URL:}
   dlq-channel: "#synapse-dlq-alert"

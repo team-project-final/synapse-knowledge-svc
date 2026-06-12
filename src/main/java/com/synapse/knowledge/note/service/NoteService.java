@@ -1,7 +1,10 @@
 package com.synapse.knowledge.note.service;
 
 import com.synapse.knowledge.global.exception.AccessDeniedException;
+import com.synapse.knowledge.global.security.UserIdResolver;
 import com.synapse.knowledge.global.util.MarkdownSanitizer;
+import com.synapse.knowledge.note.client.SharedContentValidationClient;
+import com.synapse.knowledge.note.client.SharedContentValidationResponse;
 import com.synapse.knowledge.note.dto.NoteCreateRequest;
 import com.synapse.knowledge.note.dto.NoteResponse;
 import com.synapse.knowledge.note.dto.NoteShareableResponse;
@@ -44,6 +47,7 @@ public class NoteService {
     private final NoteEventOutboxService noteEventOutboxService;
     private final ApplicationEventPublisher eventPublisher;
     private final NoteVersionService noteVersionService;
+    private final SharedContentValidationClient sharedContentValidationClient;
 
     @Transactional(propagation = Propagation.REQUIRED)
     public NoteResponse create(Long userId, NoteCreateRequest request) {
@@ -115,6 +119,67 @@ public class NoteService {
         return contentPlain.length() <= SHARE_DESCRIPTION_MAX_LENGTH
             ? contentPlain
             : contentPlain.substring(0, SHARE_DESCRIPTION_MAX_LENGTH);
+    }
+
+    /**
+     * 커뮤니티 공유 경로로 들어온 노트 상세 조회.
+     * 원본 노트 확인 → Engagement 공유 검증 → ownerId 일치 확인 후 본문을 반환한다.
+     */
+    public NoteResponse getSharedDetail(String authorization, Long noteId, UUID sharedContentId, String shareToken) {
+        Note note = findSharedNoteOrDeny(noteId);
+        validateSharedAccess(authorization, sharedContentId, shareToken, noteId, note);
+        return NoteResponse.from(note);
+    }
+
+    /**
+     * 커뮤니티 공유 경로로 들어온 노트를 현재 로그인 사용자의 새 노트로 복사한다.
+     * 복사본의 tenantId 는 원본 노트의 tenantId 를 사용한다(프론트 전달 값 미사용 — 변조 방지).
+     */
+    @Transactional(propagation = Propagation.REQUIRED)
+    public NoteResponse copyFromShare(
+        String authorization,
+        Long userId,
+        Long noteId,
+        UUID sharedContentId,
+        String shareToken
+    ) {
+        Note origin = findSharedNoteOrDeny(noteId);
+        validateSharedAccess(authorization, sharedContentId, shareToken, noteId, origin);
+        return create(userId, new NoteCreateRequest(
+            origin.getTenantId(), origin.getTitle(), origin.getContentMd(), origin.getTags()));
+    }
+
+    /**
+     * 공유 경로 조회/복사용 노트 조회. 없거나 삭제된 경우 노트 존재 여부를 숨기기 위해 403으로 처리한다.
+     */
+    private Note findSharedNoteOrDeny(Long noteId) {
+        return noteRepository.findByIdAndDeletedAtIsNull(noteId)
+            .orElseThrow(() -> new AccessDeniedException("공유 노트에 접근할 수 없습니다"));
+    }
+
+    /**
+     * Engagement 공유 검증 호출 + ownerId 정합성 확인.
+     * valid=false 또는 소유자 불일치 시 403, Engagement 장애 시 502(클라이언트에서 변환)로 처리한다.
+     */
+    private void validateSharedAccess(
+        String authorization,
+        UUID sharedContentId,
+        String shareToken,
+        Long noteId,
+        Note note
+    ) {
+        SharedContentValidationResponse validation =
+            sharedContentValidationClient.validate(authorization, sharedContentId, shareToken, noteId);
+        if (!validation.valid()) {
+            throw new AccessDeniedException("공유 접근이 유효하지 않습니다: " + validation.reason());
+        }
+        if (!ownerMatches(note, validation.ownerId())) {
+            throw new AccessDeniedException("공유글과 노트 소유자가 일치하지 않습니다");
+        }
+    }
+
+    private boolean ownerMatches(Note note, String ownerId) {
+        return ownerId != null && note.getUserId().equals(UserIdResolver.resolve(ownerId));
     }
 
     @Transactional(propagation = Propagation.REQUIRED)
