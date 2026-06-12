@@ -27,14 +27,14 @@ public class LearningAiEmbeddingClient {
 
     public EmbeddingBatchResponse createEmbeddings(String actorId, List<String> texts) {
         try {
-            String responseBody = restClient.post()
+            byte[] responseBody = restClient.post()
                 .uri(EMBEDDINGS_PATH)
                 .header("X-User-Id", actorId)
                 .body(new EmbeddingBatchRequest(texts))
                 .retrieve()
-                .body(String.class);
+                .body(byte[].class);
 
-            if (responseBody == null || responseBody.isBlank()) {
+            if (responseBody == null || responseBody.length == 0) {
                 throw new IllegalStateException("learning-ai 임베딩 응답이 비어 있습니다");
             }
 
