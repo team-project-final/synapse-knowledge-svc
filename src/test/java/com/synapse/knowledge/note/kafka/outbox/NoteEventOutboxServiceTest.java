@@ -8,6 +8,8 @@ import static org.mockito.Mockito.never;
 import static org.mockito.BDDMockito.given;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.synapse.knowledge.global.config.KafkaTopicProperties;
+import com.synapse.knowledge.global.config.KafkaTopicResolver;
 import com.synapse.knowledge.note.entity.Note;
 import com.synapse.knowledge.note.kafka.producer.NoteCreatedPublishRequested;
 import java.time.LocalDateTime;
@@ -25,6 +27,9 @@ import org.springframework.test.util.ReflectionTestUtils;
 @ExtendWith(MockitoExtension.class)
 class NoteEventOutboxServiceTest {
 
+    private static final KafkaTopicResolver KAFKA_TOPIC_RESOLVER =
+        new KafkaTopicResolver(new KafkaTopicProperties("dev."));
+
     @Mock
     private NoteEventOutboxRepository noteEventOutboxRepository;
 
@@ -39,7 +44,11 @@ class NoteEventOutboxServiceTest {
         String eventUserId = "11111111-1111-1111-1111-111111111111";
         ReflectionTestUtils.setField(note, "createdAt", LocalDateTime.of(2026, 6, 1, 9, 0));
 
-        NoteEventOutboxService service = new NoteEventOutboxService(noteEventOutboxRepository, objectMapper);
+        NoteEventOutboxService service = new NoteEventOutboxService(
+            noteEventOutboxRepository,
+            objectMapper,
+            KAFKA_TOPIC_RESOLVER
+        );
         ReflectionTestUtils.setField(service, "kafkaEnabled", true);
 
         service.enqueueCreated(note, externalNoteId, eventUserId);
@@ -47,7 +56,7 @@ class NoteEventOutboxServiceTest {
         ArgumentCaptor<NoteEventOutbox> outboxCaptor = ArgumentCaptor.forClass(NoteEventOutbox.class);
         verify(noteEventOutboxRepository).save(outboxCaptor.capture());
         NoteEventOutbox outbox = outboxCaptor.getValue();
-        assertThat(outbox.getTopic()).isEqualTo("knowledge.note.note-created-v1");
+        assertThat(outbox.getTopic()).isEqualTo("dev.knowledge.note.note-created-v1");
         assertThat(outbox.getMessageKey()).isEqualTo("tenant-1");
         assertThat(outbox.getEventType()).isEqualTo(NoteEventOutboxService.EVENT_TYPE_CREATED);
         NoteCreatedPublishRequested payload = objectMapper.readValue(outbox.getPayloadJson(), NoteCreatedPublishRequested.class);
@@ -63,7 +72,11 @@ class NoteEventOutboxServiceTest {
         Note note = Note.create("tenant-1", 10L, "제목", "본문", "본문", List.of());
         UUID externalNoteId = UUID.randomUUID();
         String eventUserId = "11111111-1111-1111-1111-111111111111";
-        NoteEventOutboxService service = new NoteEventOutboxService(noteEventOutboxRepository, objectMapper);
+        NoteEventOutboxService service = new NoteEventOutboxService(
+            noteEventOutboxRepository,
+            objectMapper,
+            KAFKA_TOPIC_RESOLVER
+        );
         ReflectionTestUtils.setField(service, "kafkaEnabled", true);
         given(noteEventOutboxRepository.save(any(NoteEventOutbox.class)))
             .willThrow(new DataIntegrityViolationException("duplicate"));
@@ -78,7 +91,11 @@ class NoteEventOutboxServiceTest {
         UUID externalNoteId = UUID.randomUUID();
         String eventUserId = "11111111-1111-1111-1111-111111111111";
 
-        NoteEventOutboxService service = new NoteEventOutboxService(noteEventOutboxRepository, objectMapper);
+        NoteEventOutboxService service = new NoteEventOutboxService(
+            noteEventOutboxRepository,
+            objectMapper,
+            KAFKA_TOPIC_RESOLVER
+        );
         ReflectionTestUtils.setField(service, "kafkaEnabled", false);
 
         service.enqueueCreated(note, externalNoteId, eventUserId);

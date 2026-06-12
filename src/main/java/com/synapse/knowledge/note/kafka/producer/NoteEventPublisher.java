@@ -21,7 +21,10 @@ public class NoteEventPublisher {
 
     private final KafkaTemplate<String, SpecificRecord> kafkaTemplate;
 
-    public CompletableFuture<SendResult<String, SpecificRecord>> publishCreated(NoteCreatedPublishRequested event) {
+    public CompletableFuture<SendResult<String, SpecificRecord>> publishCreated(
+        String topic,
+        NoteCreatedPublishRequested event
+    ) {
         NoteCreated payload = NoteCreated.newBuilder()
             .setEventId(event.eventId())
             .setNoteId(event.externalNoteId().toString())
@@ -34,10 +37,13 @@ public class NoteEventPublisher {
             .setOccurredAt(event.occurredAt())
             .build();
 
-        return send(NoteKafkaTopics.NOTE_CREATED, event.tenantId(), payload);
+        return send(topic, event.tenantId(), payload);
     }
 
-    public CompletableFuture<SendResult<String, SpecificRecord>> publishUpdated(NoteUpdatedPublishRequested event) {
+    public CompletableFuture<SendResult<String, SpecificRecord>> publishUpdated(
+        String topic,
+        NoteUpdatedPublishRequested event
+    ) {
         NoteUpdated payload = NoteUpdated.newBuilder()
             .setEventId(event.eventId())
             .setNoteId(event.externalNoteId().toString())
@@ -48,7 +54,7 @@ public class NoteEventPublisher {
             .setOccurredAt(event.occurredAt())
             .build();
 
-        return send(NoteKafkaTopics.NOTE_UPDATED, event.tenantId(), payload);
+        return send(topic, event.tenantId(), payload);
     }
 
     private CompletableFuture<SendResult<String, SpecificRecord>> send(String topic, String key, SpecificRecord payload) {

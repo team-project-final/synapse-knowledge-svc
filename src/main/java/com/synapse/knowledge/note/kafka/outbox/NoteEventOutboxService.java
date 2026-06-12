@@ -2,20 +2,18 @@ package com.synapse.knowledge.note.kafka.outbox;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.synapse.knowledge.global.config.KafkaTopicResolver;
 import com.synapse.knowledge.note.entity.Note;
 import com.synapse.knowledge.note.kafka.producer.NoteCreatedPublishRequested;
-import com.synapse.knowledge.note.kafka.producer.NoteKafkaTopics;
 import com.synapse.knowledge.note.kafka.producer.NoteUpdatedPublishRequested;
 import java.util.UUID;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class NoteEventOutboxService {
 
     static final String EVENT_TYPE_CREATED = "NOTE_CREATED";
@@ -23,9 +21,20 @@ public class NoteEventOutboxService {
 
     private final NoteEventOutboxRepository noteEventOutboxRepository;
     private final ObjectMapper objectMapper;
+    private final KafkaTopicResolver kafkaTopicResolver;
 
     @Value("${synapse.kafka.enabled:false}")
     private boolean kafkaEnabled;
+
+    public NoteEventOutboxService(
+        NoteEventOutboxRepository noteEventOutboxRepository,
+        ObjectMapper objectMapper,
+        KafkaTopicResolver kafkaTopicResolver
+    ) {
+        this.noteEventOutboxRepository = noteEventOutboxRepository;
+        this.objectMapper = objectMapper;
+        this.kafkaTopicResolver = kafkaTopicResolver;
+    }
 
     public void enqueueCreated(Note note, UUID externalNoteId, String eventUserId) {
         if (!kafkaEnabled) {
@@ -35,7 +44,7 @@ public class NoteEventOutboxService {
         NoteCreatedPublishRequested payload = NoteCreatedPublishRequested.from(note, externalNoteId, eventUserId);
         enqueue(
             payload.eventId(),
-            NoteKafkaTopics.NOTE_CREATED,
+            kafkaTopicResolver.noteCreated(),
             note.getTenantId(),
             EVENT_TYPE_CREATED,
             serialize(payload)
@@ -50,7 +59,7 @@ public class NoteEventOutboxService {
         NoteUpdatedPublishRequested payload = NoteUpdatedPublishRequested.from(note, externalNoteId, eventUserId);
         enqueue(
             payload.eventId(),
-            NoteKafkaTopics.NOTE_UPDATED,
+            kafkaTopicResolver.noteUpdated(),
             note.getTenantId(),
             EVENT_TYPE_UPDATED,
             serialize(payload)

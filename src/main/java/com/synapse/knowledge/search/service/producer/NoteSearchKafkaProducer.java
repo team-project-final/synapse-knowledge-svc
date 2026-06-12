@@ -1,5 +1,6 @@
 package com.synapse.knowledge.search.service.producer;
 
+import com.synapse.knowledge.global.config.KafkaTopicResolver;
 import com.synapse.knowledge.search.event.NoteSearchSyncKafkaEvent;
 import com.synapse.knowledge.shared.NoteSearchSyncRequested;
 import lombok.RequiredArgsConstructor;
@@ -18,12 +19,14 @@ import org.springframework.transaction.event.TransactionalEventListener;
 class NoteSearchKafkaProducer {
 
     private final KafkaTemplate<Object, Object> kafkaTemplate;
+    private final KafkaTopicResolver kafkaTopicResolver;
 
     @Async
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     void onNoteSearchSyncRequested(NoteSearchSyncRequested event) {
         NoteSearchSyncKafkaEvent kafkaEvent = NoteSearchSyncKafkaEvent.from(event);
-        kafkaTemplate.send(NoteSearchSyncKafkaEvent.TOPIC, kafkaEvent.noteId().toString(), kafkaEvent);
-        log.debug("Kafka event sent: topic={}, noteId={}", NoteSearchSyncKafkaEvent.TOPIC, kafkaEvent.noteId());
+        String topic = kafkaTopicResolver.noteSearchSync();
+        kafkaTemplate.send(topic, kafkaEvent.noteId().toString(), kafkaEvent);
+        log.debug("Kafka event sent: topic={}, noteId={}", topic, kafkaEvent.noteId());
     }
 }

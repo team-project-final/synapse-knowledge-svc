@@ -2,6 +2,7 @@ package com.synapse.knowledge.note.kafka.outbox;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
@@ -51,7 +52,7 @@ class NoteEventOutboxDispatcherTest {
         );
         NoteEventOutbox outbox = NoteEventOutbox.pending(
             payload.eventId(),
-            "knowledge.note.note-created-v1",
+            "dev.knowledge.note.note-created-v1",
             "tenant-1",
             NoteEventOutboxService.EVENT_TYPE_CREATED,
             objectMapper.writeValueAsString(payload)
@@ -66,13 +67,14 @@ class NoteEventOutboxDispatcherTest {
         ReflectionTestUtils.setField(noteEventOutboxDispatcher, "batchSize", 50);
         given(noteEventOutboxClaimService.claimNextBatch(50))
             .willReturn(List.of(outbox));
-        given(noteEventPublisher.publishCreated(any(NoteCreatedPublishRequested.class)))
+        given(noteEventPublisher.publishCreated(anyString(), any(NoteCreatedPublishRequested.class)))
             .willReturn(CompletableFuture.completedFuture(null));
 
         noteEventOutboxDispatcher.dispatchPending();
 
         ArgumentCaptor<NoteEventOutbox> outboxCaptor = ArgumentCaptor.forClass(NoteEventOutbox.class);
         verify(noteEventOutboxRepository).save(outboxCaptor.capture());
+        verify(noteEventPublisher).publishCreated("dev.knowledge.note.note-created-v1", payload);
         assertThat(outboxCaptor.getValue().getStatus()).isEqualTo(NoteEventOutboxStatus.PUBLISHED);
         assertThat(outboxCaptor.getValue().getPublishedAt()).isNotNull();
         assertThat(outboxCaptor.getValue().getClaimedBy()).isNull();
@@ -95,7 +97,7 @@ class NoteEventOutboxDispatcherTest {
         );
         NoteEventOutbox outbox = NoteEventOutbox.pending(
             payload.eventId(),
-            "knowledge.note.note-created-v1",
+            "dev.knowledge.note.note-created-v1",
             "tenant-2",
             NoteEventOutboxService.EVENT_TYPE_CREATED,
             objectMapper.writeValueAsString(payload)
@@ -112,7 +114,7 @@ class NoteEventOutboxDispatcherTest {
             .willReturn(List.of(outbox));
         CompletableFuture<SendResult<String, SpecificRecord>> failedFuture = new CompletableFuture<>();
         failedFuture.completeExceptionally(new IllegalStateException("broker down"));
-        given(noteEventPublisher.publishCreated(any(NoteCreatedPublishRequested.class)))
+        given(noteEventPublisher.publishCreated(anyString(), any(NoteCreatedPublishRequested.class)))
             .willReturn(failedFuture);
 
         noteEventOutboxDispatcher.dispatchPending();

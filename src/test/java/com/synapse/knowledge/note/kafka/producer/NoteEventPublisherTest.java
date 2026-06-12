@@ -21,6 +21,9 @@ import org.springframework.kafka.core.KafkaTemplate;
 @ExtendWith(MockitoExtension.class)
 class NoteEventPublisherTest {
 
+    private static final String CREATED_TOPIC = "dev.knowledge.note.note-created-v1";
+    private static final String UPDATED_TOPIC = "dev.knowledge.note.note-updated-v1";
+
     @Mock
     private KafkaTemplate<String, SpecificRecord> kafkaTemplate;
 
@@ -42,13 +45,13 @@ class NoteEventPublisherTest {
             1_717_234_530_000L,
             deckId
         );
-        given(kafkaTemplate.send(eq(NoteKafkaTopics.NOTE_CREATED), eq("tenant-a"), org.mockito.ArgumentMatchers.any(SpecificRecord.class)))
+        given(kafkaTemplate.send(eq(CREATED_TOPIC), eq("tenant-a"), org.mockito.ArgumentMatchers.any(SpecificRecord.class)))
             .willReturn(CompletableFuture.completedFuture(null));
 
-        noteEventPublisher.publishCreated(event);
+        noteEventPublisher.publishCreated(CREATED_TOPIC, event);
 
         ArgumentCaptor<SpecificRecord> payloadCaptor = ArgumentCaptor.forClass(SpecificRecord.class);
-        verify(kafkaTemplate).send(eq(NoteKafkaTopics.NOTE_CREATED), eq("tenant-a"), payloadCaptor.capture());
+        verify(kafkaTemplate).send(eq(CREATED_TOPIC), eq("tenant-a"), payloadCaptor.capture());
         assertThat(payloadCaptor.getValue()).isInstanceOf(NoteCreated.class);
         NoteCreated payload = (NoteCreated) payloadCaptor.getValue();
         assertThat(payload.getEventId()).isEqualTo("event-1");
@@ -72,13 +75,13 @@ class NoteEventPublisherTest {
             "2026-06-01T11:30:00",
             1_717_238_200_000L
         );
-        given(kafkaTemplate.send(eq(NoteKafkaTopics.NOTE_UPDATED), eq("tenant-b"), org.mockito.ArgumentMatchers.any(SpecificRecord.class)))
+        given(kafkaTemplate.send(eq(UPDATED_TOPIC), eq("tenant-b"), org.mockito.ArgumentMatchers.any(SpecificRecord.class)))
             .willReturn(CompletableFuture.completedFuture(null));
 
-        noteEventPublisher.publishUpdated(event);
+        noteEventPublisher.publishUpdated(UPDATED_TOPIC, event);
 
         ArgumentCaptor<SpecificRecord> payloadCaptor = ArgumentCaptor.forClass(SpecificRecord.class);
-        verify(kafkaTemplate).send(eq(NoteKafkaTopics.NOTE_UPDATED), eq("tenant-b"), payloadCaptor.capture());
+        verify(kafkaTemplate).send(eq(UPDATED_TOPIC), eq("tenant-b"), payloadCaptor.capture());
         assertThat(payloadCaptor.getValue()).isInstanceOf(NoteUpdated.class);
         NoteUpdated payload = (NoteUpdated) payloadCaptor.getValue();
         assertThat(payload.getEventId()).isEqualTo("event-2");
