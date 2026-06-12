@@ -402,6 +402,7 @@
   - test(kafka): `KafkaTopicResolverTest`, `NoteSearchKafkaProducerTest`를 추가하고 note outbox/publisher, search Kafka config 테스트를 prefix-aware 기대값으로 갱신한 뒤 관련 Gradle 테스트 6종 통과 확인
   - verify(kafka): shared 로컬 docker stack(`synapse-kafka`, `synapse-schema-registry`)에 붙는 `TopicPrefixLiveIntegrationTest`를 추가하고 `./gradlew.bat test --tests "com.synapse.knowledge.note.kafka.TopicPrefixLiveIntegrationTest"` 통과 확인
   - verify(kafka): live broker/topic 확인 결과 `dev.knowledge.note.note-created-v1`, `dev.knowledge.note.note-updated-v1`, `dev.knowledge.note.note-search-sync-v1` 토픽 생성과 Schema Registry subject `dev.knowledge.note.note-created-v1-value`, `dev.knowledge.note.note-updated-v1-value` 등록까지 확인
+  - fix(ci): `TopicPrefixLiveIntegrationTest`를 기본 `test` 작업에서 제외하고 `topicPrefixLiveTest` 전용 Gradle task로 분리해 로컬 shared Kafka stack 전용 검증이 GitHub Actions `clean build`를 깨지 않도록 수정
 - **진행 중**:
   - 없음
 - **이슈**:
