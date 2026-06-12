@@ -388,6 +388,19 @@
 - **다음**:
   - PR 본문에 GitHub Actions 메이저 업그레이드 근거와 로컬 `./gradlew.bat test` 검증 결과를 포함해 리뷰 요청
 
+#### 2026-06-12 (금)
+
+- **완료**:
+  - fix(observability): `micrometer-registry-prometheus` runtime 의존성을 추가하고 `application.yml`에 `management.endpoints.web.exposure.include=health,info,prometheus`, `management.endpoint.prometheus.enabled=true`를 반영해 `/actuator/prometheus` 엔드포인트를 실제로 노출
+  - fix(security): `SecurityConfig`에서 `/actuator/prometheus`를 `permitAll`로 열어 ServiceMonitor scrape가 인증 없이 통과하도록 정렬
+  - test(observability): `PrometheusActuatorIntegrationTest`를 추가해 비인증 `GET /actuator/prometheus` 200 응답과 Prometheus 텍스트 포맷 노출을 회귀 테스트로 고정
+- **진행 중**:
+  - 없음
+- **이슈**:
+  - staging/EKS에서 실제 Prometheus 타깃이 `UP`으로 전환되는 최종 확인은 배포 후 in-cluster scrape 재검증이 필요
+- **다음**:
+  - 배포 후 in-cluster `GET /actuator/prometheus` 200과 Prometheus target `UP` 여부를 확인하고 false-positive alert 해소 여부 점검
+
 ---
 
 ## 변경 이력
