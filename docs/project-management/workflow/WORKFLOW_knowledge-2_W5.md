@@ -39,6 +39,8 @@
 - [x] 검색 E2E가 통과한다.
 - [x] 정확도 리포트가 작성된다.
 - [x] knowledge-2 P0 버그가 0건이다.
+- [x] live AI 카드 생성 차단 원인이던 `note-created.deckId` 누락이 해소됐다.
+  - 근거: `NoteCreateRequest` nullable `deckId` 입력 + `notes.deck_id` 저장 + `knowledge.note.note-created-v1` payload 전파
 - [x] knowledge-svc JaCoCo service line coverage가 80% 이상이다.
   - 근거: `build/reports/jacoco/test/jacocoTestReport.xml` line coverage `84.11%` (`covered=1212`, `missed=229`) + `jacocoTestCoverageVerification` 통과
 - [x] 발표용 검색 쿼리가 안정적으로 동작한다.

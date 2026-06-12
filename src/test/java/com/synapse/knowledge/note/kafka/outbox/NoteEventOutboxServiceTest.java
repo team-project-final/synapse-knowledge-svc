@@ -33,7 +33,8 @@ class NoteEventOutboxServiceTest {
     @Test
     @DisplayName("정상 요청이면 Outbox Row를 저장한다")
     void enqueueCreated_validRequest_shouldSaveOutboxRow() throws Exception {
-        Note note = Note.create("tenant-1", 10L, "제목", "본문", "본문", List.of("tag"));
+        String deckId = "550e8400-e29b-41d4-a716-446655440000";
+        Note note = Note.create("tenant-1", 10L, "제목", "본문", "본문", List.of("tag"), deckId);
         UUID externalNoteId = UUID.randomUUID();
         String eventUserId = "11111111-1111-1111-1111-111111111111";
         ReflectionTestUtils.setField(note, "createdAt", LocalDateTime.of(2026, 6, 1, 9, 0));
@@ -53,6 +54,7 @@ class NoteEventOutboxServiceTest {
         assertThat(payload.externalNoteId()).isEqualTo(externalNoteId);
         assertThat(payload.userId()).isEqualTo(eventUserId);
         assertThat(payload.title()).isEqualTo("제목");
+        assertThat(payload.deckId()).isEqualTo(deckId);
     }
 
     @Test

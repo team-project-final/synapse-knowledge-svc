@@ -51,7 +51,15 @@ public class NoteService {
         String sanitizedMd = sanitizer.sanitize(request.contentMd());
         String plainText = extractPlainText(sanitizedMd);
 
-        Note note = Note.create(request.tenantId(), userId, request.title(), sanitizedMd, plainText, request.tags());
+        Note note = Note.create(
+            request.tenantId(),
+            userId,
+            request.title(),
+            sanitizedMd,
+            plainText,
+            request.tags(),
+            request.deckId()
+        );
         Note savedNote = noteRepository.save(note);
         NoteIdentityMap identityMap = getOrCreateIdentityMap(savedNote.getId());
 
@@ -77,7 +85,7 @@ public class NoteService {
         NoteVersionDetailResponse target = noteVersionService.getVersion(userId, noteId, versionNo);
         Note note = findValidNote(noteId);
         return update(userId, noteId,
-            new NoteCreateRequest(note.getTenantId(), target.title(), target.contentMd(), note.getTags()));
+            new NoteCreateRequest(note.getTenantId(), target.title(), target.contentMd(), note.getTags(), note.getDeckId()));
     }
 
     public NoteResponse getById(Long userId, Long noteId) {
@@ -100,8 +108,9 @@ public class NoteService {
 
         String sanitizedMd = sanitizer.sanitize(request.contentMd());
         String plainText = extractPlainText(sanitizedMd);
+        String resolvedDeckId = request.deckId() != null ? request.deckId() : note.getDeckId();
 
-        note.update(request.title(), sanitizedMd, plainText, request.tags());
+        note.update(request.title(), sanitizedMd, plainText, request.tags(), resolvedDeckId);
         NoteIdentityMap identityMap = getOrCreateIdentityMap(note.getId());
 
         updateWikiLinks(note.getId(), note.getTenantId(), sanitizedMd);

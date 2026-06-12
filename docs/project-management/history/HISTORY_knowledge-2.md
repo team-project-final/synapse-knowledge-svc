@@ -369,6 +369,8 @@
 - **완료**:
   - fix(chunking): `ChunkingEventListener` 경로를 청크 저장 후 `learning-ai /ai/embeddings` HTTP 호출 + JDBC `cast(? as vector)` 업데이트 구조로 재배치
   - fix(chunking): `NoteChunkingRequested`에 actor id를 추가하고, `ChunkingService`에서 임베딩 개수/차원(1536) 검증 후 `note_chunks.embedding` 적재 로직을 구현
+  - fix(note): `NoteCreateRequest`/`notes.deck_id`/`note-created` outbox payload에 nullable `deckId` 계약을 추가해 learning-ai AI 카드 생성 트리거가 가능한 상태로 정렬
+  - test(note): note integration/outbox/publisher/service 테스트에 `deckId` 저장·전파·기존값 유지 케이스를 보강
   - test(chunking): `ChunkingServiceTest`, `ChunkingIntegrationTest`, `ChunkingPostgresFlywayIntegrationTest`를 보강해 임베딩 저장/개수 불일치/차원 불일치와 pgvector 실제 적재를 함께 검증
   - chore(coverage): `build.gradle.kts`의 JaCoCo 집계를 `search` 한정에서 service-wide 기준으로 재정렬하고 `chunkingPgTest`/`searchE2eTest` 실행 데이터까지 읽도록 수정
   - test(coverage): `MarkdownSanitizerTest`, `TokenCounterTest`, `WebMvcConfigTest`, `NoteChunkEmbeddingJdbcRepositoryTest`, `NoteCommandAdapterTest`, `NoteIdentityQueryAdapterTest`를 추가해 설정/유틸/어댑터 계층 coverage를 보강
