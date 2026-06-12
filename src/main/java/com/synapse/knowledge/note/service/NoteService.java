@@ -4,7 +4,9 @@ import com.synapse.knowledge.global.exception.AccessDeniedException;
 import com.synapse.knowledge.global.util.MarkdownSanitizer;
 import com.synapse.knowledge.note.dto.NoteCreateRequest;
 import com.synapse.knowledge.note.dto.NoteResponse;
+import com.synapse.knowledge.note.dto.NoteShareableResponse;
 import com.synapse.knowledge.note.dto.NoteVersionDetailResponse;
+import com.synapse.knowledge.note.dto.ShareableReason;
 import com.synapse.knowledge.note.entity.Note;
 import com.synapse.knowledge.note.entity.NoteIdentityMap;
 import com.synapse.knowledge.note.entity.NoteLink;
@@ -32,6 +34,8 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class NoteService {
+    private static final int SHARE_DESCRIPTION_MAX_LENGTH = 200;
+
     private final NoteRepository noteRepository;
     private final NoteIdentityMapRepository noteIdentityMapRepository;
     private final NoteLinkRepository noteLinkRepository;
@@ -84,6 +88,33 @@ public class NoteService {
         Note note = findValidNote(noteId);
         validateOwner(userId, note);
         return NoteResponse.from(note);
+    }
+
+    /**
+     * 노트를 커뮤니티에 공유할 수 있는지 확인한다.
+     * 일반 조회와 달리 예외를 던지지 않고, 불가 사유를 응답에 담아 반환한다.
+     */
+    public NoteShareableResponse checkShareable(Long userId, Long noteId) {
+        Note note = noteRepository.findByIdAndDeletedAtIsNull(noteId).orElse(null);
+        if (note == null) {
+            return NoteShareableResponse.denied(noteId, ShareableReason.NOT_FOUND);
+        }
+        if (!note.getUserId().equals(userId)) {
+            return NoteShareableResponse.denied(noteId, ShareableReason.NOT_OWNER);
+        }
+        if (!"active".equals(note.getStatus())) {
+            return NoteShareableResponse.denied(noteId, ShareableReason.NOT_ACTIVE);
+        }
+        return NoteShareableResponse.ok(note, buildShareDescription(note.getContentPlain()));
+    }
+
+    private String buildShareDescription(String contentPlain) {
+        if (contentPlain == null) {
+            return null;
+        }
+        return contentPlain.length() <= SHARE_DESCRIPTION_MAX_LENGTH
+            ? contentPlain
+            : contentPlain.substring(0, SHARE_DESCRIPTION_MAX_LENGTH);
     }
 
     @Transactional(propagation = Propagation.REQUIRED)

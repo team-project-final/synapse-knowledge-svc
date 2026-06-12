@@ -5,6 +5,7 @@ import com.synapse.knowledge.global.security.CurrentUser;
 import com.synapse.knowledge.global.security.CurrentUserAuth;
 import com.synapse.knowledge.note.dto.NoteCreateRequest;
 import com.synapse.knowledge.note.dto.NoteResponse;
+import com.synapse.knowledge.note.dto.NoteShareableResponse;
 import com.synapse.knowledge.note.service.NoteService;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -54,6 +55,14 @@ public class NoteController {
     @GetMapping("/{id}")
     public ApiResponse<NoteResponse> get(@CurrentUserAuth CurrentUser currentUser, @PathVariable Long id) {
         return ApiResponse.success(noteService.getById(currentUser.userId(), id));
+    }
+
+    @GetMapping("/{id}/shareable")
+    public ApiResponse<NoteShareableResponse> shareable(
+        @CurrentUserAuth CurrentUser currentUser,
+        @PathVariable Long id
+    ) {
+        return ApiResponse.success(noteService.checkShareable(currentUser.userId(), id));
     }
 
     @PatchMapping("/{id}")
