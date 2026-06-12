@@ -38,7 +38,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/tags/autocomplete").authenticated()
                         .requestMatchers("/api/v1/ai/search/**").authenticated()
                         .requestMatchers("/api/v1/graphs/**").authenticated()
-                        .requestMatchers("/actuator/health").permitAll()
+                        .requestMatchers("/actuator/health", "/actuator/prometheus").permitAll()
                         .anyRequest().permitAll())
                 .oauth2ResourceServer(oauth -> oauth.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())))
                 .build();
