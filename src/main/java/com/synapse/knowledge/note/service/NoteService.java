@@ -8,6 +8,7 @@ import com.synapse.knowledge.note.dto.NoteVersionDetailResponse;
 import com.synapse.knowledge.note.entity.Note;
 import com.synapse.knowledge.note.entity.NoteIdentityMap;
 import com.synapse.knowledge.note.entity.NoteLink;
+import com.synapse.knowledge.note.exception.NoteNotFoundException;
 import com.synapse.knowledge.note.kafka.outbox.NoteEventOutboxService;
 import com.synapse.knowledge.note.repository.NoteIdentityMapRepository;
 import com.synapse.knowledge.note.repository.NoteLinkRepository;
@@ -177,7 +178,7 @@ public class NoteService {
 
     private Note findValidNote(Long noteId) {
         return noteRepository.findByIdAndDeletedAtIsNull(noteId)
-            .orElseThrow(() -> new RuntimeException("Note not found"));
+            .orElseThrow(() -> new NoteNotFoundException(noteId));
     }
 
     private void validateOwner(Long userId, Note note) {

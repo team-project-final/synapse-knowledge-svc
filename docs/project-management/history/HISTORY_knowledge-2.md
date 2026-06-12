@@ -394,7 +394,9 @@
   - fix(observability): `micrometer-registry-prometheus` runtime 의존성을 추가하고 `application.yml`에 `management.endpoints.web.exposure.include=health,info,prometheus`, `management.endpoint.prometheus.enabled=true`를 반영해 `/actuator/prometheus` 엔드포인트를 실제로 노출
   - fix(security): `SecurityConfig`에서 `/actuator/prometheus`를 `permitAll`로 열어 ServiceMonitor scrape가 인증 없이 통과하도록 정렬
   - test(observability): `PrometheusActuatorIntegrationTest`를 추가해 비인증 `GET /actuator/prometheus` 200 응답과 Prometheus 텍스트 포맷 노출을 회귀 테스트로 고정
+  - fix(note): 삭제된 노트 상세 조회가 `RuntimeException -> 500`으로 떨어지지 않도록 `NoteNotFoundException` 기반 `404` 예외 계층과 서비스/E2E 회귀 테스트를 추가
   - fix(chunking): `LearningAiEmbeddingClient`가 `learning-ai /ai/embeddings`의 `application/octet-stream` 응답도 `byte[]`로 수신 후 JSON 파싱하도록 보강해 live chunking 임베딩 저장 회귀를 복구
+  - fix(ci): `docker-compose.ci.yml`에 Schema Registry와 Kafka 내부 리스너를 추가하고 `ci-java.yml`에 `topicPrefixLiveTest` 단계를 포함해 prefixed Kafka live 테스트도 CI에서 실행되도록 확장
   - test(chunking): `LearningAiEmbeddingClientTest`를 추가하고 `./gradlew.bat test --tests "com.synapse.knowledge.chunking.client.LearningAiEmbeddingClientTest"`, `./gradlew.bat test --tests "com.synapse.knowledge.chunking.service.ChunkingServiceTest"`, `./gradlew.bat chunkingPgTest` 통과 확인
   - verify(chunking): `synapse-shared` 도커 스택에서 `knowledge-svc`를 재빌드한 뒤 실제 노트 생성으로 `synapse_knowledge.note_chunks`에 청크와 pgvector 임베딩 저장, BM25 검색 반영까지 확인
   - fix(kafka): `KAFKA_TOPIC_PREFIX`(기본 `""`)를 `application.yml`과 공통 `KafkaTopicResolver`에 추가하고 note created/updated, search sync, search sync DLQ 토픽을 단일 해석 지점에서 prefix 조합하도록 정리
