@@ -49,6 +49,7 @@ class SearchAccuracyServiceTest {
 
     private final SearchProperties searchProperties = new SearchProperties(
         new SearchProperties.Ai("http://localhost:8090", Duration.ofSeconds(3), 0.55d),
+        new SearchProperties.Platform("http://localhost:8080", Duration.ofSeconds(3)),
         new SearchProperties.Hybrid(40, 5),
         new SearchProperties.Accuracy("test-v1", 910000L, "benchmark-search", "11111111-1111-1111-1111-111111111111", 10, Duration.ofSeconds(5)),
         new SearchProperties.Bm25(1.4d, 0.65d, 4.0d, 1.0d, 2.5d, "70%")
@@ -69,7 +70,7 @@ class SearchAccuracyServiceTest {
             searchProperties,
             new ObjectMapper()
         );
-        SearchIdentity identity = new SearchIdentity(910000L, searchProperties.accuracy().semanticActorId());
+        SearchIdentity identity = SearchIdentity.forBenchmark(910000L, searchProperties.accuracy().semanticTenantId());
         UUID semanticNoteId = UUID.randomUUID();
 
         List<SearchAccuracyService.ResolvedSearchTestQuery> queries = List.of(

@@ -2,7 +2,8 @@ package com.synapse.knowledge.search;
 
 public record SearchIdentity(
     Long userId,
-    String semanticActorId
+    String semanticTenantId,
+    String accessToken
 ) {
     public SearchIdentity {
         if (userId == null) {
@@ -10,7 +11,23 @@ public record SearchIdentity(
         }
     }
 
+    public static SearchIdentity forRuntime(Long userId, String accessToken) {
+        return new SearchIdentity(userId, null, accessToken);
+    }
+
+    public static SearchIdentity forBenchmark(Long userId, String semanticTenantId) {
+        return new SearchIdentity(userId, semanticTenantId, null);
+    }
+
     public boolean canUseSemanticSearch() {
-        return semanticActorId != null && !semanticActorId.isBlank();
+        return hasSemanticTenantId() || hasAccessToken();
+    }
+
+    public boolean hasSemanticTenantId() {
+        return semanticTenantId != null && !semanticTenantId.isBlank();
+    }
+
+    public boolean hasAccessToken() {
+        return accessToken != null && !accessToken.isBlank();
     }
 }

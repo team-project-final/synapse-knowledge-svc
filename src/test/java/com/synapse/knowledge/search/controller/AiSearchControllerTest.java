@@ -55,6 +55,7 @@ class AiSearchControllerTest {
     @Test
     @DisplayName("semantic_정상JWT요청_shouldReturn200")
     void semantic_정상JWT요청_shouldReturn200() throws Exception {
+        String accessToken = "semantic-access-token";
         String subject = UUID.randomUUID().toString();
         SemanticSearchRequest request = new SemanticSearchRequest("시맨틱", 10, List.of("ai"));
         SemanticSearchResponse.SemanticSearchResult result = new SemanticSearchResponse.SemanticSearchResult(
@@ -68,11 +69,11 @@ class AiSearchControllerTest {
             1L,
             45L
         );
-        given(searchService.semanticSearch(new SearchIdentity(100L, subject), request)).willReturn(response);
+        given(searchService.semanticSearch(SearchIdentity.forRuntime(100L, accessToken), request)).willReturn(response);
 
         mockMvc.perform(
                 post("/api/v1/ai/search/semantic")
-                    .with(jwt().jwt(jwt -> jwt.subject(subject).claim("userId", 100L)))
+                    .with(jwt().jwt(jwt -> jwt.tokenValue(accessToken).subject(subject).claim("userId", 100L)))
                     .contentType("application/json")
                     .content(objectMapper.writeValueAsString(request))
             )
@@ -81,12 +82,13 @@ class AiSearchControllerTest {
             .andExpect(jsonPath("$.data.results[0].noteId").value(result.noteId().toString()))
             .andExpect(jsonPath("$.data.results[0].score").value(0.82f));
 
-        verify(searchService).semanticSearch(eq(new SearchIdentity(100L, subject)), eq(request));
+        verify(searchService).semanticSearch(eq(SearchIdentity.forRuntime(100L, accessToken)), eq(request));
     }
 
     @Test
     @DisplayName("hybrid_정상JWT요청_shouldReturn200")
     void hybrid_정상JWT요청_shouldReturn200() throws Exception {
+        String accessToken = "hybrid-access-token";
         String subject = UUID.randomUUID().toString();
         HybridSearchRequest request = new HybridSearchRequest("하이브리드", 10, List.of("backend"));
         HybridSearchResponse response = HybridSearchResponse.of(
@@ -94,11 +96,11 @@ class AiSearchControllerTest {
             70L,
             false
         );
-        given(searchService.hybridSearch(new SearchIdentity(100L, subject), request)).willReturn(response);
+        given(searchService.hybridSearch(SearchIdentity.forRuntime(100L, accessToken), request)).willReturn(response);
 
         mockMvc.perform(
                 post("/api/v1/ai/search/hybrid")
-                    .with(jwt().jwt(jwt -> jwt.subject(subject).claim("userId", 100L)))
+                    .with(jwt().jwt(jwt -> jwt.tokenValue(accessToken).subject(subject).claim("userId", 100L)))
                     .contentType("application/json")
                     .content(objectMapper.writeValueAsString(request))
             )
@@ -107,6 +109,6 @@ class AiSearchControllerTest {
             .andExpect(jsonPath("$.data.results[0].keywordScore").value(3.4f))
             .andExpect(jsonPath("$.data.semanticFallback").value(false));
 
-        verify(searchService).hybridSearch(eq(new SearchIdentity(100L, subject)), eq(request));
+        verify(searchService).hybridSearch(eq(SearchIdentity.forRuntime(100L, accessToken)), eq(request));
     }
 }

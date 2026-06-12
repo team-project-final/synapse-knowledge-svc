@@ -29,4 +29,16 @@ public class SearchClientConfig {
             .requestFactory(requestFactory)
             .build();
     }
+
+    @Bean
+    RestClient platformRestClient(RestClient.Builder builder, SearchProperties properties) {
+        SimpleClientHttpRequestFactory requestFactory = new SimpleClientHttpRequestFactory();
+        requestFactory.setConnectTimeout(properties.platform().timeout());
+        requestFactory.setReadTimeout(properties.platform().timeout());
+
+        return builder
+            .baseUrl(properties.platform().baseUrl())
+            .requestFactory(requestFactory)
+            .build();
+    }
 }

@@ -31,11 +31,11 @@ public class LearningAiSearchClient {
         this.searchProperties = searchProperties;
     }
 
-    public List<LearningAiSemanticHit> searchSemantic(String semanticActorId, String query, int topK) {
+    public List<LearningAiSemanticHit> searchSemantic(String tenantId, String query, int topK) {
         try {
             String responseBody = restClient.post()
                 .uri(SEMANTIC_SEARCH_PATH)
-                .header("X-User-Id", semanticActorId)
+                .header("X-User-Id", tenantId)
                 .body(new LearningAiSemanticRequest(query, topK, searchProperties.ai().threshold()))
                 .retrieve()
                 .body(String.class);

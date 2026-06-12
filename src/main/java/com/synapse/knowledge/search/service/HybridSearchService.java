@@ -32,6 +32,7 @@ public class HybridSearchService {
     private final RrfMergeService rrfMergeService;
     private final SearchProperties searchProperties;
     private final NoteIdentityQueryPort noteIdentityQueryPort;
+    private final SemanticTenantResolver semanticTenantResolver;
 
     public HybridSearchResponse search(SearchIdentity identity, HybridSearchRequest request) {
         Instant startedAt = Instant.now();
@@ -43,15 +44,21 @@ public class HybridSearchService {
         CompletableFuture<List<SearchCandidate>> keywordFuture = CompletableFuture.supplyAsync(() ->
             noteSearchRepository.searchKeywordCandidates(identity.userId(), request.query(), candidateLimit, request.tags())
         );
-        CompletableFuture<List<LearningAiSearchClient.LearningAiSemanticHit>> semanticFuture =
-            identity.canUseSemanticSearch()
-                ? CompletableFuture.supplyAsync(() ->
-                    learningAiSearchClient.searchSemantic(identity.semanticActorId(), request.query(), candidateLimit))
-                : CompletableFuture.completedFuture(List.of());
-
         List<SearchCandidate> keywordResults = keywordFuture.join();
         List<SearchCandidate> semanticResults = List.of();
         boolean semanticFallback = !identity.canUseSemanticSearch();
+        CompletableFuture<List<LearningAiSearchClient.LearningAiSemanticHit>> semanticFuture =
+            CompletableFuture.completedFuture(List.of());
+
+        if (!semanticFallback) {
+            try {
+                String semanticTenantId = semanticTenantResolver.resolve(identity);
+                semanticFuture = CompletableFuture.supplyAsync(() ->
+                    learningAiSearchClient.searchSemantic(semanticTenantId, request.query(), candidateLimit));
+            } catch (Exception ex) {
+                semanticFallback = true;
+            }
+        }
 
         try {
             List<LearningAiSearchClient.LearningAiSemanticHit> semanticHits =

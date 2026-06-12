@@ -149,7 +149,7 @@ public class SearchAccuracyService {
                 if (!identity.canUseSemanticSearch()) {
                     yield List.of();
                 }
-                yield learningAiSearchClient.searchSemantic(identity.semanticActorId(), query, searchProperties.accuracy().topK()).stream()
+                yield learningAiSearchClient.searchSemantic(identity.semanticTenantId(), query, searchProperties.accuracy().topK()).stream()
                     .map(hit -> noteIdentityQueryPort.findByExternalNoteId(hit.noteId()))
                     .flatMap(Optional::stream)
                     .map(NoteIdentityQueryPort.NoteIdentityView::noteId)
@@ -207,7 +207,7 @@ public class SearchAccuracyService {
         List<String> improvements = new ArrayList<>();
 
         if (!semanticAvailable) {
-            improvements.add("semantic 검색 측정이 실패했습니다. learning-ai 연결 상태와 semantic actor 설정을 점검하세요.");
+            improvements.add("semantic 검색 측정이 실패했습니다. learning-ai 연결 상태와 semantic tenant 설정을 점검하세요.");
         }
         if (bm25Report.precisionAt10() < 0.6d) {
             improvements.add("BM25 Precision@10이 목표 미달입니다. title/content/tags field boost와 nori analyzer 구성을 재조정하세요.");

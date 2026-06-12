@@ -44,7 +44,7 @@ public class CurrentUserArgumentResolver implements HandlerMethodArgumentResolve
 
         Long userId = extractRequiredUserIdClaim(jwt, webRequest.getNativeRequest(HttpServletRequest.class));
 
-        return new CurrentUser(userId, jwt.getSubject());
+        return new CurrentUser(userId, jwt.getSubject(), jwt.getTokenValue());
     }
 
     private Long extractRequiredUserIdClaim(Jwt jwt, HttpServletRequest request) {

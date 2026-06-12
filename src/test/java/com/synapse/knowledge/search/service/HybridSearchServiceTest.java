@@ -37,8 +37,12 @@ class HybridSearchServiceTest {
     @Mock
     private NoteIdentityQueryPort noteIdentityQueryPort;
 
+    @Mock
+    private SemanticTenantResolver semanticTenantResolver;
+
     private final SearchProperties searchProperties = new SearchProperties(
         new SearchProperties.Ai("http://localhost:8090", Duration.ofSeconds(3), 0.55d),
+        new SearchProperties.Platform("http://localhost:8080", Duration.ofSeconds(3)),
         new SearchProperties.Hybrid(40, 5),
         new SearchProperties.Accuracy("test-v1", 910000L, "benchmark-search", "11111111-1111-1111-1111-111111111111", 10, Duration.ofSeconds(5)),
         new SearchProperties.Bm25(1.4d, 0.65d, 4.0d, 1.0d, 2.5d, "70%")
@@ -48,7 +52,7 @@ class HybridSearchServiceTest {
     @DisplayName("시맨틱 조회가 실패하면 BM25 Fallback으로 반환한다")
     void search_semanticQueryFails_shouldReturnBM25Fallback() {
         // Given
-        SearchIdentity identity = new SearchIdentity(100L, UUID.randomUUID().toString());
+        SearchIdentity identity = SearchIdentity.forBenchmark(100L, UUID.randomUUID().toString());
         HybridSearchRequest request = new HybridSearchRequest("스프링", 10, null);
         UUID externalNoteId = UUID.randomUUID();
         List<SearchCandidate> keywordCandidates = List.of(
@@ -62,11 +66,13 @@ class HybridSearchServiceTest {
             learningAiSearchClient,
             rrfMergeService,
             searchProperties,
-            noteIdentityQueryPort
+            noteIdentityQueryPort,
+            semanticTenantResolver
         );
 
         given(noteSearchRepository.searchKeywordCandidates(100L, "스프링", 50, null)).willReturn(keywordCandidates);
-        given(learningAiSearchClient.searchSemantic(identity.semanticActorId(), "스프링", 50))
+        given(semanticTenantResolver.resolve(identity)).willReturn(identity.semanticTenantId());
+        given(learningAiSearchClient.searchSemantic(identity.semanticTenantId(), "스프링", 50))
             .willThrow(new IllegalStateException("semantic unavailable"));
         given(rrfMergeService.merge(keywordCandidates, List.of(), 10, 40)).willReturn(mergedResults);
 
@@ -84,7 +90,7 @@ class HybridSearchServiceTest {
     @Test
     @DisplayName("시맨틱 UUID 매핑이 가능하면 병합 후 fallback false를 반환한다")
     void search_semanticUuidMappable_shouldMergeResultsWithFallbackFalse() {
-        SearchIdentity identity = new SearchIdentity(100L, UUID.randomUUID().toString());
+        SearchIdentity identity = SearchIdentity.forBenchmark(100L, UUID.randomUUID().toString());
         HybridSearchRequest request = new HybridSearchRequest("스프링", 10, null);
         UUID keywordExternalNoteId = UUID.randomUUID();
         UUID semanticExternalNoteId = UUID.randomUUID();
@@ -105,11 +111,13 @@ class HybridSearchServiceTest {
             learningAiSearchClient,
             rrfMergeService,
             searchProperties,
-            noteIdentityQueryPort
+            noteIdentityQueryPort,
+            semanticTenantResolver
         );
 
         given(noteSearchRepository.searchKeywordCandidates(100L, "스프링", 50, null)).willReturn(keywordCandidates);
-        given(learningAiSearchClient.searchSemantic(identity.semanticActorId(), "스프링", 50)).willReturn(semanticHits);
+        given(semanticTenantResolver.resolve(identity)).willReturn(identity.semanticTenantId());
+        given(learningAiSearchClient.searchSemantic(identity.semanticTenantId(), "스프링", 50)).willReturn(semanticHits);
         given(noteIdentityQueryPort.findByExternalNoteId(semanticExternalNoteId))
             .willReturn(java.util.Optional.of(new NoteIdentityQueryPort.NoteIdentityView(2L, semanticExternalNoteId, "의미 노트")));
         given(rrfMergeService.merge(keywordCandidates, semanticCandidates, 10, 40)).willReturn(mergedResults);
@@ -125,7 +133,7 @@ class HybridSearchServiceTest {
     @Test
     @DisplayName("같은 노트의 시맨틱 hit가 여러 개면 최고 점수 한 건으로 축약한다")
     void search_duplicateSemanticHitsForSameNote_shouldDeduplicateByExternalNoteId() {
-        SearchIdentity identity = new SearchIdentity(100L, UUID.randomUUID().toString());
+        SearchIdentity identity = SearchIdentity.forBenchmark(100L, UUID.randomUUID().toString());
         HybridSearchRequest request = new HybridSearchRequest("스프링", 10, null);
         UUID keywordExternalNoteId = UUID.randomUUID();
         UUID semanticExternalNoteId = UUID.randomUUID();
@@ -147,11 +155,13 @@ class HybridSearchServiceTest {
             learningAiSearchClient,
             rrfMergeService,
             searchProperties,
-            noteIdentityQueryPort
+            noteIdentityQueryPort,
+            semanticTenantResolver
         );
 
         given(noteSearchRepository.searchKeywordCandidates(100L, "스프링", 50, null)).willReturn(keywordCandidates);
-        given(learningAiSearchClient.searchSemantic(identity.semanticActorId(), "스프링", 50)).willReturn(semanticHits);
+        given(semanticTenantResolver.resolve(identity)).willReturn(identity.semanticTenantId());
+        given(learningAiSearchClient.searchSemantic(identity.semanticTenantId(), "스프링", 50)).willReturn(semanticHits);
         given(noteIdentityQueryPort.findByExternalNoteId(semanticExternalNoteId))
             .willReturn(java.util.Optional.of(new NoteIdentityQueryPort.NoteIdentityView(2L, semanticExternalNoteId, "의미 노트")));
         given(rrfMergeService.merge(keywordCandidates, semanticCandidates, 10, 40)).willReturn(mergedResults);
@@ -161,5 +171,36 @@ class HybridSearchServiceTest {
         assertThat(response.semanticFallback()).isFalse();
         assertThat(response.results()).containsExactlyElementsOf(mergedResults);
         verify(rrfMergeService).merge(keywordCandidates, semanticCandidates, 10, 40);
+    }
+
+    @Test
+    @DisplayName("tenant 해석에 실패하면 BM25 fallback으로 반환한다")
+    void search_tenantResolutionFails_shouldReturnBm25Fallback() {
+        SearchIdentity identity = SearchIdentity.forRuntime(100L, "access-token");
+        HybridSearchRequest request = new HybridSearchRequest("스프링", 10, null);
+        UUID externalNoteId = UUID.randomUUID();
+        List<SearchCandidate> keywordCandidates = List.of(
+            new SearchCandidate(1L, externalNoteId, "스프링 노트", List.of("<mark>스프링</mark>"), "snippet", 4.2f, null)
+        );
+        List<UnifiedSearchResultResponse> mergedResults = List.of(
+            new UnifiedSearchResultResponse(1L, "스프링 노트", List.of("<mark>스프링</mark>"), "snippet", 4.2f, null, 0.016f)
+        );
+        HybridSearchService hybridSearchService = new HybridSearchService(
+            noteSearchRepository,
+            learningAiSearchClient,
+            rrfMergeService,
+            searchProperties,
+            noteIdentityQueryPort,
+            semanticTenantResolver
+        );
+
+        given(noteSearchRepository.searchKeywordCandidates(100L, "스프링", 50, null)).willReturn(keywordCandidates);
+        given(semanticTenantResolver.resolve(identity)).willThrow(new IllegalStateException("platform unavailable"));
+        given(rrfMergeService.merge(keywordCandidates, List.of(), 10, 40)).willReturn(mergedResults);
+
+        HybridSearchResponse response = hybridSearchService.search(identity, request);
+
+        assertThat(response.semanticFallback()).isTrue();
+        assertThat(response.results()).containsExactlyElementsOf(mergedResults);
     }
 }

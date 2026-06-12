@@ -405,6 +405,10 @@
   - verify(kafka): shared 로컬 docker stack(`synapse-kafka`, `synapse-schema-registry`)에 붙는 `TopicPrefixLiveIntegrationTest`를 추가하고 `./gradlew.bat test --tests "com.synapse.knowledge.note.kafka.TopicPrefixLiveIntegrationTest"` 통과 확인
   - verify(kafka): live broker/topic 확인 결과 `dev.knowledge.note.note-created-v1`, `dev.knowledge.note.note-updated-v1`, `dev.knowledge.note.note-search-sync-v1` 토픽 생성과 Schema Registry subject `dev.knowledge.note.note-created-v1-value`, `dev.knowledge.note.note-updated-v1-value` 등록까지 확인
   - fix(ci): `TopicPrefixLiveIntegrationTest`를 기본 `test` 작업에서 제외하고 `topicPrefixLiveTest` 전용 Gradle task로 분리해 로컬 shared Kafka stack 전용 검증이 GitHub Actions `clean build`를 깨지 않도록 수정
+  - fix(search): `platform-svc GET /api/v1/tenants/me`를 조회하는 `PlatformTenantClient`와 `SemanticTenantResolver`를 추가하고, semantic/hybrid 검색이 JWT `subject` 대신 runtime bearer token으로 tenant UUID를 해석해 `learning-ai`에 전달하도록 정렬
+  - refactor(search): `SearchIdentity`를 runtime(`accessToken`)과 benchmark(`semanticTenantId`) 경로로 분리하고, accuracy 설정/클라이언트 파라미터 명을 `semantic-tenant-id` 기준으로 정리
+  - test(search): `CurrentUserArgumentResolverTest`, `AiSearchControllerTest`, `SearchServiceTest`, `HybridSearchServiceTest`, `SearchAccuracyServiceTest`를 새 tenant resolution 계약에 맞게 갱신하고 `./gradlew.bat test --tests "com.synapse.knowledge.global.security.CurrentUserArgumentResolverTest" --tests "com.synapse.knowledge.search.controller.AiSearchControllerTest" --tests "com.synapse.knowledge.search.service.SearchServiceTest" --tests "com.synapse.knowledge.search.service.HybridSearchServiceTest" --tests "com.synapse.knowledge.search.service.SearchAccuracyServiceTest"` 통과 확인
+  - verify(search): `./gradlew.bat searchE2eTest --tests "com.synapse.knowledge.search.service.SearchElasticsearchIntegrationTest"`를 실행해 semantic/hybrid 검색의 benchmark tenant 경로와 RRF 병합 회귀를 추가 확인
 - **진행 중**:
   - 없음
 - **이슈**:

@@ -64,7 +64,7 @@ class SearchServiceTest {
     @DisplayName("정상 요청 시 SemanticService 결과를 반환한다")
     void semanticSearch_validRequest_shouldReturnSemanticServiceResults() {
         // Given
-        SearchIdentity identity = new SearchIdentity(100L, UUID.randomUUID().toString());
+        SearchIdentity identity = SearchIdentity.forBenchmark(100L, UUID.randomUUID().toString());
         SemanticSearchRequest request = new SemanticSearchRequest("벡터 검색", 10, List.of("ai"));
         SemanticSearchResponse expected = new SemanticSearchResponse(
             List.of(new SemanticSearchResponse.SemanticSearchResult(
@@ -90,7 +90,7 @@ class SearchServiceTest {
     @DisplayName("정상 요청 시 HybridService 결과를 반환한다")
     void hybridSearch_validRequest_shouldReturnHybridServiceResults() {
         // Given
-        SearchIdentity identity = new SearchIdentity(100L, UUID.randomUUID().toString());
+        SearchIdentity identity = SearchIdentity.forBenchmark(100L, UUID.randomUUID().toString());
         HybridSearchRequest request = new HybridSearchRequest("하이브리드 검색", 10, List.of("backend"));
         HybridSearchResponse expected = HybridSearchResponse.of(
             List.of(new UnifiedSearchResultResponse(1L, "하이브리드 노트", List.of("<mark>검색</mark>"), "snippet", 3.2f, 0.88f, 0.033f)),

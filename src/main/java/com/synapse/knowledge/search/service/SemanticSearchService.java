@@ -15,15 +15,17 @@ import org.springframework.stereotype.Service;
 public class SemanticSearchService {
 
     private final LearningAiSearchClient learningAiSearchClient;
+    private final SemanticTenantResolver semanticTenantResolver;
 
     public SemanticSearchResponse search(SearchIdentity identity, SemanticSearchRequest request) {
         if (!identity.canUseSemanticSearch()) {
-            throw new IllegalStateException("semantic 검색에는 UUID subject 기반 토큰이 필요합니다");
+            throw new IllegalStateException("semantic 검색에는 tenant 해석 가능한 인증 정보가 필요합니다");
         }
 
         Instant startedAt = Instant.now();
+        String semanticTenantId = semanticTenantResolver.resolve(identity);
         List<LearningAiSearchClient.LearningAiSemanticHit> hits =
-            learningAiSearchClient.searchSemantic(identity.semanticActorId(), request.query(), request.limit());
+            learningAiSearchClient.searchSemantic(semanticTenantId, request.query(), request.limit());
 
         List<SemanticSearchResponse.SemanticSearchResult> results = hits.stream()
             .map(hit -> new SemanticSearchResponse.SemanticSearchResult(

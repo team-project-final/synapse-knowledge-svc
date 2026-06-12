@@ -39,7 +39,7 @@ public class SearchAccuracyBenchmarkSeeder {
         return new BenchmarkContext(
             searchProperties.accuracy().benchmarkUserId(),
             searchProperties.accuracy().benchmarkTenantId(),
-            searchProperties.accuracy().semanticActorId(),
+            searchProperties.accuracy().semanticTenantId(),
             notesByBenchmarkId
         );
     }
@@ -118,11 +118,11 @@ public class SearchAccuracyBenchmarkSeeder {
     public record BenchmarkContext(
         Long userId,
         String tenantId,
-        String semanticActorId,
+        String semanticTenantId,
         Map<String, SeededNote> notesByBenchmarkId
     ) {
         public SearchIdentity toSearchIdentity() {
-            return new SearchIdentity(userId, semanticActorId);
+            return SearchIdentity.forBenchmark(userId, semanticTenantId);
         }
     }
 }
