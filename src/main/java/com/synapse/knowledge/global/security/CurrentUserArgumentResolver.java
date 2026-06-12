@@ -2,8 +2,6 @@ package com.synapse.knowledge.global.security;
 
 import com.synapse.knowledge.global.exception.AuthenticationRequiredException;
 import jakarta.servlet.http.HttpServletRequest;
-import java.nio.charset.StandardCharsets;
-import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.MethodParameter;
 import org.springframework.security.core.Authentication;
@@ -63,24 +61,10 @@ public class CurrentUserArgumentResolver implements HandlerMethodArgumentResolve
         // 숫자 userId가 없으면 subject를 결정적 Long으로 도출한다(engagement 등 타 서비스와 동일 알고리즘).
         String subject = jwt.getSubject();
         if (subject != null && !subject.isBlank()) {
-            return resolveUserId(subject);
+            return UserIdResolver.resolve(subject);
         }
         String requestUri = request == null ? "unknown" : request.getRequestURI();
         log.warn("JWT has no numeric userId claim and no subject. uri={}", requestUri);
         throw new AuthenticationRequiredException("토큰에서 userId를 확인할 수 없습니다");
-    }
-
-    /**
-     * 외부 userId(JWT subject 등)를 내부 Long userId로 변환한다.
-     * 숫자면 그대로, 아니면(UUID 등) nameUUIDFromBytes 기반 결정적 해시 —
-     * 동일 사용자가 서비스 전반에서 같은 Long을 갖도록 타 서비스와 동일 알고리즘을 쓴다.
-     */
-    private static Long resolveUserId(String subject) {
-        try {
-            return Long.valueOf(subject);
-        } catch (NumberFormatException ex) {
-            UUID uuid = UUID.nameUUIDFromBytes(subject.getBytes(StandardCharsets.UTF_8));
-            return uuid.getMostSignificantBits() & Long.MAX_VALUE;
-        }
     }
 }

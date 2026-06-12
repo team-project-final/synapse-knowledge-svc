@@ -63,3 +63,7 @@ chunking:
     base-url: http://localhost:8090
     timeout: 3s
     expected-dimensions: 1536
+
+engagement:
+  base-url: http://localhost:8083
+  timeout: 3s

@@ -4,7 +4,8 @@ public enum ErrorCode {
     COMMON_BAD_REQUEST("C400", 400),
     AUTHENTICATION_REQUIRED("C401", 401),
     ACCESS_DENIED("C403", 403),
-    INTERNAL_ERROR("C500", 500);
+    INTERNAL_ERROR("C500", 500),
+    EXTERNAL_API_ERROR("C502", 502);
 
     private final String code;
     private final int status;
