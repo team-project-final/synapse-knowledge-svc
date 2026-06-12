@@ -20,8 +20,6 @@ public record NoteSearchSyncKafkaEvent(
     List<String> tags,
     boolean      deleted
 ) {
-    public static final String TOPIC = "knowledge.note.note-search-sync-v1";
-
     public static NoteSearchSyncKafkaEvent from(NoteSearchSyncRequested event) {
         return new NoteSearchSyncKafkaEvent(
             "1.0",

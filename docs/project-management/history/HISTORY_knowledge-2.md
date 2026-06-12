@@ -397,14 +397,22 @@
   - fix(chunking): `LearningAiEmbeddingClient`가 `learning-ai /ai/embeddings`의 `application/octet-stream` 응답도 `byte[]`로 수신 후 JSON 파싱하도록 보강해 live chunking 임베딩 저장 회귀를 복구
   - test(chunking): `LearningAiEmbeddingClientTest`를 추가하고 `./gradlew.bat test --tests "com.synapse.knowledge.chunking.client.LearningAiEmbeddingClientTest"`, `./gradlew.bat test --tests "com.synapse.knowledge.chunking.service.ChunkingServiceTest"`, `./gradlew.bat chunkingPgTest` 통과 확인
   - verify(chunking): `synapse-shared` 도커 스택에서 `knowledge-svc`를 재빌드한 뒤 실제 노트 생성으로 `synapse_knowledge.note_chunks`에 청크와 pgvector 임베딩 저장, BM25 검색 반영까지 확인
+  - fix(kafka): `KAFKA_TOPIC_PREFIX`(기본 `""`)를 `application.yml`과 공통 `KafkaTopicResolver`에 추가하고 note created/updated, search sync, search sync DLQ 토픽을 단일 해석 지점에서 prefix 조합하도록 정리
+  - refactor(kafka): `NoteSearchSyncKafkaEvent.TOPIC`과 `NoteKafkaTopics` 하드코딩 상수를 제거하고 note outbox/dispatcher 및 search producer/consumer가 해석된 최종 토픽을 사용하도록 치환
+  - test(kafka): `KafkaTopicResolverTest`, `NoteSearchKafkaProducerTest`를 추가하고 note outbox/publisher, search Kafka config 테스트를 prefix-aware 기대값으로 갱신한 뒤 관련 Gradle 테스트 6종 통과 확인
+  - verify(kafka): shared 로컬 docker stack(`synapse-kafka`, `synapse-schema-registry`)에 붙는 `TopicPrefixLiveIntegrationTest`를 추가하고 `./gradlew.bat test --tests "com.synapse.knowledge.note.kafka.TopicPrefixLiveIntegrationTest"` 통과 확인
+  - verify(kafka): live broker/topic 확인 결과 `dev.knowledge.note.note-created-v1`, `dev.knowledge.note.note-updated-v1`, `dev.knowledge.note.note-search-sync-v1` 토픽 생성과 Schema Registry subject `dev.knowledge.note.note-created-v1-value`, `dev.knowledge.note.note-updated-v1-value` 등록까지 확인
+  - fix(ci): `TopicPrefixLiveIntegrationTest`를 기본 `test` 작업에서 제외하고 `topicPrefixLiveTest` 전용 Gradle task로 분리해 로컬 shared Kafka stack 전용 검증이 GitHub Actions `clean build`를 깨지 않도록 수정
 - **진행 중**:
   - 없음
 - **이슈**:
   - staging/EKS에서 실제 Prometheus 타깃이 `UP`으로 전환되는 최종 확인은 배포 후 in-cluster scrape 재검증이 필요
   - 이번 chunking 회귀 수정 이후에도 `synapse_ai.note_chunks`에는 신규 노트 청크가 적재되지 않아 semantic/hybrid 결과는 여전히 비어 있으며, `learning-ai` ingest 경로를 별도로 점검해야 함
+  - Kafka topic prefix 변경은 로컬 live produce/consume까지 확인했지만, DLQ prefix 경로는 여전히 단위 테스트 기준으로만 검증했고 실제 실패 유도 재현은 별도다
 - **다음**:
   - 배포 후 in-cluster `GET /actuator/prometheus` 200과 Prometheus target `UP` 여부를 확인하고 false-positive alert 해소 여부 점검
   - `learning-ai`의 note ingest/semantic 적재 경로를 확인해 `synapse_ai.note_chunks` 미적재 원인을 분리하고 E2E semantic/hybrid 검색을 다시 검증
+  - dev 환경에서 `KAFKA_TOPIC_PREFIX=dev.` 기준 note/search 토픽과 DLQ가 모두 prefixed topic으로 동작하는지 실배포 경로에서 확인
 
 ---
 

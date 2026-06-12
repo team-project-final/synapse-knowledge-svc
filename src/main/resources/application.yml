@@ -58,6 +58,7 @@ synapse:
     issuer: ${JWT_ISSUER:synapse-auth}
   kafka:
     enabled: ${KAFKA_ENABLED:false}
+    topic-prefix: ${KAFKA_TOPIC_PREFIX:}
     search-sync-listener:
       auto-startup: ${KAFKA_SEARCH_SYNC_LISTENER_AUTO_STARTUP:true}
     outbox:

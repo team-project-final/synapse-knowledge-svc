@@ -103,6 +103,7 @@ tasks.withType<Test> {
 tasks.named<Test>("test") {
 	exclude("**/SearchElasticsearchIntegrationTest.class")
 	exclude("**/ChunkingPostgresFlywayIntegrationTest.class")
+	exclude("**/TopicPrefixLiveIntegrationTest.class")
 }
 
 tasks.register<Test>("searchE2eTest") {
@@ -120,6 +121,17 @@ tasks.register<Test>("chunkingPgTest") {
 	testClassesDirs = sourceSets["test"].output.classesDirs
 	classpath = sourceSets["test"].runtimeClasspath
 	include("**/ChunkingPostgresFlywayIntegrationTest.class")
+	shouldRunAfter(tasks.named("test"))
+}
+
+tasks.register<Test>("topicPrefixLiveTest") {
+	group = JavaBasePlugin.VERIFICATION_GROUP
+	description = "Runs the TopicPrefixLiveIntegrationTest suite against the shared local Kafka stack."
+	testClassesDirs = sourceSets["test"].output.classesDirs
+	classpath = sourceSets["test"].runtimeClasspath
+	filter {
+		includeTestsMatching("com.synapse.knowledge.note.kafka.TopicPrefixLiveIntegrationTest")
+	}
 	shouldRunAfter(tasks.named("test"))
 }
 

@@ -42,9 +42,11 @@ public class NoteEventOutboxDispatcher {
         try {
             switch (outbox.getEventType()) {
                 case NoteEventOutboxService.EVENT_TYPE_CREATED -> noteEventPublisher.publishCreated(
+                    outbox.getTopic(),
                     objectMapper.readValue(outbox.getPayloadJson(), NoteCreatedPublishRequested.class)
                 ).join();
                 case NoteEventOutboxService.EVENT_TYPE_UPDATED -> noteEventPublisher.publishUpdated(
+                    outbox.getTopic(),
                     objectMapper.readValue(outbox.getPayloadJson(), NoteUpdatedPublishRequested.class)
                 ).join();
                 default -> throw new IllegalStateException("Unsupported outbox event type: " + outbox.getEventType());

@@ -1,5 +1,6 @@
 package com.synapse.knowledge.search.config;
 
+import com.synapse.knowledge.global.config.KafkaTopicResolver;
 import com.synapse.knowledge.search.event.NoteSearchSyncKafkaEvent;
 import java.util.HashMap;
 import java.util.Map;
@@ -33,6 +34,7 @@ import org.springframework.util.backoff.ExponentialBackOff;
 class KafkaConfig {
 
     private final SlackNotifier slackNotifier;
+    private final KafkaTopicResolver kafkaTopicResolver;
 
     @Value("${spring.kafka.security.protocol:PLAINTEXT}")
     private String securityProtocol;
@@ -83,7 +85,7 @@ class KafkaConfig {
         var recoverer = new DeadLetterPublishingRecoverer(kafkaTemplate,
             (record, ex) -> {
                 slackNotifier.sendDlqAlert(record.topic(), ex.getMessage());
-                return new TopicPartition(record.topic() + ".dlq", -1);
+                return new TopicPartition(kafkaTopicResolver.dlq(record.topic()), -1);
             });
 
         var factory = new ConcurrentKafkaListenerContainerFactory<String, NoteSearchSyncKafkaEvent>();

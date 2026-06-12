@@ -3,6 +3,8 @@ package com.synapse.knowledge.search.config;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
+import com.synapse.knowledge.global.config.KafkaTopicProperties;
+import com.synapse.knowledge.global.config.KafkaTopicResolver;
 import com.synapse.knowledge.search.event.NoteSearchSyncKafkaEvent;
 import java.util.Map;
 import org.apache.kafka.clients.CommonClientConfigs;
@@ -21,7 +23,9 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 class KafkaConfigTest {
 
-    private final KafkaConfig kafkaConfig = new KafkaConfig(mock(SlackNotifier.class));
+    private final KafkaTopicResolver kafkaTopicResolver =
+        new KafkaTopicResolver(new KafkaTopicProperties("dev."));
+    private final KafkaConfig kafkaConfig = new KafkaConfig(mock(SlackNotifier.class), kafkaTopicResolver);
     private final ApplicationContextRunner contextRunner = new ApplicationContextRunner()
         .withUserConfiguration(KafkaConfig.class, KafkaConfigTestSupport.class);
 
@@ -109,6 +113,13 @@ class KafkaConfigTest {
     }
 
     @Test
+    @DisplayName("DLQ topic은 prefix가 붙은 원본 topic 뒤에 suffix를 붙인다")
+    void dlq_withPrefixedTopic_shouldAppendDlqSuffix() {
+        assertThat(kafkaTopicResolver.dlq("dev.knowledge.note.note-search-sync-v1"))
+            .isEqualTo("dev.knowledge.note.note-search-sync-v1.dlq");
+    }
+
+    @Test
     @DisplayName("synapseKafkaEnabled_false면SearchKafkaBean을등록하지않는다")
     void context_synapseKafkaEnabledFalse_shouldNotRegisterSearchKafkaBeans() {
         contextRunner
@@ -179,6 +190,11 @@ class KafkaConfigTest {
         @Bean
         SlackNotifier slackNotifier() {
             return mock(SlackNotifier.class);
+        }
+
+        @Bean
+        KafkaTopicResolver kafkaTopicResolver() {
+            return new KafkaTopicResolver(new KafkaTopicProperties(""));
         }
     }
 }
