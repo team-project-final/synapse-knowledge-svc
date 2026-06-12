@@ -17,6 +17,20 @@ class GlobalExceptionHandlerTest {
     private final GlobalExceptionHandler handler = new GlobalExceptionHandler();
 
     @Test
+    @DisplayName("비즈니스 예외는 선언된 상태코드와 에러코드로 응답한다")
+    void handleBusinessException_shouldReturnDeclaredStatusAndErrorCode() {
+        BusinessException ex = new NotFoundException(ErrorCode.NOTE_NOT_FOUND, "노트를 찾을 수 없습니다") {
+        };
+
+        ResponseEntity<ErrorResponse> response = handler.handleBusinessException(ex);
+
+        assertThat(response.getStatusCode().value()).isEqualTo(404);
+        assertThat(response.getBody()).isNotNull();
+        assertThat(response.getBody().code()).isEqualTo(ErrorCode.NOTE_NOT_FOUND.code());
+        assertThat(response.getBody().message()).isEqualTo("노트를 찾을 수 없습니다");
+    }
+
+    @Test
     @DisplayName("예상하지 못한 예외는 500 응답과 error 로그를 남긴다")
     void handleException_unexpectedException_shouldReturn500AndLogError(CapturedOutput output) {
         HttpServletRequest request = Mockito.mock(HttpServletRequest.class);

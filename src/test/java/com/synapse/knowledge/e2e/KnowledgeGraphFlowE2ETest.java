@@ -1,6 +1,7 @@
 package com.synapse.knowledge.e2e;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -181,6 +182,23 @@ class KnowledgeGraphFlowE2ETest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.success").value(true))
             .andExpect(jsonPath("$.data.totalElements").value(0));
+    }
+
+    @Test
+    @DisplayName("deletedNoteLookup_삭제된노트조회_shouldReturn404")
+    void deletedNoteLookup_삭제된노트조회_shouldReturn404() throws Exception {
+        // Given: 사용자가 조회 가능한 노트를 생성
+        long noteId = createNote("삭제 대상", "삭제될 본문", List.of());
+
+        // When: 노트를 soft delete
+        mockMvc.perform(delete("/api/v1/notes/{id}", noteId).with(E2eJwtHelper.user(USER)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.success").value(true));
+
+        // Then: 같은 노트 상세 조회는 404로 응답
+        mockMvc.perform(get("/api/v1/notes/{id}", noteId).with(E2eJwtHelper.user(USER)))
+            .andExpect(status().isNotFound())
+            .andExpect(jsonPath("$.code").value("KNOW-404"));
     }
 
     /** 노트를 수정한다 (이전 상태가 버전으로 스냅샷됨). */

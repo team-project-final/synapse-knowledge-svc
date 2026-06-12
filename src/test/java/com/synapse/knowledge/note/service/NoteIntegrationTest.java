@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.synapse.knowledge.global.exception.AccessDeniedException;
 import com.synapse.knowledge.note.dto.NoteCreateRequest;
 import com.synapse.knowledge.note.dto.NoteResponse;
+import com.synapse.knowledge.note.exception.NoteNotFoundException;
 import com.synapse.knowledge.note.repository.NoteIdentityMapRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -91,15 +92,30 @@ class NoteIntegrationTest {
 
     @Test
     void deleteNote_소프트삭제_shouldNotBeFound() {
+        // Given
         Long userId = 100L;
         NoteResponse created = noteService.create(userId, new NoteCreateRequest("tenant1", "Title", "Content"));
 
+        // When
         noteService.delete(userId, created.id());
 
+        // Then
         assertThatThrownBy(() -> noteService.getById(userId, created.id()))
-            .hasMessageContaining("Note not found");
+            .isInstanceOf(NoteNotFoundException.class)
+            .hasMessageContaining("noteId=" + created.id());
 
         Page<NoteResponse> notes = noteService.findAll(userId, PageRequest.of(0, 10));
         assertThat(notes.getTotalElements()).isZero();
+    }
+
+    @Test
+    void getNote_존재하지않는노트조회_shouldThrowNoteNotFound() {
+        // Given
+        Long userId = 100L;
+
+        // When & Then
+        assertThatThrownBy(() -> noteService.getById(userId, 99999L))
+            .isInstanceOf(NoteNotFoundException.class)
+            .hasMessageContaining("noteId=99999");
     }
 }
