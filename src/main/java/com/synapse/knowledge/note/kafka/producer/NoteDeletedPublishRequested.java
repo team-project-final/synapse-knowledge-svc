@@ -3,6 +3,7 @@ package com.synapse.knowledge.note.kafka.producer;
 import com.synapse.knowledge.note.entity.Note;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.UUID;
 
 public record NoteDeletedPublishRequested(
@@ -29,6 +30,9 @@ public record NoteDeletedPublishRequested(
     }
 
     private static String resolveTimestamp(LocalDateTime value, Instant fallback) {
-        return value != null ? value.toString() : fallback.toString();
+        long deletedAtMillis = value != null
+            ? value.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
+            : fallback.toEpochMilli();
+        return String.valueOf(deletedAtMillis);
     }
 }

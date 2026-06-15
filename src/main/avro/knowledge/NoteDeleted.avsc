@@ -9,7 +9,7 @@
     {"name": "userId", "type": "string", "doc": "UUID of the note author"},
     {"name": "tenantId", "type": "string", "doc": "Tenant identifier"},
     {"name": "title", "type": "string", "default": "", "doc": "Note title for observability"},
-    {"name": "deletedAt", "type": "string", "doc": "ISO-8601 deletion timestamp"},
+    {"name": "deletedAt", "type": "string", "default": "", "doc": "Note deletion time encoded as epoch millis string for v1 compatibility"},
     {"name": "occurredAt", "type": "long", "default": 0, "doc": "Event emission time (epoch millis) — common meta"}
   ]
 }

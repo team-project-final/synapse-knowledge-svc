@@ -219,6 +219,7 @@ class TopicPrefixLiveIntegrationTest {
             assertThat(noteDeleted.getTitle()).isEqualTo("before delete title");
             assertThat(noteDeleted.getTenantId()).isEqualTo("tenant-prefix-live-delete");
             assertThat(noteDeleted.getNoteId()).isNotBlank();
+            assertThat(Long.parseLong(noteDeleted.getDeletedAt())).isPositive();
 
             assertThat(searchSyncRecord.topic()).isEqualTo("dev.knowledge.note.note-search-sync-v1");
             assertThat(searchSyncRecord.value().noteId()).isEqualTo(created.id());

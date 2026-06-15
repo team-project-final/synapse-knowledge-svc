@@ -138,7 +138,7 @@ class NoteEventOutboxDispatcherTest {
             "33333333-3333-3333-3333-333333333333",
             "tenant-3",
             "삭제 제목",
-            "2026-06-15T09:45:00",
+            "1781516700000",
             1_750_000_000_000L
         );
         NoteEventOutbox outbox = NoteEventOutbox.pending(

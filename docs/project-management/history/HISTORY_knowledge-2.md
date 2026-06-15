@@ -437,15 +437,20 @@
   - fix(search): `PlatformTenantClient`에 loopback(`localhost`/`127.0.0.1`/`::1`) base URL 전용 fallback client를 추가해, 컨테이너 내부에서 `SEARCH_PLATFORM_BASE_URL`이 로컬 기본값으로 남아 있어도 `platform-svc:8081`로 tenant 조회를 재시도하도록 보강
   - test(search): `PlatformTenantClientTest`를 추가해 primary base URL 성공 경로와 loopback connection failure 후 fallback 성공 경로를 고정하고 `SearchServiceTest`, `HybridSearchServiceTest` 재통과를 확인
   - verify(search): `synapse-shared` compose에서 현재 브랜치 코드로 `knowledge-svc` 이미지를 재빌드/교체한 뒤 실제 회원가입 → 노트 생성 → `/api/v1/ai/search/semantic` 호출을 재검증해 `semanticbridge 20260615072507` 쿼리 기준 semantic 1건, hybrid `semanticFallback=false` 응답을 확인
+  - fix(kafka): `NoteDeleted` v1 스키마의 `deletedAt`은 `string`을 유지하되 payload 값을 epoch millis 숫자 문자열로 전환해 Schema Registry 호환성을 깨지 않으면서 `learning-ai`의 `int` 파싱 계약과 정렬
+  - test(kafka): `NoteEventPublisherTest`, `NoteEventOutboxServiceTest`, `NoteEventOutboxDispatcherTest`, `TopicPrefixLiveIntegrationTest`를 새 delete timestamp 계약에 맞게 갱신하고 `./gradlew.bat test --tests "com.synapse.knowledge.note.kafka.producer.NoteEventPublisherTest" --tests "com.synapse.knowledge.note.kafka.outbox.NoteEventOutboxServiceTest" --tests "com.synapse.knowledge.note.kafka.outbox.NoteEventOutboxDispatcherTest" --tests "com.synapse.knowledge.note.kafka.TopicPrefixLiveIntegrationTest" --no-daemon --rerun-tasks` 통과 확인
+  - verify(kafka): shared compose의 `knowledge-svc`가 기본적으로 `.e2e-worktrees/synapse-knowledge-svc`를 빌드하는 점을 확인하고, 현재 브랜치 소스를 직접 `synapse-knowledge-svc:e2e` 이미지로 빌드해 교체한 뒤 `NOTE_DELETED` outbox row가 `PUBLISHED`로 전환되고 `synapse_ai.note_chunks`가 `1 -> 0`으로 삭제되는 것을 재검증
 - **이슈**
   - 기존 로컬 `synapse_knowledge` DB는 이미 `flyway_schema_history`와 테이블이 존재해 정확한 빈 DB 검증 대상이 아니므로, 이번 검증은 임시 `synapse_knowledge_verify` DB로 수행함
   - `application.yml`의 Flyway `baseline-on-migrate=true`, `baseline-version=8` 때문에 비어있지 않은 `synapse_knowledge` DB를 재사용하면 `V1~V8`이 baseline 처리로 스킵될 수 있어, 실제 전환 전 로컬 볼륨 초기화 또는 DB 재생성이 필요함
-  - `knowledge-svc`는 note delete producer까지 복구됐지만 `learning-ai`는 아직 `note-deleted` consumer가 없어, 실환경 벡터 저장소 삭제 E2E 완료는 후속 작업이 필요함
-  - `learning-ai` 실환경 delete consume 경로는 여전히 `deletedAt` 타입 불일치로 DLQ에 떨어져 `synapse_ai.note_chunks` 삭제가 일어나지 않았고, 이번 브랜치에서는 시맨틱 tenant fallback만 우선 복구함
+  - `learning-ai` delete consumer는 현재 shared compose 기준으로 동작하지만, `knowledge.note.note-deleted-v1`의 기존 Schema Registry subject가 `deletedAt=string`으로 등록돼 있어 producer가 타입을 직접 `long`으로 바꾸면 409 호환성 오류로 발행이 막힘
+  - 로컬 shared compose 검증은 현재 브랜치 이미지를 직접 덮어써 해결했지만, 동일한 v1 subject를 사용하는 다른 환경에도 숫자 문자열 기반 `deletedAt` 계약이 반영돼야 동일한 삭제 전파 결과를 재현할 수 있음
+  - shared compose의 `knowledge-svc` build context는 현재 작업 디렉터리가 아니라 `C:\workspace\synapse\.e2e-worktrees\synapse-knowledge-svc`라서, 브랜치 수정사항을 검증하려면 현재 워크스페이스 이미지를 직접 빌드해 동일 태그로 교체해야 했음
+  - `deletedAt` 필드를 `long`으로 직접 바꾸는 방식은 Schema Registry subject `knowledge.note.note-deleted-v1-value`의 기존 `string` 스키마와 충돌해 409 호환성 오류로 발행이 막혔고, v1 유지 조건에서는 숫자 문자열 payload가 현실적인 호환 경로였음
 - **내일 계획**
   - 필요 시 기존 로컬 `synapse_knowledge`를 초기화한 뒤 실제 기본 폴백 DB 이름 그대로 `bootRun`을 재검증하고, GitHub Actions `dev-smoke` 재실행 결과를 확인
-  - `learning-ai`의 `note-deleted` consumer 구현과 배포 이후 semantic/hybrid 검색에서 삭제 노트가 재노출되지 않는지 교차 검증
-  - delete event의 `deletedAt` 계약을 knowledge-svc / learning-ai 사이에서 정렬하고 같은 shared compose 환경에서 삭제 전파까지 포함한 semantic/hybrid E2E를 다시 검증
+  - `learning-ai`의 semantic/hybrid 조회 API까지 포함해 삭제된 노트가 재노출되지 않는지 교차 시나리오를 한 번 더 확인
+  - shared compose의 `.e2e-worktrees/synapse-knowledge-svc`에도 이번 브랜치 기준 코드가 반영되도록 정리하고, 동일 이미지 태그를 수동 덮어쓰지 않아도 재현 가능한 검증 절차로 문서화
 
 ---
 
