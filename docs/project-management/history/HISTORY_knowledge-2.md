@@ -417,8 +417,21 @@
   - Kafka topic prefix 변경은 로컬 live produce/consume까지 확인했지만, DLQ prefix 경로는 여전히 단위 테스트 기준으로만 검증했고 실제 실패 유도 재현은 별도다
 - **다음**:
   - 배포 후 in-cluster `GET /actuator/prometheus` 200과 Prometheus target `UP` 여부를 확인하고 false-positive alert 해소 여부 점검
-  - `learning-ai`의 note ingest/semantic 적재 경로를 확인해 `synapse_ai.note_chunks` 미적재 원인을 분리하고 E2E semantic/hybrid 검색을 다시 검증
-  - dev 환경에서 `KAFKA_TOPIC_PREFIX=dev.` 기준 note/search 토픽과 DLQ가 모두 prefixed topic으로 동작하는지 실배포 경로에서 확인
+- `learning-ai`의 note ingest/semantic 적재 경로를 확인해 `synapse_ai.note_chunks` 미적재 원인을 분리하고 E2E semantic/hybrid 검색을 다시 검증
+- dev 환경에서 `KAFKA_TOPIC_PREFIX=dev.` 기준 note/search 토픽과 DLQ가 모두 prefixed topic으로 동작하는지 실배포 경로에서 확인
+
+### W6 (2026-06-15 ~ 06-19)
+
+#### 2026-06-15 (월)
+
+- **한 일**
+  - fix(config): `application-dev.yml`의 로컬 `DB_URL` 폴백을 `jdbc:postgresql://localhost:5432/synapse_knowledge`로 변경해 knowledge-svc가 platform/engagement와 `flyway_schema_history`를 공유하지 않도록 분리
+  - verify(flyway): 빈 `synapse_knowledge_verify` DB에 `DB_URL` override + `dev` profile로 `bootRun`을 실행해 `V1~V8`, `V20260611153000__add_deck_id_to_notes.sql`까지 실제 적용되고 `notes.deck_id`, `note_versions`, `flyway_schema_history` 이력이 생성되는 것을 확인
+- **이슈**
+  - 기존 로컬 `synapse_knowledge` DB는 이미 `flyway_schema_history`와 테이블이 존재해 정확한 빈 DB 검증 대상이 아니므로, 이번 검증은 임시 `synapse_knowledge_verify` DB로 수행함
+  - `application.yml`의 Flyway `baseline-on-migrate=true`, `baseline-version=8` 때문에 비어있지 않은 `synapse_knowledge` DB를 재사용하면 `V1~V8`이 baseline 처리로 스킵될 수 있어, 실제 전환 전 로컬 볼륨 초기화 또는 DB 재생성이 필요함
+- **내일 계획**
+  - 필요 시 기존 로컬 `synapse_knowledge`를 초기화한 뒤 실제 기본 폴백 DB 이름 그대로 `bootRun`을 재검증하고, platform/engagement 동시 기동에서 checksum mismatch가 재현되지 않는지 최종 확인
 
 ---
 
