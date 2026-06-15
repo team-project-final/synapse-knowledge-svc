@@ -3,6 +3,7 @@ package com.synapse.knowledge.note.kafka.outbox;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.synapse.knowledge.note.kafka.producer.NoteCreatedPublishRequested;
+import com.synapse.knowledge.note.kafka.producer.NoteDeletedPublishRequested;
 import com.synapse.knowledge.note.kafka.producer.NoteEventPublisher;
 import com.synapse.knowledge.note.kafka.producer.NoteUpdatedPublishRequested;
 import java.util.List;
@@ -44,6 +45,10 @@ public class NoteEventOutboxDispatcher {
                 case NoteEventOutboxService.EVENT_TYPE_CREATED -> noteEventPublisher.publishCreated(
                     outbox.getTopic(),
                     objectMapper.readValue(outbox.getPayloadJson(), NoteCreatedPublishRequested.class)
+                ).join();
+                case NoteEventOutboxService.EVENT_TYPE_DELETED -> noteEventPublisher.publishDeleted(
+                    outbox.getTopic(),
+                    objectMapper.readValue(outbox.getPayloadJson(), NoteDeletedPublishRequested.class)
                 ).join();
                 case NoteEventOutboxService.EVENT_TYPE_UPDATED -> noteEventPublisher.publishUpdated(
                     outbox.getTopic(),

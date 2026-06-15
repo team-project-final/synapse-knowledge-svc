@@ -12,6 +12,7 @@ import com.synapse.knowledge.global.config.KafkaTopicProperties;
 import com.synapse.knowledge.global.config.KafkaTopicResolver;
 import com.synapse.knowledge.note.entity.Note;
 import com.synapse.knowledge.note.kafka.producer.NoteCreatedPublishRequested;
+import com.synapse.knowledge.note.kafka.producer.NoteDeletedPublishRequested;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -67,6 +68,36 @@ class NoteEventOutboxServiceTest {
     }
 
     @Test
+    @DisplayName("삭제 요청이면 deleted outbox row를 저장한다")
+    void enqueueDeleted_validRequest_shouldSaveOutboxRow() throws Exception {
+        Note note = Note.create("tenant-1", 10L, "삭제 제목", "본문", "본문", List.of("tag"));
+        UUID externalNoteId = UUID.randomUUID();
+        String eventUserId = "11111111-1111-1111-1111-111111111111";
+        ReflectionTestUtils.setField(note, "deletedAt", LocalDateTime.of(2026, 6, 15, 9, 45));
+
+        NoteEventOutboxService service = new NoteEventOutboxService(
+            noteEventOutboxRepository,
+            objectMapper,
+            KAFKA_TOPIC_RESOLVER
+        );
+        ReflectionTestUtils.setField(service, "kafkaEnabled", true);
+
+        service.enqueueDeleted(note, externalNoteId, eventUserId);
+
+        ArgumentCaptor<NoteEventOutbox> outboxCaptor = ArgumentCaptor.forClass(NoteEventOutbox.class);
+        verify(noteEventOutboxRepository).save(outboxCaptor.capture());
+        NoteEventOutbox outbox = outboxCaptor.getValue();
+        assertThat(outbox.getTopic()).isEqualTo("dev.knowledge.note.note-deleted-v1");
+        assertThat(outbox.getMessageKey()).isEqualTo("tenant-1");
+        assertThat(outbox.getEventType()).isEqualTo(NoteEventOutboxService.EVENT_TYPE_DELETED);
+        NoteDeletedPublishRequested payload = objectMapper.readValue(outbox.getPayloadJson(), NoteDeletedPublishRequested.class);
+        assertThat(payload.externalNoteId()).isEqualTo(externalNoteId);
+        assertThat(payload.userId()).isEqualTo(eventUserId);
+        assertThat(payload.title()).isEqualTo("삭제 제목");
+        assertThat(payload.deletedAt()).isEqualTo("2026-06-15T09:45");
+    }
+
+    @Test
     @DisplayName("같은 eventId가 입력되면 예외 없이 중복을 건너뛴다")
     void enqueueCreated_duplicateEventId_shouldSkipWithoutException() {
         Note note = Note.create("tenant-1", 10L, "제목", "본문", "본문", List.of());
@@ -99,6 +130,25 @@ class NoteEventOutboxServiceTest {
         ReflectionTestUtils.setField(service, "kafkaEnabled", false);
 
         service.enqueueCreated(note, externalNoteId, eventUserId);
+
+        verify(noteEventOutboxRepository, never()).save(any(NoteEventOutbox.class));
+    }
+
+    @Test
+    @DisplayName("Kafka가 비활성화면 deleted outbox row를 저장하지 않는다")
+    void enqueueDeleted_kafkaDisabled_shouldNotSaveOutboxRow() {
+        Note note = Note.create("tenant-1", 10L, "삭제 제목", "본문", "본문", List.of("tag"));
+        UUID externalNoteId = UUID.randomUUID();
+        String eventUserId = "11111111-1111-1111-1111-111111111111";
+
+        NoteEventOutboxService service = new NoteEventOutboxService(
+            noteEventOutboxRepository,
+            objectMapper,
+            KAFKA_TOPIC_RESOLVER
+        );
+        ReflectionTestUtils.setField(service, "kafkaEnabled", false);
+
+        service.enqueueDeleted(note, externalNoteId, eventUserId);
 
         verify(noteEventOutboxRepository, never()).save(any(NoteEventOutbox.class));
     }

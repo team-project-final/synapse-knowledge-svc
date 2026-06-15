@@ -8,6 +8,7 @@ import static org.mockito.Mockito.verify;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.synapse.knowledge.note.kafka.producer.NoteCreatedPublishRequested;
+import com.synapse.knowledge.note.kafka.producer.NoteDeletedPublishRequested;
 import com.synapse.knowledge.note.kafka.producer.NoteEventPublisher;
 import java.util.List;
 import java.util.UUID;
@@ -126,5 +127,46 @@ class NoteEventOutboxDispatcherTest {
         assertThat(outboxCaptor.getValue().getLastError()).contains("broker down");
         assertThat(outboxCaptor.getValue().getClaimedBy()).isNull();
         assertThat(outboxCaptor.getValue().getClaimExpiresAt()).isNull();
+    }
+
+    @Test
+    @DisplayName("삭제 이벤트 발행 성공이면 Outbox 상태를 PUBLISHED로 변경한다")
+    void dispatchPending_deletePublishSucceeds_shouldMarkOutboxAsPublished() throws Exception {
+        NoteDeletedPublishRequested payload = new NoteDeletedPublishRequested(
+            "event-3",
+            UUID.randomUUID(),
+            "33333333-3333-3333-3333-333333333333",
+            "tenant-3",
+            "삭제 제목",
+            "2026-06-15T09:45:00",
+            1_750_000_000_000L
+        );
+        NoteEventOutbox outbox = NoteEventOutbox.pending(
+            payload.eventId(),
+            "dev.knowledge.note.note-deleted-v1",
+            "tenant-3",
+            NoteEventOutboxService.EVENT_TYPE_DELETED,
+            objectMapper.writeValueAsString(payload)
+        );
+        outbox.markInProgress("worker-3", java.time.LocalDateTime.now().plusSeconds(30));
+        NoteEventOutboxDispatcher noteEventOutboxDispatcher = new NoteEventOutboxDispatcher(
+            noteEventOutboxRepository,
+            noteEventOutboxClaimService,
+            noteEventPublisher,
+            objectMapper
+        );
+        ReflectionTestUtils.setField(noteEventOutboxDispatcher, "batchSize", 50);
+        given(noteEventOutboxClaimService.claimNextBatch(50))
+            .willReturn(List.of(outbox));
+        given(noteEventPublisher.publishDeleted(anyString(), any(NoteDeletedPublishRequested.class)))
+            .willReturn(CompletableFuture.completedFuture(null));
+
+        noteEventOutboxDispatcher.dispatchPending();
+
+        ArgumentCaptor<NoteEventOutbox> outboxCaptor = ArgumentCaptor.forClass(NoteEventOutbox.class);
+        verify(noteEventOutboxRepository).save(outboxCaptor.capture());
+        verify(noteEventPublisher).publishDeleted("dev.knowledge.note.note-deleted-v1", payload);
+        assertThat(outboxCaptor.getValue().getStatus()).isEqualTo(NoteEventOutboxStatus.PUBLISHED);
+        assertThat(outboxCaptor.getValue().getPublishedAt()).isNotNull();
     }
 }

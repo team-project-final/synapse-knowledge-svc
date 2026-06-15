@@ -1,6 +1,7 @@
 package com.synapse.knowledge.note.kafka.producer;
 
 import com.synapse.knowledge.NoteCreated;
+import com.synapse.knowledge.NoteDeleted;
 import com.synapse.knowledge.NoteUpdated;
 import java.util.concurrent.CompletableFuture;
 import lombok.RequiredArgsConstructor;
@@ -51,6 +52,23 @@ public class NoteEventPublisher {
             .setTenantId(event.tenantId())
             .setTitle(event.title())
             .setUpdatedAt(event.updatedAt())
+            .setOccurredAt(event.occurredAt())
+            .build();
+
+        return send(topic, event.tenantId(), payload);
+    }
+
+    public CompletableFuture<SendResult<String, SpecificRecord>> publishDeleted(
+        String topic,
+        NoteDeletedPublishRequested event
+    ) {
+        NoteDeleted payload = NoteDeleted.newBuilder()
+            .setEventId(event.eventId())
+            .setNoteId(event.externalNoteId().toString())
+            .setUserId(event.userId())
+            .setTenantId(event.tenantId())
+            .setTitle(event.title())
+            .setDeletedAt(event.deletedAt())
             .setOccurredAt(event.occurredAt())
             .build();
 

@@ -127,6 +127,7 @@ public class NoteService {
         validateOwner(userId, note);
         NoteIdentityMap identityMap = getOrCreateIdentityMap(note.getId());
         note.softDelete();
+        noteEventOutboxService.enqueueDeleted(note, identityMap.getExternalNoteId(), String.valueOf(userId));
         eventPublisher.publishEvent(
             new NoteChunkingRequested(
                 note.getId(),

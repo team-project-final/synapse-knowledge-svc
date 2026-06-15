@@ -138,6 +138,7 @@ tasks.register<Test>("topicPrefixLiveTest") {
 val serviceCoverageExcludes = listOf(
 	"com/synapse/knowledge/KnowledgeSvcApplication.class",
 	"com/synapse/knowledge/NoteCreated.class",
+	"com/synapse/knowledge/NoteDeleted.class",
 	"com/synapse/knowledge/NoteUpdated.class",
 	"com/synapse/knowledge/**/dto/**",
 	"com/synapse/knowledge/**/entity/**",

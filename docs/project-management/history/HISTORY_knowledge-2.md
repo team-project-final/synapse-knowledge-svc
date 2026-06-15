@@ -428,11 +428,19 @@
   - fix(config): `application-dev.yml`의 로컬 `DB_URL` 폴백을 `jdbc:postgresql://localhost:5432/synapse_knowledge`로 변경해 knowledge-svc가 platform/engagement와 `flyway_schema_history`를 공유하지 않도록 분리
   - verify(flyway): 빈 `synapse_knowledge_verify` DB에 `DB_URL` override + `dev` profile로 `bootRun`을 실행해 `V1~V8`, `V20260611153000__add_deck_id_to_notes.sql`까지 실제 적용되고 `notes.deck_id`, `note_versions`, `flyway_schema_history` 이력이 생성되는 것을 확인
   - fix(ci): `docker-compose.ci.yml` Postgres에 initdb SQL을 연결해 GitHub Actions `dev-smoke`가 `synapse_knowledge` DB를 자동 생성하도록 보강
+  - fix(kafka): `NoteDeleted.avsc`, `NoteDeletedPublishRequested`, `KafkaTopicResolver.noteDeleted()`를 추가하고 note outbox/dispatcher/publisher에 `knowledge.note.note-deleted-v1` 발행 경로를 반영
+  - fix(note): `NoteService.delete()`가 soft delete 직후 `note-deleted` outbox를 적재하면서 기존 chunking 삭제 이벤트와 search sync 삭제 이벤트를 함께 유지하도록 정리
+  - test(kafka): `NoteServiceKafkaPublishTest`, `NoteEventOutboxServiceTest`, `NoteEventOutboxDispatcherTest`, `NoteEventPublisherTest`, `KafkaTopicResolverTest`에 delete 케이스를 추가하고 targeted Gradle 테스트를 통과 확인
+  - verify(kafka): `./gradlew.bat topicPrefixLiveTest --no-daemon`를 실행해 `dev.knowledge.note.note-deleted-v1`와 prefixed search sync delete 이벤트의 실제 발행 경로를 검증
+  - verify(ci): `docker compose -f docker-compose.ci.yml up -d --wait` 후 `./gradlew.bat clean build --no-daemon`, `chunkingPgTest`, `searchE2eTest`, `topicPrefixLiveTest`, `jacocoTestCoverageVerification jacocoTestReport`, `test --tests "*ModuleStructureTest"`를 CI 순서대로 재현해 전부 통과 확인
+  - verify(ci): XML 리포트 기준 `ChunkingPostgresFlywayIntegrationTest` 2건, `SearchElasticsearchIntegrationTest` 7건, `TopicPrefixLiveIntegrationTest` 3건, `ModuleStructureTest` 2건 모두 `skipped=0`, `failures=0`, `errors=0` 확인
 - **이슈**
   - 기존 로컬 `synapse_knowledge` DB는 이미 `flyway_schema_history`와 테이블이 존재해 정확한 빈 DB 검증 대상이 아니므로, 이번 검증은 임시 `synapse_knowledge_verify` DB로 수행함
   - `application.yml`의 Flyway `baseline-on-migrate=true`, `baseline-version=8` 때문에 비어있지 않은 `synapse_knowledge` DB를 재사용하면 `V1~V8`이 baseline 처리로 스킵될 수 있어, 실제 전환 전 로컬 볼륨 초기화 또는 DB 재생성이 필요함
+  - `knowledge-svc`는 note delete producer까지 복구됐지만 `learning-ai`는 아직 `note-deleted` consumer가 없어, 실환경 벡터 저장소 삭제 E2E 완료는 후속 작업이 필요함
 - **내일 계획**
   - 필요 시 기존 로컬 `synapse_knowledge`를 초기화한 뒤 실제 기본 폴백 DB 이름 그대로 `bootRun`을 재검증하고, GitHub Actions `dev-smoke` 재실행 결과를 확인
+  - `learning-ai`의 `note-deleted` consumer 구현과 배포 이후 semantic/hybrid 검색에서 삭제 노트가 재노출되지 않는지 교차 검증
 
 ---
 

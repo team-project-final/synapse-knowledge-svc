@@ -22,6 +22,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -113,5 +114,29 @@ class NoteServiceKafkaPublishTest {
         assertThat(note.getDeckId()).isEqualTo(deckId);
         assertThat(eventCaptor.getAllValues()).anyMatch(NoteChunkingRequested.class::isInstance);
         assertThat(eventCaptor.getAllValues()).anyMatch(NoteSearchSyncRequested.class::isInstance);
+    }
+
+    @Test
+    @DisplayName("delete_노트삭제성공시_shouldOutbox삭제적재와후속이벤트를함께발행")
+    void delete_노트삭제성공시_shouldOutbox삭제적재와후속이벤트를함께발행() {
+        String deckId = "550e8400-e29b-41d4-a716-446655440000";
+        Note note = Note.create("tenant-1", 10L, "삭제 제목", "본문", "평문 본문", List.of("delete"), deckId);
+        NoteIdentityMap identityMap = NoteIdentityMap.create(1L);
+        ReflectionTestUtils.setField(note, "id", 1L);
+        ReflectionTestUtils.setField(note, "deletedAt", LocalDateTime.of(2026, 6, 15, 9, 45));
+        ReflectionTestUtils.setField(identityMap, "externalNoteId", UUID.fromString("11111111-1111-1111-1111-111111111111"));
+        given(noteRepository.findByIdAndDeletedAtIsNull(1L)).willReturn(Optional.of(note));
+        given(noteIdentityMapRepository.findById(1L)).willReturn(Optional.of(identityMap));
+
+        noteService.delete(10L, 1L);
+
+        ArgumentCaptor<Object> eventCaptor = ArgumentCaptor.forClass(Object.class);
+        verify(noteEventOutboxService).enqueueDeleted(note, identityMap.getExternalNoteId(), "10");
+        verify(eventPublisher, times(2)).publishEvent(eventCaptor.capture());
+        assertThat(note.getDeletedAt()).isNotNull();
+        assertThat(eventCaptor.getAllValues()).anyMatch(NoteChunkingRequested.class::isInstance);
+        assertThat(eventCaptor.getAllValues()).anyMatch(event ->
+            event instanceof NoteSearchSyncRequested requested && requested.deleted()
+        );
     }
 }

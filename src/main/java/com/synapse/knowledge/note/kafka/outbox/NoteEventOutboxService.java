@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.synapse.knowledge.global.config.KafkaTopicResolver;
 import com.synapse.knowledge.note.entity.Note;
 import com.synapse.knowledge.note.kafka.producer.NoteCreatedPublishRequested;
+import com.synapse.knowledge.note.kafka.producer.NoteDeletedPublishRequested;
 import com.synapse.knowledge.note.kafka.producer.NoteUpdatedPublishRequested;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Service;
 public class NoteEventOutboxService {
 
     static final String EVENT_TYPE_CREATED = "NOTE_CREATED";
+    static final String EVENT_TYPE_DELETED = "NOTE_DELETED";
     static final String EVENT_TYPE_UPDATED = "NOTE_UPDATED";
 
     private final NoteEventOutboxRepository noteEventOutboxRepository;
@@ -62,6 +64,21 @@ public class NoteEventOutboxService {
             kafkaTopicResolver.noteUpdated(),
             note.getTenantId(),
             EVENT_TYPE_UPDATED,
+            serialize(payload)
+        );
+    }
+
+    public void enqueueDeleted(Note note, UUID externalNoteId, String eventUserId) {
+        if (!kafkaEnabled) {
+            log.debug("Kafka disabled, skipping note deleted outbox enqueue noteId={}", note.getId());
+            return;
+        }
+        NoteDeletedPublishRequested payload = NoteDeletedPublishRequested.from(note, externalNoteId, eventUserId);
+        enqueue(
+            payload.eventId(),
+            kafkaTopicResolver.noteDeleted(),
+            note.getTenantId(),
+            EVENT_TYPE_DELETED,
             serialize(payload)
         );
     }

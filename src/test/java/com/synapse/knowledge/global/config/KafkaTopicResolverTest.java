@@ -13,6 +13,7 @@ class KafkaTopicResolverTest {
         KafkaTopicResolver resolver = new KafkaTopicResolver(new KafkaTopicProperties(""));
 
         assertThat(resolver.noteCreated()).isEqualTo("knowledge.note.note-created-v1");
+        assertThat(resolver.noteDeleted()).isEqualTo("knowledge.note.note-deleted-v1");
         assertThat(resolver.noteUpdated()).isEqualTo("knowledge.note.note-updated-v1");
         assertThat(resolver.noteSearchSync()).isEqualTo("knowledge.note.note-search-sync-v1");
     }
@@ -23,6 +24,7 @@ class KafkaTopicResolverTest {
         KafkaTopicResolver resolver = new KafkaTopicResolver(new KafkaTopicProperties("dev."));
 
         assertThat(resolver.noteCreated()).isEqualTo("dev.knowledge.note.note-created-v1");
+        assertThat(resolver.noteDeleted()).isEqualTo("dev.knowledge.note.note-deleted-v1");
         assertThat(resolver.noteUpdated()).isEqualTo("dev.knowledge.note.note-updated-v1");
         assertThat(resolver.noteSearchSync()).isEqualTo("dev.knowledge.note.note-search-sync-v1");
     }
