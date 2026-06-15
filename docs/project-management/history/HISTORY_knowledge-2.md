@@ -434,13 +434,18 @@
   - verify(kafka): `./gradlew.bat topicPrefixLiveTest --no-daemon`를 실행해 `dev.knowledge.note.note-deleted-v1`와 prefixed search sync delete 이벤트의 실제 발행 경로를 검증
   - verify(ci): `docker compose -f docker-compose.ci.yml up -d --wait` 후 `./gradlew.bat clean build --no-daemon`, `chunkingPgTest`, `searchE2eTest`, `topicPrefixLiveTest`, `jacocoTestCoverageVerification jacocoTestReport`, `test --tests "*ModuleStructureTest"`를 CI 순서대로 재현해 전부 통과 확인
   - verify(ci): XML 리포트 기준 `ChunkingPostgresFlywayIntegrationTest` 2건, `SearchElasticsearchIntegrationTest` 7건, `TopicPrefixLiveIntegrationTest` 3건, `ModuleStructureTest` 2건 모두 `skipped=0`, `failures=0`, `errors=0` 확인
+  - fix(search): `PlatformTenantClient`에 loopback(`localhost`/`127.0.0.1`/`::1`) base URL 전용 fallback client를 추가해, 컨테이너 내부에서 `SEARCH_PLATFORM_BASE_URL`이 로컬 기본값으로 남아 있어도 `platform-svc:8081`로 tenant 조회를 재시도하도록 보강
+  - test(search): `PlatformTenantClientTest`를 추가해 primary base URL 성공 경로와 loopback connection failure 후 fallback 성공 경로를 고정하고 `SearchServiceTest`, `HybridSearchServiceTest` 재통과를 확인
+  - verify(search): `synapse-shared` compose에서 현재 브랜치 코드로 `knowledge-svc` 이미지를 재빌드/교체한 뒤 실제 회원가입 → 노트 생성 → `/api/v1/ai/search/semantic` 호출을 재검증해 `semanticbridge 20260615072507` 쿼리 기준 semantic 1건, hybrid `semanticFallback=false` 응답을 확인
 - **이슈**
   - 기존 로컬 `synapse_knowledge` DB는 이미 `flyway_schema_history`와 테이블이 존재해 정확한 빈 DB 검증 대상이 아니므로, 이번 검증은 임시 `synapse_knowledge_verify` DB로 수행함
   - `application.yml`의 Flyway `baseline-on-migrate=true`, `baseline-version=8` 때문에 비어있지 않은 `synapse_knowledge` DB를 재사용하면 `V1~V8`이 baseline 처리로 스킵될 수 있어, 실제 전환 전 로컬 볼륨 초기화 또는 DB 재생성이 필요함
   - `knowledge-svc`는 note delete producer까지 복구됐지만 `learning-ai`는 아직 `note-deleted` consumer가 없어, 실환경 벡터 저장소 삭제 E2E 완료는 후속 작업이 필요함
+  - `learning-ai` 실환경 delete consume 경로는 여전히 `deletedAt` 타입 불일치로 DLQ에 떨어져 `synapse_ai.note_chunks` 삭제가 일어나지 않았고, 이번 브랜치에서는 시맨틱 tenant fallback만 우선 복구함
 - **내일 계획**
   - 필요 시 기존 로컬 `synapse_knowledge`를 초기화한 뒤 실제 기본 폴백 DB 이름 그대로 `bootRun`을 재검증하고, GitHub Actions `dev-smoke` 재실행 결과를 확인
   - `learning-ai`의 `note-deleted` consumer 구현과 배포 이후 semantic/hybrid 검색에서 삭제 노트가 재노출되지 않는지 교차 검증
+  - delete event의 `deletedAt` 계약을 knowledge-svc / learning-ai 사이에서 정렬하고 같은 shared compose 환경에서 삭제 전파까지 포함한 semantic/hybrid E2E를 다시 검증
 
 ---
 
