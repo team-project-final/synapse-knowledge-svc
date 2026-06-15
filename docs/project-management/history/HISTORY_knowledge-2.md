@@ -427,11 +427,12 @@
 - **한 일**
   - fix(config): `application-dev.yml`의 로컬 `DB_URL` 폴백을 `jdbc:postgresql://localhost:5432/synapse_knowledge`로 변경해 knowledge-svc가 platform/engagement와 `flyway_schema_history`를 공유하지 않도록 분리
   - verify(flyway): 빈 `synapse_knowledge_verify` DB에 `DB_URL` override + `dev` profile로 `bootRun`을 실행해 `V1~V8`, `V20260611153000__add_deck_id_to_notes.sql`까지 실제 적용되고 `notes.deck_id`, `note_versions`, `flyway_schema_history` 이력이 생성되는 것을 확인
+  - fix(ci): `docker-compose.ci.yml` Postgres에 initdb SQL을 연결해 GitHub Actions `dev-smoke`가 `synapse_knowledge` DB를 자동 생성하도록 보강
 - **이슈**
   - 기존 로컬 `synapse_knowledge` DB는 이미 `flyway_schema_history`와 테이블이 존재해 정확한 빈 DB 검증 대상이 아니므로, 이번 검증은 임시 `synapse_knowledge_verify` DB로 수행함
   - `application.yml`의 Flyway `baseline-on-migrate=true`, `baseline-version=8` 때문에 비어있지 않은 `synapse_knowledge` DB를 재사용하면 `V1~V8`이 baseline 처리로 스킵될 수 있어, 실제 전환 전 로컬 볼륨 초기화 또는 DB 재생성이 필요함
 - **내일 계획**
-  - 필요 시 기존 로컬 `synapse_knowledge`를 초기화한 뒤 실제 기본 폴백 DB 이름 그대로 `bootRun`을 재검증하고, platform/engagement 동시 기동에서 checksum mismatch가 재현되지 않는지 최종 확인
+  - 필요 시 기존 로컬 `synapse_knowledge`를 초기화한 뒤 실제 기본 폴백 DB 이름 그대로 `bootRun`을 재검증하고, GitHub Actions `dev-smoke` 재실행 결과를 확인
 
 ---
 
