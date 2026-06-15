@@ -103,7 +103,7 @@ class NoteEventPublisherTest {
             "33333333-3333-3333-3333-333333333333",
             "tenant-c",
             "삭제 노트",
-            "2026-06-15T09:45:00",
+            "1781516700000",
             1_750_000_000_000L
         );
         given(kafkaTemplate.send(eq(DELETED_TOPIC), eq("tenant-c"), org.mockito.ArgumentMatchers.any(SpecificRecord.class)))
@@ -120,6 +120,6 @@ class NoteEventPublisherTest {
         assertThat(payload.getUserId()).isEqualTo("33333333-3333-3333-3333-333333333333");
         assertThat(payload.getTenantId()).isEqualTo("tenant-c");
         assertThat(payload.getTitle()).isEqualTo("삭제 노트");
-        assertThat(payload.getDeletedAt()).isEqualTo("2026-06-15T09:45:00");
+        assertThat(payload.getDeletedAt()).isEqualTo("1781516700000");
     }
 }

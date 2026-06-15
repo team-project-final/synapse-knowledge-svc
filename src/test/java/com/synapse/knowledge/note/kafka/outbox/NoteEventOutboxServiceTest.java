@@ -14,6 +14,7 @@ import com.synapse.knowledge.note.entity.Note;
 import com.synapse.knowledge.note.kafka.producer.NoteCreatedPublishRequested;
 import com.synapse.knowledge.note.kafka.producer.NoteDeletedPublishRequested;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
@@ -94,7 +95,14 @@ class NoteEventOutboxServiceTest {
         assertThat(payload.externalNoteId()).isEqualTo(externalNoteId);
         assertThat(payload.userId()).isEqualTo(eventUserId);
         assertThat(payload.title()).isEqualTo("삭제 제목");
-        assertThat(payload.deletedAt()).isEqualTo("2026-06-15T09:45");
+        assertThat(payload.deletedAt()).isEqualTo(
+            String.valueOf(
+                LocalDateTime.of(2026, 6, 15, 9, 45)
+                    .atZone(ZoneId.systemDefault())
+                    .toInstant()
+                    .toEpochMilli()
+            )
+        );
     }
 
     @Test
