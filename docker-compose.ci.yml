@@ -5,6 +5,8 @@ services:
       POSTGRES_DB: synapse
       POSTGRES_USER: synapse
       POSTGRES_PASSWORD: synapse_local_pw
+    volumes:
+      - ./docker/postgres/initdb:/docker-entrypoint-initdb.d:ro
     ports:
       - "5432:5432"
     healthcheck:
