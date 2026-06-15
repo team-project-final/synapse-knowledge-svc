@@ -6,6 +6,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.BDDMockito.given;
 
 import com.synapse.knowledge.NoteCreated;
+import com.synapse.knowledge.NoteDeleted;
 import com.synapse.knowledge.NoteUpdated;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -22,6 +23,7 @@ import org.springframework.kafka.core.KafkaTemplate;
 class NoteEventPublisherTest {
 
     private static final String CREATED_TOPIC = "dev.knowledge.note.note-created-v1";
+    private static final String DELETED_TOPIC = "dev.knowledge.note.note-deleted-v1";
     private static final String UPDATED_TOPIC = "dev.knowledge.note.note-updated-v1";
 
     @Mock
@@ -90,5 +92,34 @@ class NoteEventPublisherTest {
         assertThat(payload.getTenantId()).isEqualTo("tenant-b");
         assertThat(payload.getTitle()).isEqualTo("수정 노트");
         assertThat(payload.getUpdatedAt()).isEqualTo("2026-06-01T11:30:00");
+    }
+
+    @Test
+    @DisplayName("노트 삭제 이벤트를 받으면 NoteDeleted 토픽으로 발행한다")
+    void handle_noteDeletedEvent_shouldPublishToNoteDeletedTopic() {
+        NoteDeletedPublishRequested event = new NoteDeletedPublishRequested(
+            "event-3",
+            UUID.randomUUID(),
+            "33333333-3333-3333-3333-333333333333",
+            "tenant-c",
+            "삭제 노트",
+            "2026-06-15T09:45:00",
+            1_750_000_000_000L
+        );
+        given(kafkaTemplate.send(eq(DELETED_TOPIC), eq("tenant-c"), org.mockito.ArgumentMatchers.any(SpecificRecord.class)))
+            .willReturn(CompletableFuture.completedFuture(null));
+
+        noteEventPublisher.publishDeleted(DELETED_TOPIC, event);
+
+        ArgumentCaptor<SpecificRecord> payloadCaptor = ArgumentCaptor.forClass(SpecificRecord.class);
+        verify(kafkaTemplate).send(eq(DELETED_TOPIC), eq("tenant-c"), payloadCaptor.capture());
+        assertThat(payloadCaptor.getValue()).isInstanceOf(NoteDeleted.class);
+        NoteDeleted payload = (NoteDeleted) payloadCaptor.getValue();
+        assertThat(payload.getEventId()).isEqualTo("event-3");
+        assertThat(payload.getNoteId()).isEqualTo(event.externalNoteId().toString());
+        assertThat(payload.getUserId()).isEqualTo("33333333-3333-3333-3333-333333333333");
+        assertThat(payload.getTenantId()).isEqualTo("tenant-c");
+        assertThat(payload.getTitle()).isEqualTo("삭제 노트");
+        assertThat(payload.getDeletedAt()).isEqualTo("2026-06-15T09:45:00");
     }
 }

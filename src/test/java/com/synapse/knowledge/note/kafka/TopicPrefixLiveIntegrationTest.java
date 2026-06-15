@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.synapse.knowledge.NoteCreated;
+import com.synapse.knowledge.NoteDeleted;
 import com.synapse.knowledge.NoteUpdated;
 import com.synapse.knowledge.global.config.KafkaTopicResolver;
 import com.synapse.knowledge.note.dto.NoteCreateRequest;
@@ -176,6 +177,52 @@ class TopicPrefixLiveIntegrationTest {
             assertThat(searchSyncRecord.value().noteId()).isEqualTo(created.id());
             assertThat(searchSyncRecord.value().title()).isEqualTo("after update title");
             assertThat(searchSyncRecord.value().deleted()).isFalse();
+        }
+    }
+
+    @Test
+    @DisplayName("노트 삭제 시 dev prefix가 붙은 note-deleted와 search-sync topic으로 발행된다")
+    void delete_withTopicPrefix_shouldPublishDeletedAndSearchSyncToPrefixedTopics() {
+        NoteResponse created = noteService.create(
+            303L,
+            new NoteCreateRequest(
+                "tenant-prefix-live-delete",
+                "before delete title",
+                "before delete body",
+                List.of("prefix", "delete"),
+                null
+            )
+        );
+        dispatchPendingOutbox();
+
+        try (
+            KafkaConsumer<String, Object> noteDeletedConsumer = avroConsumer();
+            KafkaConsumer<String, NoteSearchSyncKafkaEvent> searchSyncConsumer = searchSyncConsumer()
+        ) {
+            String deletedTopic = kafkaTopicResolver.noteDeleted();
+            String searchSyncTopic = kafkaTopicResolver.noteSearchSync();
+            ensureTopicExists(deletedTopic);
+            ensureTopicExists(searchSyncTopic);
+            subscribe(noteDeletedConsumer, deletedTopic);
+            subscribe(searchSyncConsumer, searchSyncTopic);
+
+            noteService.delete(303L, created.id());
+            dispatchPendingOutbox();
+
+            ConsumerRecord<String, Object> deletedRecord = pollUntilRecord(noteDeletedConsumer, deletedTopic);
+            ConsumerRecord<String, NoteSearchSyncKafkaEvent> searchSyncRecord =
+                pollUntilRecord(searchSyncConsumer, searchSyncTopic);
+
+            assertThat(deletedRecord.topic()).isEqualTo("dev.knowledge.note.note-deleted-v1");
+            assertThat(deletedRecord.value()).isInstanceOf(NoteDeleted.class);
+            NoteDeleted noteDeleted = (NoteDeleted) deletedRecord.value();
+            assertThat(noteDeleted.getTitle()).isEqualTo("before delete title");
+            assertThat(noteDeleted.getTenantId()).isEqualTo("tenant-prefix-live-delete");
+            assertThat(noteDeleted.getNoteId()).isNotBlank();
+
+            assertThat(searchSyncRecord.topic()).isEqualTo("dev.knowledge.note.note-search-sync-v1");
+            assertThat(searchSyncRecord.value().noteId()).isEqualTo(created.id());
+            assertThat(searchSyncRecord.value().deleted()).isTrue();
         }
     }
 

@@ -3,6 +3,7 @@ package com.synapse.knowledge.global.config;
 public class KafkaTopicResolver {
 
     static final String NOTE_CREATED_BASE = "knowledge.note.note-created-v1";
+    static final String NOTE_DELETED_BASE = "knowledge.note.note-deleted-v1";
     static final String NOTE_UPDATED_BASE = "knowledge.note.note-updated-v1";
     static final String NOTE_SEARCH_SYNC_BASE = "knowledge.note.note-search-sync-v1";
 
@@ -14,6 +15,10 @@ public class KafkaTopicResolver {
 
     public String noteCreated() {
         return resolve(NOTE_CREATED_BASE);
+    }
+
+    public String noteDeleted() {
+        return resolve(NOTE_DELETED_BASE);
     }
 
     public String noteUpdated() {
