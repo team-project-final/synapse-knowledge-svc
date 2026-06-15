@@ -10,7 +10,6 @@ import com.synapse.knowledge.search.dto.SemanticSearchRequest;
 import com.synapse.knowledge.search.dto.SemanticSearchResponse;
 import com.synapse.knowledge.search.service.SearchService;
 import jakarta.validation.Valid;
-import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -43,18 +42,6 @@ public class AiSearchController {
     }
 
     private SearchIdentity createSearchIdentity(CurrentUser currentUser) {
-        return new SearchIdentity(currentUser.userId(), toSemanticActorId(currentUser.subject()));
-    }
-
-    private String toSemanticActorId(String subject) {
-        if (subject == null || subject.isBlank()) {
-            return null;
-        }
-
-        try {
-            return UUID.fromString(subject).toString();
-        } catch (IllegalArgumentException ex) {
-            return null;
-        }
+        return SearchIdentity.forRuntime(currentUser.userId(), currentUser.accessToken());
     }
 }

@@ -42,6 +42,7 @@ class CurrentUserArgumentResolverTest {
 
         assertThat(currentUser.userId()).isEqualTo(10L);
         assertThat(currentUser.subject()).isEqualTo("11111111-1111-1111-1111-111111111111");
+        assertThat(currentUser.accessToken()).isEqualTo("token");
     }
 
     @Test
@@ -61,6 +62,7 @@ class CurrentUserArgumentResolverTest {
         assertThat(first.userId()).isNotNull().isPositive();
         assertThat(first.userId()).isEqualTo(second.userId()); // 동일 UUID → 결정적 Long
         assertThat(first.subject()).isEqualTo("22222222-2222-2222-2222-222222222222");
+        assertThat(first.accessToken()).isEqualTo("token");
     }
 
     @Test

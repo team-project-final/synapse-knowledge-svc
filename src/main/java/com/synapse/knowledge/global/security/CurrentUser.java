@@ -1,4 +1,4 @@
 package com.synapse.knowledge.global.security;
 
-public record CurrentUser(Long userId, String subject) {
+public record CurrentUser(Long userId, String subject, String accessToken) {
 }

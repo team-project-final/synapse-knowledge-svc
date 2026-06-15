@@ -164,7 +164,7 @@ class SearchElasticsearchIntegrationTest {
     void hybridSearch_withSemanticResults_shouldMergeByRrfScore() {
         // Given
         Long ownerId = 500L;
-        String semanticActorId = UUID.randomUUID().toString();
+        String semanticTenantId = UUID.randomUUID().toString();
         Long springNoteId = noteService.create(
             ownerId,
             new NoteCreateRequest("tenant1", "스프링 시큐리티", "spring security jwt resource server", List.of("backend"))
@@ -179,7 +179,7 @@ class SearchElasticsearchIntegrationTest {
         UUID elasticExternalNoteId = noteIdentityMapRepository.findById(elasticNoteId)
             .orElseThrow(() -> new IllegalStateException("missing note identity mapping: " + elasticNoteId))
             .getExternalNoteId();
-        given(learningAiSearchClient.searchSemantic(semanticActorId, "스프링", 50)).willReturn(List.of(
+        given(learningAiSearchClient.searchSemantic(semanticTenantId, "스프링", 50)).willReturn(List.of(
             new LearningAiSearchClient.LearningAiSemanticHit(UUID.randomUUID(), springExternalNoteId, "의미상 관련", 0.98f),
             new LearningAiSearchClient.LearningAiSemanticHit(UUID.randomUUID(), elasticExternalNoteId, "의미상 관련", 0.95f)
         ));
@@ -187,7 +187,7 @@ class SearchElasticsearchIntegrationTest {
         // When
         waitForResults(ownerId, "스프링", null, 20);
         HybridSearchResponse response = searchService.hybridSearch(
-            new SearchIdentity(ownerId, semanticActorId),
+            SearchIdentity.forBenchmark(ownerId, semanticTenantId),
             new HybridSearchRequest("스프링", 10, null)
         );
 
@@ -204,12 +204,12 @@ class SearchElasticsearchIntegrationTest {
     void hybridSearch_semanticTimeout_shouldReturnBm25Fallback() {
         // Given
         Long ownerId = 700L;
-        String semanticActorId = UUID.randomUUID().toString();
+        String semanticTenantId = UUID.randomUUID().toString();
         Long springNoteId = noteService.create(
             ownerId,
             new NoteCreateRequest("tenant1", "스프링 타임아웃", "spring timeout fallback search", List.of("backend", "search"))
         ).id();
-        given(learningAiSearchClient.searchSemantic(semanticActorId, "스프링", 50))
+        given(learningAiSearchClient.searchSemantic(semanticTenantId, "스프링", 50))
             .willAnswer(invocation -> {
                 sleep(Duration.ofMillis(400));
                 return List.of(new LearningAiSearchClient.LearningAiSemanticHit(
@@ -223,7 +223,7 @@ class SearchElasticsearchIntegrationTest {
         // When
         waitForResults(ownerId, "스프링", null, 20);
         HybridSearchResponse response = searchService.hybridSearch(
-            new SearchIdentity(ownerId, semanticActorId),
+            SearchIdentity.forBenchmark(ownerId, semanticTenantId),
             new HybridSearchRequest("스프링", 10, null)
         );
 
@@ -239,7 +239,7 @@ class SearchElasticsearchIntegrationTest {
     @Order(5)
     void hybridSearch_duplicateSemanticHitsForSameNote_shouldKeepStableRanking() {
         Long ownerId = 800L;
-        String semanticActorId = UUID.randomUUID().toString();
+        String semanticTenantId = UUID.randomUUID().toString();
         Long springNoteId = noteService.create(
             ownerId,
             new NoteCreateRequest("tenant1", "스프링 아키텍처", "spring architecture and modulith design", List.of("backend", "spring"))
@@ -254,7 +254,7 @@ class SearchElasticsearchIntegrationTest {
         UUID searchExternalNoteId = noteIdentityMapRepository.findById(searchNoteId)
             .orElseThrow(() -> new IllegalStateException("missing note identity mapping: " + searchNoteId))
             .getExternalNoteId();
-        given(learningAiSearchClient.searchSemantic(semanticActorId, "스프링", 50)).willReturn(List.of(
+        given(learningAiSearchClient.searchSemantic(semanticTenantId, "스프링", 50)).willReturn(List.of(
             new LearningAiSearchClient.LearningAiSemanticHit(UUID.randomUUID(), searchExternalNoteId, "검색 의미 1", 0.99f),
             new LearningAiSearchClient.LearningAiSemanticHit(UUID.randomUUID(), searchExternalNoteId, "검색 의미 2", 0.97f),
             new LearningAiSearchClient.LearningAiSemanticHit(UUID.randomUUID(), springExternalNoteId, "스프링 의미", 0.94f)
@@ -262,7 +262,7 @@ class SearchElasticsearchIntegrationTest {
 
         waitForResults(ownerId, "스프링", null, 20);
         HybridSearchResponse response = searchService.hybridSearch(
-            new SearchIdentity(ownerId, semanticActorId),
+            SearchIdentity.forBenchmark(ownerId, semanticTenantId),
             new HybridSearchRequest("스프링", 10, null)
         );
 

@@ -14,6 +14,7 @@ import org.springframework.validation.annotation.Validated;
 @ConfigurationProperties(prefix = "search")
 public record SearchProperties(
     @NotNull @Valid Ai ai,
+    @NotNull @Valid Platform platform,
     @NotNull @Valid Hybrid hybrid,
     @NotNull @Valid Accuracy accuracy,
     @NotNull @Valid Bm25 bm25
@@ -22,6 +23,12 @@ public record SearchProperties(
         @NotBlank String baseUrl,
         @NotNull Duration timeout,
         @DecimalMin("0.0") @DecimalMax("1.0") double threshold
+    ) {
+    }
+
+    public record Platform(
+        @NotBlank String baseUrl,
+        @NotNull Duration timeout
     ) {
     }
 
@@ -35,7 +42,7 @@ public record SearchProperties(
         @NotBlank String datasetVersion,
         @Positive long benchmarkUserId,
         @NotBlank String benchmarkTenantId,
-        @NotBlank String semanticActorId,
+        @NotBlank String semanticTenantId,
         @Positive int topK,
         @NotNull Duration indexingWaitTimeout
     ) {
