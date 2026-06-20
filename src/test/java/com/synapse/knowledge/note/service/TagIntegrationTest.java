@@ -43,9 +43,13 @@ class TagIntegrationTest {
     void setUp() {
         noteIdentityMapRepository.deleteAll();
         noteRepository.deleteAll();
-        var popularKeys = redisTemplate.keys("tags:popular*");
-        if (popularKeys != null && !popularKeys.isEmpty()) {
-            redisTemplate.delete(popularKeys);
+        try {
+            var popularKeys = redisTemplate.keys("tags:popular*");
+            if (popularKeys != null && !popularKeys.isEmpty()) {
+                redisTemplate.delete(popularKeys);
+            }
+        } catch (Exception ignored) {
+            // The default test profile runs without Redis; cache tests use mocked Redis separately.
         }
     }
 

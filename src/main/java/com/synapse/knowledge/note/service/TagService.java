@@ -55,7 +55,7 @@ public class TagService {
     }
 
     public List<PopularTagResponse> getPopular(int limit) {
-        String cached = redisTemplate.opsForValue().get(POPULAR_CACHE_KEY);
+        String cached = readCachedPopular();
         if (cached != null) {
             try {
                 List<PopularTagResponse> all = objectMapper.readValue(cached, new TypeReference<>() {});
@@ -68,6 +68,15 @@ public class TagService {
         List<PopularTagResponse> result = queryPopularFromDb();
         cachePopular(result);
         return result.stream().limit(limit).toList();
+    }
+
+    private String readCachedPopular() {
+        try {
+            return redisTemplate.opsForValue().get(POPULAR_CACHE_KEY);
+        } catch (Exception e) {
+            log.warn("인기 태그 캐시 조회 실패, DB에서 재조회합니다: {}", e.getMessage());
+            return null;
+        }
     }
 
     @SuppressWarnings("unchecked")

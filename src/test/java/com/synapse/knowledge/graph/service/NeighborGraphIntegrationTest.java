@@ -11,25 +11,12 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest
 @ActiveProfiles("test")
 @Transactional
 class NeighborGraphIntegrationTest {
-
-    @DynamicPropertySource
-    static void overrideProps(DynamicPropertyRegistry registry) {
-        registry.add("spring.datasource.url", () -> "jdbc:postgresql://localhost:5432/synapse");
-        registry.add("spring.datasource.username", () -> "synapse");
-        registry.add("spring.datasource.password", () -> "synapse_local_pw");
-        registry.add("spring.datasource.driver-class-name", () -> "org.postgresql.Driver");
-        registry.add("spring.jpa.database-platform", () -> "org.hibernate.dialect.PostgreSQLDialect");
-        registry.add("spring.jpa.hibernate.ddl-auto", () -> "none");
-        registry.add("spring.flyway.enabled", () -> "true");
-    }
 
     @Autowired
     private GraphService graphService;
