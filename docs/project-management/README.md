@@ -3,6 +3,8 @@
 > **프로젝트명**: Synapse — 통합 학습-지식 그래프 SaaS  
 > **기간**: 2026-05-12 ~ 2026-06-15 (5주 + 발표일, 22 영업일 — 5/25 부처님오신날·6/3 지방선거 제외)  
 > **팀 구성**: 팀장 1명 + 팀원 6명
+> **Phase E Sync**: 중앙 기준은 [2026-06-21 통합 QA 및 문서 마감 실행 리포트](../../../documents/docs/project-management/reports/phase-e-qa-docs-closeout-2026-06-21.md)다. knowledge는 dashboard 611/621 상태이므로 ES sync, note/graph E2E, 검색 result>0 증거가 붙은 항목만 완료 처리한다.
+> **Phase F Sync**: 중앙 기준은 [2026-06-21 PM Dashboard / 문서 동기화 실행 리포트](../../../documents/docs/project-management/reports/phase-f-pm-dashboard-doc-sync-2026-06-21.md)다. knowledge dry-run은 611/621로 현재 dashboard JSON과 일치한다. 남은 10개 check는 ES sync, note/graph E2E, 검색 결과 증거가 붙을 때만 완료 처리한다.
 
 ---
 
