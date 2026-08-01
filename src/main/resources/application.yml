@@ -1,4 +1,7 @@
 spring:
+  # preStop 5s + drain 30s < terminationGracePeriodSeconds 40s.
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
   application:
     name: knowledge-svc
   profiles:
@@ -39,6 +42,8 @@ spring:
 
 server:
   port: 8082
+  # 진행 중 요청을 처리한 뒤 종료(무중단 배포, gitops #98의 preStop+terminationGracePeriod와 정합).
+  shutdown: graceful
 
 management:
   endpoints:
